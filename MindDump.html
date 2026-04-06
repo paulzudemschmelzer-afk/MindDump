@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindDump</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:#111; --sidebar:#161616; --card:#1c1c1c; --card2:#222;
+  --border:#2a2a2a; --accent:#7c3aed; --accent2:#a78bfa;
+  --text:#e5e5e5; --sub:#777; --green:#10b981; --yellow:#f59e0b; --red:#ef4444;
+}
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; font-size:14px; }
+
+/* SIDEBAR */
+.sidebar { width:210px; min-width:210px; background:var(--sidebar); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:20px 0 14px; }
+.logo { padding:0 20px 22px; font-size:19px; font-weight:700; letter-spacing:-0.5px; }
+.logo span { color:var(--accent2); }
+.nav-btn { width:100%; padding:10px 18px; background:none; border:none; color:var(--sub); font-size:14px; text-align:left; cursor:pointer; display:flex; align-items:center; gap:10px; transition:all .15s; border-right:2px solid transparent; }
+.nav-btn:hover { background:var(--card); color:var(--text); }
+.nav-btn.active { background:rgba(124,58,237,.15); color:var(--accent2); border-right-color:var(--accent2); }
+.nav-icon { width:18px; text-align:center; }
+.badge { margin-left:auto; background:var(--accent); color:#fff; font-size:11px; padding:1px 6px; border-radius:10px; min-width:18px; text-align:center; font-weight:600; }
+.sidebar-bottom { margin-top:auto; padding:0 14px 2px; }
+.api-status { font-size:12px; padding:7px 10px; border-radius:7px; display:flex; align-items:center; gap:7px; margin-bottom:8px; }
+.api-status.ok { background:rgba(16,185,129,.1); color:#34d399; border:1px solid rgba(16,185,129,.2); }
+.api-status.missing { background:rgba(239,68,68,.08); color:#f87171; border:1px solid rgba(239,68,68,.15); cursor:pointer; }
+.dot { width:7px; height:7px; border-radius:50%; background:currentColor; flex-shrink:0; }
+.user-area { padding:0 0 2px; }
+.user-card { display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--card); border-radius:8px; border:1px solid var(--border); }
+.user-avatar { width:24px; height:24px; border-radius:50%; background:#333; object-fit:cover; }
+.user-name { font-size:12px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text); }
+.sign-btn { width:100%; padding:9px; background:rgba(124,58,237,.15); border:1px solid rgba(124,58,237,.3); border-radius:8px; color:var(--accent2); cursor:pointer; font-size:13px; font-weight:500; font-family:inherit; transition:all .15s; text-align:center; }
+.sign-btn:hover { background:rgba(124,58,237,.25); }
+
+/* MAIN */
+.main { flex:1; overflow-y:auto; padding:32px 36px; }
+.tab-panel { display:none; max-width:960px; }
+.tab-panel.active { display:block; }
+.page-header { margin-bottom:24px; }
+.page-header h1 { font-size:22px; font-weight:600; margin-bottom:4px; }
+.page-header p { color:var(--sub); font-size:13px; }
+.header-row { display:flex; justify-content:space-between; align-items:flex-start; }
+
+/* BUTTONS */
+.btn { padding:9px 16px; border-radius:8px; border:none; cursor:pointer; font-size:13px; font-weight:500; transition:all .15s; font-family:inherit; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover { background:#6d28d9; }
+.btn-primary:disabled { opacity:.45; cursor:not-allowed; }
+.btn-ghost { background:none; color:var(--sub); border:1px solid var(--border); }
+.btn-ghost:hover { color:var(--text); border-color:#3a3a3a; }
+.btn-sm { padding:6px 12px; font-size:12px; }
+.icon-btn { background:none; border:none; color:#444; cursor:pointer; font-size:15px; line-height:1; padding:3px 6px; border-radius:5px; transition:all .15s; }
+.icon-btn:hover { color:var(--text); background:var(--card2); }
+.icon-btn.del:hover { color:var(--red); background:rgba(239,68,68,.1); }
+
+/* DUMP */
+.dump-box { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin-bottom:14px; }
+.dump-box:focus-within { border-color:#3d3d3d; }
+textarea { width:100%; min-height:180px; background:none; border:none; color:var(--text); font-size:14px; line-height:1.7; resize:vertical; outline:none; font-family:inherit; }
+textarea::placeholder { color:#444; }
+.btn-row { display:flex; gap:8px; align-items:center; }
+.hint { font-size:12px; color:#444; margin-left:4px; }
+.result-block { margin-top:26px; }
+.section-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--sub); margin-bottom:10px; }
+
+/* TASK CARD */
+.task-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:8px; display:flex; gap:12px; align-items:flex-start; transition:border-color .15s; }
+.task-card:hover { border-color:#333; }
+.task-card.done { opacity:.45; }
+.task-card.done .task-title { text-decoration:line-through; }
+.checkbox { width:19px; height:19px; min-width:19px; border:1.5px solid #3a3a3a; border-radius:5px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:11px; transition:all .15s; margin-top:2px; }
+.checkbox:hover { border-color:var(--accent2); }
+.checkbox.checked { background:var(--accent); border-color:var(--accent); color:#fff; }
+.task-body { flex:1; min-width:0; }
+.task-title { font-size:14px; font-weight:500; margin-bottom:5px; }
+.task-ctx { font-size:13px; color:var(--sub); line-height:1.55; }
+.task-meta { display:flex; align-items:center; gap:7px; margin-top:9px; flex-wrap:wrap; }
+.prio { font-size:11px; padding:2px 8px; border-radius:4px; font-weight:500; }
+.prio-hoch,.prio-high { background:rgba(239,68,68,.12); color:#f87171; }
+.prio-mittel,.prio-medium { background:rgba(245,158,11,.12); color:#fbbf24; }
+.prio-niedrig,.prio-low { background:rgba(16,185,129,.12); color:#34d399; }
+.date-chip { font-size:11px; color:var(--accent2); background:rgba(124,58,237,.12); padding:2px 7px; border-radius:4px; }
+.date-label { font-size:11px; color:#444; }
+.card-actions { display:flex; gap:4px; flex-shrink:0; }
+
+/* THOUGHT CARD */
+.thought-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:8px; display:flex; gap:12px; justify-content:space-between; }
+.thought-text { font-size:14px; line-height:1.6; flex:1; }
+
+/* SNIPPETS */
+.snippet-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:8px; }
+.snippet-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.snippet-name { font-size:14px; font-weight:500; }
+.snippet-cat { font-size:11px; padding:2px 7px; border-radius:4px; background:rgba(124,58,237,.15); color:var(--accent2); font-weight:500; margin-left:8px; }
+.snippet-code { background:#141414; border:1px solid #222; border-radius:7px; padding:9px 13px; font-family:'Cascadia Code','Consolas',monospace; font-size:13px; color:var(--accent2); word-break:break-all; line-height:1.6; white-space:pre-wrap; }
+.copy-btn { padding:5px 11px; background:rgba(124,58,237,.15); color:var(--accent2); border:1px solid rgba(124,58,237,.25); border-radius:6px; cursor:pointer; font-size:12px; font-family:inherit; transition:all .15s; }
+.copy-btn:hover { background:rgba(124,58,237,.25); }
+.copy-btn.ok { background:rgba(16,185,129,.15); color:#34d399; border-color:rgba(16,185,129,.25); }
+
+/* WEEK CALENDAR */
+.week-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px; }
+.week-label { font-size:14px; font-weight:500; }
+.week-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin-bottom:24px; }
+.day-col { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 10px; min-height:150px; display:flex; flex-direction:column; }
+.day-col.today { border-color:var(--accent); }
+.day-head { text-align:center; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+.day-name { font-size:10px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:.5px; }
+.day-num { font-size:20px; font-weight:700; line-height:1.2; }
+.day-col.today .day-num { color:var(--accent2); }
+.cal-tasks { flex:1; }
+.cal-task { border-radius:6px; padding:5px 7px; margin-bottom:4px; font-size:11px; cursor:pointer; line-height:1.4; border-left:3px solid #3a3a3a; background:rgba(255,255,255,.04); transition:opacity .15s; }
+.cal-task:hover { background:rgba(255,255,255,.08); }
+.cal-task.done { opacity:.35; text-decoration:line-through; }
+.cal-task.prio-hoch { border-left-color:#f87171; }
+.cal-task.prio-mittel { border-left-color:#fbbf24; }
+.cal-task.prio-niedrig { border-left-color:#34d399; }
+.add-day-btn { width:100%; padding:5px; background:none; border:1px dashed #2a2a2a; border-radius:6px; color:#444; cursor:pointer; font-size:11px; margin-top:6px; transition:all .15s; font-family:inherit; }
+.add-day-btn:hover { border-color:var(--accent); color:var(--accent2); }
+.unscheduled-area { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; }
+.unsched-tasks { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.unsched-task { background:rgba(124,58,237,.1); border:1px solid rgba(124,58,237,.2); border-radius:7px; padding:6px 10px; font-size:12px; display:flex; align-items:center; gap:6px; }
+
+/* FILTER TABS */
+.ftabs { display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap; }
+.ftab { padding:6px 13px; border-radius:7px; background:none; border:1px solid var(--border); color:var(--sub); cursor:pointer; font-size:13px; transition:all .15s; font-family:inherit; }
+.ftab:hover { color:var(--text); }
+.ftab.active { background:rgba(124,58,237,.15); color:var(--accent2); border-color:rgba(124,58,237,.3); }
+
+/* SEARCH */
+.search-row { display:flex; gap:8px; margin-bottom:16px; }
+.search-input { flex:1; padding:8px 13px; background:var(--card); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; outline:none; font-family:inherit; }
+.search-input:focus { border-color:var(--accent); }
+
+/* ADD FORM */
+.add-form { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:18px; }
+.form-row { display:flex; gap:8px; margin-bottom:10px; }
+.form-row:last-child { margin-bottom:0; }
+input[type=text],input[type=password],input[type=date],select,.form-ta {
+  flex:1; padding:9px 13px; background:#141414; border:1px solid var(--border); border-radius:8px;
+  color:var(--text); font-size:13px; outline:none; transition:border-color .15s; font-family:inherit;
+}
+input:focus,select:focus,.form-ta:focus { border-color:var(--accent); }
+input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.5); }
+select option { background:#1c1c1c; }
+.form-ta { resize:vertical; min-height:75px; line-height:1.55; }
+
+/* MODAL */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.65); display:flex; align-items:center; justify-content:center; z-index:1000; backdrop-filter:blur(3px); }
+.modal { background:#1e1e1e; border:1px solid var(--border); border-radius:12px; padding:24px; width:520px; max-width:95vw; }
+.modal h3 { font-size:16px; font-weight:600; margin-bottom:18px; }
+.modal-btns { display:flex; gap:8px; margin-top:16px; }
+
+/* SETTINGS */
+.set-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:22px; margin-bottom:14px; }
+.set-card h3 { font-size:15px; font-weight:600; margin-bottom:6px; }
+.set-card p { font-size:13px; color:var(--sub); margin-bottom:14px; line-height:1.6; }
+.info-box { border-radius:8px; padding:12px 15px; font-size:13px; line-height:1.6; margin-top:10px; }
+.info-purple { background:rgba(124,58,237,.08); border:1px solid rgba(124,58,237,.2); color:#c4b5fd; }
+.info-green { background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.2); color:#6ee7b7; }
+.info-yellow { background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.2); color:#fcd34d; }
+.free-badge { display:inline-block; background:rgba(16,185,129,.15); color:#34d399; font-size:11px; padding:2px 8px; border-radius:4px; font-weight:600; margin-left:8px; vertical-align:middle; }
+.steps { margin:12px 0; padding-left:0; list-style:none; }
+.steps li { font-size:13px; color:var(--sub); padding:5px 0; display:flex; gap:10px; }
+.steps li b { color:var(--text); }
+.step-num { background:rgba(124,58,237,.2); color:var(--accent2); border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; margin-top:1px; }
+.fb-status-row { display:flex; align-items:center; gap:10px; margin-top:8px; font-size:13px; }
+
+/* DUMP SELECTION */
+.dump-item { position:relative; }
+.dump-check { display:flex; align-items:flex-start; gap:10px; }
+.dump-check input[type=checkbox] { width:17px; height:17px; min-width:17px; margin-top:3px; accent-color:var(--accent); cursor:pointer; }
+.dump-check input[type=checkbox]:not(:checked) ~ .task-card,
+.dump-check input[type=checkbox]:not(:checked) ~ .thought-card { opacity:.4; }
+.topic-select-inline { margin-top:8px; display:flex; align-items:center; gap:8px; }
+.topic-select-inline label { font-size:11px; color:var(--sub); }
+.topic-inp-sm { padding:4px 9px; background:#141414; border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px; outline:none; font-family:inherit; min-width:130px; }
+.topic-inp-sm:focus { border-color:var(--accent); }
+.save-sel-row { margin-top:18px; display:flex; gap:8px; align-items:center; }
+.sel-count { font-size:12px; color:var(--sub); }
+
+/* TOPIC BADGE */
+.topic-badge { font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(16,185,129,.12); color:#34d399; font-weight:500; cursor:pointer; }
+.topic-badge:hover { background:rgba(16,185,129,.2); }
+
+/* EMPTY */
+.empty { text-align:center; padding:56px 20px; color:var(--sub); }
+.empty-icon { font-size:36px; margin-bottom:14px; }
+.empty h3 { font-size:15px; color:var(--text); margin-bottom:6px; }
+.empty p { font-size:13px; }
+
+/* LOADING */
+.loading { display:flex; align-items:center; gap:10px; color:var(--sub); padding:20px 0; }
+.spinner { width:17px; height:17px; border:2px solid #2a2a2a; border-top-color:var(--accent2); border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* TOAST */
+.toast { position:fixed; bottom:22px; right:22px; background:var(--card2); border:1px solid var(--border); border-radius:9px; padding:11px 17px; font-size:13px; box-shadow:0 4px 24px rgba(0,0,0,.5); transform:translateY(12px); opacity:0; transition:all .22s; z-index:9999; pointer-events:none; }
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.ok { border-color:rgba(16,185,129,.35); }
+.toast.err { border-color:rgba(239,68,68,.35); }
+
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:#2a2a2a; border-radius:3px; }
+
+@media (max-width: 900px) {
+  .week-grid { grid-template-columns:repeat(7,minmax(90px,1fr)); overflow-x:auto; }
+  .main { padding:20px 16px; }
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">Mind<span>Dump</span></div>
+  <nav>
+    <button class="nav-btn active" onclick="go('braindump')"><span class="nav-icon">⚡</span>Brain Dump</button>
+    <button class="nav-btn" onclick="go('tasks')"><span class="nav-icon">✓</span>Tasks<span class="badge" id="b-tasks">0</span></button>
+    <button class="nav-btn" onclick="go('week')"><span class="nav-icon">📅</span>Woche</button>
+    <button class="nav-btn" onclick="go('thoughts')"><span class="nav-icon">💡</span>Thoughts<span class="badge" id="b-thoughts">0</span></button>
+    <button class="nav-btn" onclick="go('snippets')"><span class="nav-icon">⌨</span>Snippets<span class="badge" id="b-snippets">0</span></button>
+    <button class="nav-btn" onclick="go('settings')" style="margin-top:auto"><span class="nav-icon">⚙</span>Settings</button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div id="api-indicator" class="api-status missing" onclick="go('settings')" title="API Key eintragen">
+      <div class="dot"></div><span id="api-label">Kein API Key</span>
+    </div>
+    <div class="user-area" id="user-area"></div>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- BRAIN DUMP -->
+  <div class="tab-panel active" id="tab-braindump">
+    <div class="page-header header-row">
+      <div><h1>Brain Dump</h1><p>Schreib alles rein — die KI strukturiert es automatisch.</p></div>
+    </div>
+    <div class="dump-box">
+      <textarea id="dump-input" placeholder="Einfach losschreiben... z.B.: Ich muss noch die Rechnung bis Freitag bezahlen, den SSH Key auf dem Prod-Server rotieren. Sollte ich ein besseres Monitoring aufbauen? Einkaufen nicht vergessen."></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="process-btn" onclick="processDump()">⚡ Verarbeiten</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('dump-input').value=''">Leeren</button>
+      <span class="hint">Ctrl+Enter</span>
+    </div>
+    <div id="dump-result"></div>
+  </div>
+
+  <!-- TASKS -->
+  <div class="tab-panel" id="tab-tasks">
+    <div class="page-header header-row">
+      <div><h1>Tasks</h1><p>Aufgaben mit vollem Kontext.</p></div>
+      <button class="btn btn-ghost" onclick="toggleForm('add-task-form')">+ Hinzufügen</button>
+    </div>
+    <div class="add-form" id="add-task-form" style="display:none">
+      <div class="form-row">
+        <input type="text" id="t-title" placeholder="Task Titel" onkeydown="if(event.key==='Enter')addTaskManual()" />
+        <select id="t-prio" style="max-width:155px">
+          <option value="mittel">Mittel</option>
+          <option value="hoch">Hoch</option>
+          <option value="niedrig">Niedrig</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <input type="date" id="t-date" style="max-width:175px" title="Fälligkeitsdatum (optional)" />
+        <input type="text" id="t-est" placeholder="Geschätzte Zeit (z.B. 30min, 2h)" style="max-width:240px" title="Estimated Time" />
+      </div>
+      <div class="form-row">
+        <textarea class="form-ta" id="t-ctx" placeholder="Kontext / Details — Warum, Wie, Was genau?"></textarea>
+      </div>
+      <div class="form-row">
+        <button class="btn btn-primary btn-sm" onclick="addTaskManual()">Speichern</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleForm('add-task-form')">Abbrechen</button>
+      </div>
+    </div>
+    <div class="ftabs">
+      <button class="ftab active" onclick="setTaskFilter('all',this)">Alle</button>
+      <button class="ftab" onclick="setTaskFilter('open',this)">Offen</button>
+      <button class="ftab" onclick="setTaskFilter('done',this)">Erledigt</button>
+    </div>
+    <div id="tasks-list"></div>
+  </div>
+
+  <!-- WEEK CALENDAR -->
+  <div class="tab-panel" id="tab-week">
+    <div class="page-header"><h1>Wochenplan</h1><p>Aufgaben nach Datum organisiert.</p></div>
+    <div class="week-nav">
+      <button class="btn btn-ghost btn-sm" onclick="weekOffset--;renderWeek()">← Zurück</button>
+      <span class="week-label" id="week-label">–</span>
+      <button class="btn btn-ghost btn-sm" onclick="weekOffset=0;renderWeek()">Heute</button>
+      <button class="btn btn-ghost btn-sm" onclick="weekOffset++;renderWeek()">Weiter →</button>
+    </div>
+    <div class="week-grid" id="week-grid"></div>
+    <div id="unscheduled-area"></div>
+  </div>
+
+  <!-- THOUGHTS -->
+  <div class="tab-panel" id="tab-thoughts">
+    <div class="page-header header-row">
+      <div><h1>Thoughts</h1><p>Ideen und Notizen — nach Thema organisiert.</p></div>
+      <button class="btn btn-ghost" onclick="toggleForm('add-thought-form')">+ Hinzufügen</button>
+    </div>
+    <div class="add-form" id="add-thought-form" style="display:none">
+      <div class="form-row">
+        <textarea class="form-ta" id="th-text" placeholder="Dein Gedanke, Idee oder Notiz..."></textarea>
+      </div>
+      <div class="form-row">
+        <input type="text" id="th-topic" placeholder="Thema (z.B. Ideen, Arbeit, Privat...)" list="topic-suggestions" />
+        <datalist id="topic-suggestions"></datalist>
+      </div>
+      <div class="form-row">
+        <button class="btn btn-primary btn-sm" onclick="addThoughtManual()">Speichern</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleForm('add-thought-form')">Abbrechen</button>
+      </div>
+    </div>
+    <div class="ftabs" id="thought-ftabs"></div>
+    <div id="thoughts-list"></div>
+  </div>
+
+  <!-- SNIPPETS -->
+  <div class="tab-panel" id="tab-snippets">
+    <div class="page-header header-row">
+      <div><h1>Snippets</h1><p>SSH-Commands, IPs, PowerShell-Befehle — auf Knopfdruck kopieren.</p></div>
+      <button class="btn btn-ghost" onclick="toggleForm('add-snippet-form')">+ Hinzufügen</button>
+    </div>
+    <div class="add-form" id="add-snippet-form" style="display:none">
+      <div class="form-row">
+        <input type="text" id="sn-title" placeholder="Name (z.B. SSH Homeserver)" />
+        <select id="sn-cat" style="max-width:155px">
+          <option value="SSH">SSH</option>
+          <option value="PowerShell">PowerShell</option>
+          <option value="IP">IP / Host</option>
+          <option value="CMD">CMD</option>
+          <option value="Sonstiges">Sonstiges</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <textarea class="form-ta" id="sn-content" placeholder="ssh root@192.168.1.1&#10;Oder mehrzeilige Scripts..." style="font-family:'Consolas',monospace;min-height:80px"></textarea>
+      </div>
+      <div class="form-row">
+        <button class="btn btn-primary btn-sm" onclick="addSnippet()">Speichern</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleForm('add-snippet-form')">Abbrechen</button>
+      </div>
+    </div>
+    <div class="search-row">
+      <input class="search-input" id="snip-search" placeholder="Snippets durchsuchen..." oninput="renderSnips()" />
+    </div>
+    <div class="ftabs" id="sn-ftabs">
+      <button class="ftab active" onclick="setSnipFilter('Alle',this)">Alle</button>
+      <button class="ftab" onclick="setSnipFilter('SSH',this)">SSH</button>
+      <button class="ftab" onclick="setSnipFilter('PowerShell',this)">PowerShell</button>
+      <button class="ftab" onclick="setSnipFilter('IP',this)">IPs</button>
+      <button class="ftab" onclick="setSnipFilter('CMD',this)">CMD</button>
+      <button class="ftab" onclick="setSnipFilter('Sonstiges',this)">Sonstiges</button>
+    </div>
+    <div id="snippets-list"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="tab-panel" id="tab-settings">
+    <div class="page-header"><h1>Settings</h1></div>
+
+    <!-- GROQ API KEY -->
+    <div class="set-card">
+      <h3>Groq API Key <span class="free-badge">GRATIS</span></h3>
+      <p>Für den Brain Dump. Kostenlos auf <b>console.groq.com</b> — 14.400 Anfragen/Tag gratis.</p>
+      <div class="form-row">
+        <input type="password" id="api-key-in" placeholder="gsk_..." />
+        <button class="btn btn-primary" onclick="saveKey()" style="flex:0;white-space:nowrap">Speichern</button>
+      </div>
+      <div class="info-box info-purple">🔒 Wird nur lokal gespeichert, geht direkt an Groq.</div>
+    </div>
+
+    <!-- FIREBASE SYNC -->
+    <div class="set-card">
+      <h3>Firebase Sync <span class="free-badge">GRATIS</span></h3>
+      <p>Für Sync zwischen PC und Handy. Einmalige Einrichtung, danach automatisch.</p>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Geh auf <b>firebase.google.com</b> → "Projekt erstellen"</div></li>
+        <li><div class="step-num">2</div><div>Im Projekt: <b>"Web App hinzufügen"</b> → Config kopieren (das JSON-Objekt)</div></li>
+        <li><div class="step-num">3</div><div><b>Firestore Database</b> aktivieren → "Im Testmodus starten"</div></li>
+        <li><div class="step-num">4</div><div><b>Authentication</b> → "Google" als Anmeldeanbieter aktivieren</div></li>
+        <li><div class="step-num">5</div><div>Config unten einfügen → Verbinden</div></li>
+      </ol>
+      <div class="form-row" style="margin-top:4px">
+        <textarea class="form-ta" id="fb-config-in" style="min-height:90px;font-family:'Consolas',monospace;font-size:12px" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
+      </div>
+      <div class="form-row">
+        <button class="btn btn-primary btn-sm" onclick="connectFirebase()">🔥 Firebase verbinden</button>
+        <div class="fb-status-row" id="fb-status-row">
+          <span id="fb-status" style="color:var(--sub)">Nicht eingerichtet</span>
+        </div>
+      </div>
+      <div class="info-box info-yellow" style="margin-top:12px">
+        ⚠️ Nach der Einrichtung: In Firebase → Authentication → Settings → "Authorized domains" → deine GitHub Pages URL hinzufügen (z.B. <b>deinname.github.io</b>)
+      </div>
+    </div>
+
+    <!-- GITHUB PAGES -->
+    <div class="set-card">
+      <h3>Auf GitHub Pages hosten <span class="free-badge">GRATIS</span></h3>
+      <p>Damit die App von überall (auch Handy) erreichbar ist.</p>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Geh auf <b>github.com</b> → Account erstellen → "New repository" → Name: <b>minddump</b></div></li>
+        <li><div class="step-num">2</div><div>Diese HTML-Datei ins Repository hochladen (drag & drop)</div></li>
+        <li><div class="step-num">3</div><div>Repository → <b>Settings → Pages</b> → Branch: main → Save</div></li>
+        <li><div class="step-num">4</div><div>Deine URL: <b>deinname.github.io/minddump</b></div></li>
+      </ol>
+      <div class="info-box info-green">✓ Dann diese URL auf dem Handy als Lesezeichen oder als Web-App zum Homescreen hinzufügen.</div>
+    </div>
+
+    <!-- DATA -->
+    <div class="set-card">
+      <h3>Daten</h3>
+      <p>Lokale Sicherung deiner Daten.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="exportData()">📥 JSON exportieren</button>
+        <button class="btn btn-ghost" onclick="importTrigger()">📤 JSON importieren</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)" />
+        <button class="btn btn-ghost" style="color:var(--red);border-color:rgba(239,68,68,.15)" onclick="clearAll()">Alles löschen</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modal-title">Bearbeiten</h3>
+    <div id="modal-body"></div>
+    <div class="modal-btns">
+      <button class="btn btn-primary btn-sm" onclick="saveModal()">Speichern</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────
+let D = { tasks:[], thoughts:[], snippets:[] };
+let S = { groqKey:'', fbConfig:'' };
+let pendingResult = null;
+let taskFilter = 'all';
+let snipFilter = 'Alle';
+let weekOffset = 0;
+let modalMode = null;
+let currentTab = 'braindump';
+let db = null, auth = null, currentUser = null;
+let unsubListeners = [];
+
+const DAYS = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+const MONTHS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+
+// ── LOCAL STORAGE ─────────────────────────────────────────────
+function loadLocal() {
+  try { const d=localStorage.getItem('md_data'); if(d) D=JSON.parse(d); } catch(e){}
+  try { const s=localStorage.getItem('md_settings'); if(s) S=JSON.parse(s); } catch(e){}
+}
+function saveLocal() { localStorage.setItem('md_data',JSON.stringify(D)); badges(); }
+function saveSettings() { localStorage.setItem('md_settings',JSON.stringify(S)); }
+function useFS() { return db && currentUser; }
+
+// ── FIRESTORE CRUD ────────────────────────────────────────────
+function col(name) { return db.collection(`users/${currentUser.uid}/${name}`); }
+function omitId({id,...r}) { return r; }
+
+async function fsAdd(colName, item) {
+  if(useFS()) { await col(colName).doc(item.id).set(omitId(item)); }
+  else { D[colName].push(item); saveLocal(); rerender(colName); badges(); }
+}
+
+async function fsUpdate(colName, item) {
+  if(useFS()) { await col(colName).doc(item.id).set(omitId(item)); }
+  else { const i=D[colName].findIndex(x=>x.id===item.id); if(i>=0) D[colName][i]=item; saveLocal(); rerender(colName); badges(); }
+}
+
+async function fsDel(colName, id) {
+  if(useFS()) { await col(colName).doc(id).delete(); }
+  else { D[colName]=D[colName].filter(x=>x.id!==id); saveLocal(); rerender(colName); badges(); }
+}
+
+function rerender(colName) {
+  if(colName==='tasks') { renderTasks(); if(currentTab==='week') renderWeek(); }
+  if(colName==='thoughts') renderThoughts();
+  if(colName==='snippets') renderSnips();
+}
+
+// ── FIREBASE ──────────────────────────────────────────────────
+function connectFirebase() {
+  const raw = document.getElementById('fb-config-in').value.trim();
+  if(!raw) { toast('Bitte Firebase Config einfügen','err'); return; }
+  try {
+    // Accept both object literal and JSON
+    let configStr = raw;
+    if(!raw.startsWith('{')) throw new Error('Kein gültiges JSON-Objekt');
+    const config = JSON.parse(configStr);
+
+    firebase.apps.forEach(a => { try{a.delete();}catch(e){} });
+    firebase.initializeApp(config);
+    db = firebase.firestore();
+    auth = firebase.auth();
+
+    auth.onAuthStateChanged(user => {
+      currentUser = user;
+      renderUserArea();
+      if(user) { subscribeFS(); }
+      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; D={tasks:[],thoughts:[],snippets:[]}; badges(); }
+    });
+
+    S.fbConfig = configStr;
+    saveSettings();
+    updateFBStatus(true);
+    toast('Firebase verbunden! Jetzt anmelden.');
+  } catch(e) {
+    toast('Firebase Fehler: '+e.message, 'err');
+  }
+}
+
+function subscribeFS() {
+  unsubListeners.forEach(u=>u());
+  unsubListeners=[];
+  ['tasks','thoughts','snippets'].forEach(name=>{
+    unsubListeners.push(
+      col(name).onSnapshot(snap=>{
+        D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
+        rerender(name);
+        badges();
+      }, err=>console.error(name,err))
+    );
+  });
+}
+
+function signIn() {
+  if(!auth){ toast('Bitte erst Firebase einrichten (Settings)','err'); return; }
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .catch(e=>toast('Login fehlgeschlagen: '+e.message,'err'));
+}
+
+function signOutUser() {
+  if(!auth) return;
+  if(confirm('Wirklich abmelden?')) auth.signOut();
+}
+
+function renderUserArea() {
+  const el = document.getElementById('user-area');
+  if(!auth) { el.innerHTML=''; return; }
+  if(currentUser) {
+    el.innerHTML=`<div class="user-card">
+      <img class="user-avatar" src="${currentUser.photoURL||''}" onerror="this.style.display='none'" />
+      <span class="user-name">${currentUser.displayName||currentUser.email||'Angemeldet'}</span>
+      <button class="icon-btn" onclick="signOutUser()" title="Abmelden" style="font-size:13px;color:var(--sub)">↪</button>
+    </div>`;
+  } else {
+    el.innerHTML=`<button class="sign-btn" onclick="signIn()">Mit Google anmelden</button>`;
+  }
+}
+
+function updateFBStatus(ok) {
+  const el=document.getElementById('fb-status');
+  if(el) el.innerHTML = ok ? '<span style="color:#34d399">✓ Verbunden</span>' : '<span style="color:var(--sub)">Nicht eingerichtet</span>';
+}
+
+// ── UTILS ─────────────────────────────────────────────────────
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+function esc(s) { if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(ts) { if(!ts) return ''; return new Date(ts).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}); }
+function fmtDue(ds) {
+  if(!ds) return '';
+  const [y,m,d] = ds.split('-').map(Number);
+  return `${d}. ${MONTHS[m-1]}`;
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────
+function go(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{ if(b.getAttribute('onclick').includes("'"+tab+"'")) b.classList.add('active'); });
+  currentTab=tab;
+  if(tab==='tasks') renderTasks();
+  if(tab==='thoughts') renderThoughts();
+  if(tab==='snippets') renderSnips();
+  if(tab==='week') renderWeek();
+}
+
+function badges() {
+  document.getElementById('b-tasks').textContent=D.tasks.filter(t=>!t.done).length;
+  document.getElementById('b-thoughts').textContent=D.thoughts.length;
+  document.getElementById('b-snippets').textContent=D.snippets.length;
+}
+
+function updateApiIndicator() {
+  const el=document.getElementById('api-indicator');
+  const lbl=document.getElementById('api-label');
+  if(S.groqKey){ el.className='api-status ok'; lbl.textContent='KI aktiv (Groq)'; el.onclick=null; }
+  else { el.className='api-status missing'; lbl.textContent='Kein API Key'; el.onclick=()=>go('settings'); }
+}
+
+function toggleForm(id) { const el=document.getElementById(id); el.style.display=el.style.display==='none'?'block':'none'; }
+
+// ── TOAST ─────────────────────────────────────────────────────
+function toast(msg,type='ok') {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show '+type;
+  setTimeout(()=>t.className='toast',2800);
+}
+
+// ── BRAIN DUMP ────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.key==='Enter'&&document.getElementById('dump-input')===document.activeElement) processDump();
+});
+
+async function processDump() {
+  const text=document.getElementById('dump-input').value.trim();
+  if(!text){ toast('Bitte erst etwas eintippen!','err'); return; }
+  if(!S.groqKey){ toast('Kein API Key — bitte in Settings eintragen.','err'); go('settings'); return; }
+
+  const btn=document.getElementById('process-btn');
+  btn.disabled=true; btn.textContent='Verarbeite...';
+  document.getElementById('dump-result').innerHTML='<div class="loading"><div class="spinner"></div>KI analysiert...</div>';
+
+  const prompt=`Du bist ein persönlicher Assistent. Analysiere diesen Brain Dump auf Deutsch und extrahiere:
+
+1. TASKS: Actionable Aufgaben.
+   - title: Kurzer Titel
+   - context: Ausführlicher Kontext — Warum, Wie, Details, Deadline wenn erwähnt
+   - priority: "hoch", "mittel" oder "niedrig"
+   - dueDate: Datum als "YYYY-MM-DD" falls erwähnt, sonst null. Heute ist ${new Date().toISOString().slice(0,10)}.
+   - estimatedTime: Geschätzte Dauer als String (z.B. "30min", "2h", "1h 30min") falls erwähnbar oder schätzbar, sonst null.
+
+2. THOUGHTS: Ideen/Gedanken die KEINE Aufgaben sind.
+
+Antworte NUR mit validem JSON:
+{"tasks":[{"title":"...","context":"...","priority":"hoch|mittel|niedrig","dueDate":"YYYY-MM-DD|null","estimatedTime":"..."|null}],"thoughts":[{"content":"..."}]}
+
+Brain Dump:
+${text}`;
+
+  try {
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.groqKey},
+      body:JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:2048})
+    });
+    if(!res.ok){ const e=await res.json(); throw new Error(e.error?.message||'HTTP '+res.status); }
+    const data=await res.json();
+    const raw=data.choices?.[0]?.message?.content?.trim();
+    if(!raw) throw new Error('Keine Antwort erhalten');
+    let parsed;
+    try { parsed=JSON.parse(raw); }
+    catch(e){ const m=raw.match(/\{[\s\S]*\}/); if(m) parsed=JSON.parse(m[0]); else throw new Error('Kein valides JSON'); }
+    pendingResult=parsed;
+    renderDumpResult(parsed);
+  } catch(err) {
+    document.getElementById('dump-result').innerHTML=`<div style="color:var(--red);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:14px;margin-top:16px;font-size:13px"><b>Fehler:</b> ${esc(err.message)}</div>`;
+  }
+  btn.disabled=false; btn.textContent='⚡ Verarbeiten';
+}
+
+function getExistingTopics() {
+  const topics = [...new Set(D.thoughts.map(t=>t.topic).filter(Boolean))];
+  return topics.sort();
+}
+
+function renderDumpResult(p) {
+  const tasks=p.tasks||[], thoughts=p.thoughts||[];
+  const existingTopics = getExistingTopics();
+  const topicOpts = ['Allgemein',...existingTopics.filter(t=>t!=='Allgemein')].map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+
+  let html='<div class="result-block">';
+
+  if(tasks.length){
+    html+=`<div class="section-label" style="margin-top:24px">✓ ${tasks.length} Task${tasks.length>1?'s':''} — auswählen was gespeichert wird</div>`;
+    tasks.forEach((t,i)=>{
+      const pc='prio-'+(t.priority||'mittel').toLowerCase();
+      html+=`<div class="dump-check">
+        <input type="checkbox" id="dt-${i}" checked onchange="updateSelCount()">
+        <div class="task-card" style="flex:1;margin-bottom:0">
+          <div class="task-body">
+            <div class="task-title">${esc(t.title)}</div>
+            ${t.context?`<div class="task-ctx">${esc(t.context)}</div>`:''}
+            <div class="task-meta">
+              <span class="prio ${pc}">${t.priority||'mittel'}</span>
+              ${t.dueDate&&t.dueDate!=='null'?`<span class="date-chip">📅 ${fmtDue(t.dueDate)}</span>`:''}
+            </div>
+          </div>
+        </div>
+      </div><div style="margin-bottom:8px"></div>`;
+    });
+  }
+
+  if(thoughts.length){
+    html+=`<div class="section-label" style="margin-top:20px">💡 ${thoughts.length} Thought${thoughts.length>1?'s':''} — Thema zuweisen</div>`;
+    thoughts.forEach((t,i)=>{
+      html+=`<div class="dump-check">
+        <input type="checkbox" id="dth-${i}" checked onchange="updateSelCount()">
+        <div style="flex:1">
+          <div class="thought-card" style="margin-bottom:0">
+            <div class="thought-text">${esc(t.content)}</div>
+          </div>
+          <div class="topic-select-inline">
+            <label>Thema:</label>
+            <input class="topic-inp-sm" id="dth-topic-${i}" list="dump-topic-list" placeholder="Thema eingeben..." value="Allgemein" />
+          </div>
+        </div>
+      </div><div style="margin-bottom:10px"></div>`;
+    });
+    html+=`<datalist id="dump-topic-list">${topicOpts}</datalist>`;
+  }
+
+  const total=tasks.length+thoughts.length;
+  if(total>0){
+    html+=`<div class="save-sel-row">
+      <button class="btn btn-primary" id="save-sel-btn" onclick="saveSelected()">✓ Ausgewählte speichern (<span id="sel-count">${total}</span>)</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('dump-result').innerHTML='';pendingResult=null">Verwerfen</button>
+    </div>`;
+  }
+  html+='</div>';
+  document.getElementById('dump-result').innerHTML=html;
+}
+
+function updateSelCount() {
+  const tasks=(pendingResult?.tasks||[]).length;
+  const thoughts=(pendingResult?.thoughts||[]).length;
+  let count=0;
+  for(let i=0;i<tasks;i++) if(document.getElementById('dt-'+i)?.checked) count++;
+  for(let i=0;i<thoughts;i++) if(document.getElementById('dth-'+i)?.checked) count++;
+  const el=document.getElementById('sel-count');
+  if(el) el.textContent=count;
+}
+
+async function saveSelected() {
+  if(!pendingResult) return;
+  const ps=[];
+  let nt=0, nth=0;
+  (pendingResult.tasks||[]).forEach((t,i)=>{
+    if(document.getElementById('dt-'+i)?.checked){
+      ps.push(fsAdd('tasks',{id:uid(),title:t.title,context:t.context||'',priority:t.priority||'mittel',dueDate:(t.dueDate&&t.dueDate!=='null')?t.dueDate:null,estimatedTime:(t.estimatedTime&&t.estimatedTime!=='null')?t.estimatedTime:null,done:false,createdAt:Date.now()}));
+      nt++;
+    }
+  });
+  (pendingResult.thoughts||[]).forEach((t,i)=>{
+    if(document.getElementById('dth-'+i)?.checked){
+      const topic=document.getElementById('dth-topic-'+i)?.value.trim()||'Allgemein';
+      ps.push(fsAdd('thoughts',{id:uid(),content:t.content,topic,createdAt:Date.now()}));
+      nth++;
+    }
+  });
+  await Promise.all(ps);
+  pendingResult=null;
+  document.getElementById('dump-result').innerHTML='';
+  document.getElementById('dump-input').value='';
+  toast(`Gespeichert: ${nt} Task${nt!==1?'s':''}, ${nth} Thought${nth!==1?'s':''}`);
+}
+
+// ── TASKS ─────────────────────────────────────────────────────
+function setTaskFilter(f,el){ taskFilter=f; document.querySelectorAll('#tab-tasks .ftab').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderTasks(); }
+
+function renderTasks() {
+  let list=[...D.tasks].sort((a,b)=>{ if(a.done!==b.done) return a.done?1:-1; const o={hoch:0,mittel:1,niedrig:2}; return (o[a.priority]??1)-(o[b.priority]??1); });
+  if(taskFilter==='open') list=list.filter(t=>!t.done);
+  if(taskFilter==='done') list=list.filter(t=>t.done);
+  const el=document.getElementById('tasks-list');
+  if(!list.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">✓</div><h3>${taskFilter==='done'?'Noch nichts erledigt':'Keine offenen Tasks'}</h3><p>Brain Dump nutzen oder manuell hinzufügen.</p></div>`; return; }
+  el.innerHTML=list.map(t=>{
+    const pc='prio-'+(t.priority||'mittel').toLowerCase();
+    return `<div class="task-card ${t.done?'done':''}">
+      <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
+      <div class="task-body">
+        <div class="task-title">${esc(t.title)}</div>
+        ${t.context?`<div class="task-ctx">${esc(t.context)}</div>`:''}
+        <div class="task-meta">
+          <span class="prio ${pc}">${t.priority||'mittel'}</span>
+          ${t.estimatedTime?`<span class="date-chip">⏱ ${esc(t.estimatedTime)}</span>`:''}
+          ${t.dueDate?`<span class="date-chip">📅 ${fmtDue(t.dueDate)}</span>`:''}
+          <span class="date-label">${fmtDate(t.createdAt)}</span>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="icon-btn" onclick="openEditTask('${t.id}')" title="Bearbeiten">✏</button>
+        <button class="icon-btn del" onclick="delTask('${t.id}')" title="Löschen">×</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleTask(id){ const t=D.tasks.find(x=>x.id===id); if(t){t.done=!t.done;await fsUpdate('tasks',t);} }
+async function delTask(id){ await fsDel('tasks',id); toast('Task gelöscht'); }
+
+async function addTaskManual(){
+  const title=document.getElementById('t-title').value.trim();
+  if(!title){toast('Bitte Titel eingeben','err');return;}
+  await fsAdd('tasks',{id:uid(),title,context:document.getElementById('t-ctx').value.trim(),priority:document.getElementById('t-prio').value,dueDate:document.getElementById('t-date').value||null,estimatedTime:document.getElementById('t-est').value.trim()||null,done:false,createdAt:Date.now()});
+  document.getElementById('t-title').value=''; document.getElementById('t-ctx').value=''; document.getElementById('t-date').value=''; document.getElementById('t-est').value='';
+  toggleForm('add-task-form'); toast('Task gespeichert!');
+}
+
+function openEditTask(id){
+  const t=D.tasks.find(x=>x.id===id); if(!t) return;
+  modalMode={type:'task',id};
+  document.getElementById('modal-title').textContent='Task bearbeiten';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><input type="text" id="m-title" value="${esc(t.title)}" placeholder="Titel" /></div>
+    <div class="form-row">
+      <select id="m-prio">
+        <option value="hoch" ${t.priority==='hoch'?'selected':''}>Hoch</option>
+        <option value="mittel" ${t.priority==='mittel'?'selected':''}>Mittel</option>
+        <option value="niedrig" ${t.priority==='niedrig'?'selected':''}>Niedrig</option>
+      </select>
+      <input type="date" id="m-date" value="${t.dueDate||''}" style="max-width:180px" />
+    </div>
+    <div class="form-row">
+      <input type="text" id="m-est" value="${esc(t.estimatedTime||'')}" placeholder="Geschätzte Zeit (z.B. 30min, 2h)" />
+    </div>
+    <div class="form-row"><textarea class="form-ta" id="m-ctx">${esc(t.context)}</textarea></div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-title').focus(),50);
+}
+
+// ── WEEK CALENDAR ─────────────────────────────────────────────
+function getWeekDays() {
+  const today=new Date();
+  const dow=today.getDay();
+  const monday=new Date(today);
+  monday.setDate(today.getDate()-(dow===0?6:dow-1)+weekOffset*7);
+  return Array.from({length:7},(_,i)=>{ const d=new Date(monday); d.setDate(monday.getDate()+i); return d; });
+}
+function dateStr(d) { return d.toISOString().slice(0,10); }
+function getKW(d) { const jan4=new Date(d.getFullYear(),0,4); return Math.ceil(((d-jan4)/86400000+jan4.getDay()+1)/7); }
+
+function renderWeek() {
+  const days=getWeekDays();
+  const todayStr=dateStr(new Date());
+  const s=days[0], e=days[6];
+  document.getElementById('week-label').textContent=`KW ${getKW(s)} · ${s.getDate()}. ${MONTHS[s.getMonth()]} – ${e.getDate()}. ${MONTHS[e.getMonth()]} ${e.getFullYear()}`;
+
+  const grid=document.getElementById('week-grid');
+  grid.innerHTML=days.map(day=>{
+    const ds=dateStr(day);
+    const isToday=ds===todayStr;
+    const dayTasks=D.tasks.filter(t=>t.dueDate===ds&&!t.done);
+    const doneTasks=D.tasks.filter(t=>t.dueDate===ds&&t.done);
+    return `<div class="day-col ${isToday?'today':''}">
+      <div class="day-head">
+        <div class="day-name">${DAYS[day.getDay()]}</div>
+        <div class="day-num">${day.getDate()}</div>
+      </div>
+      <div class="cal-tasks">
+        ${dayTasks.map(t=>`<div class="cal-task prio-${t.priority||'mittel'}" onclick="toggleTask('${t.id}')" title="${esc(t.title)}">${esc(t.title.length>28?t.title.slice(0,28)+'…':t.title)}</div>`).join('')}
+        ${doneTasks.map(t=>`<div class="cal-task done" onclick="toggleTask('${t.id}')" title="${esc(t.title)}">${esc(t.title.length>28?t.title.slice(0,28)+'…':t.title)}</div>`).join('')}
+      </div>
+      <button class="add-day-btn" onclick="addCalTask('${ds}')">+ Task</button>
+    </div>`;
+  }).join('');
+
+  const unsched=D.tasks.filter(t=>!t.dueDate&&!t.done);
+  const ua=document.getElementById('unscheduled-area');
+  if(unsched.length){
+    ua.innerHTML=`<div class="unscheduled-area">
+      <div class="section-label">Ohne Datum (${unsched.length})</div>
+      <div class="unsched-tasks">
+        ${unsched.map(t=>`<div class="unsched-task">
+          <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')" style="width:15px;height:15px;min-width:15px;font-size:9px;border-radius:3px">${t.done?'✓':''}</div>
+          <span style="font-size:12px">${esc(t.title)}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  } else {
+    ua.innerHTML='';
+  }
+}
+
+function addCalTask(ds) {
+  go('tasks');
+  document.getElementById('add-task-form').style.display='block';
+  document.getElementById('t-date').value=ds;
+  setTimeout(()=>document.getElementById('t-title').focus(),100);
+}
+
+// ── THOUGHTS ─────────────────────────────────────────────────
+let thoughtTopicFilter = 'Alle';
+
+function renderThoughts(){
+  // Update topic filter tabs
+  const topics = getExistingTopics();
+  const ftabs = document.getElementById('thought-ftabs');
+  if(ftabs){
+    ftabs.innerHTML = ['Alle',...topics].map(tp=>
+      `<button class="ftab ${thoughtTopicFilter===tp?'active':''}" onclick="setThoughtTopic('${esc(tp)}',this)">${esc(tp)}</button>`
+    ).join('');
+  }
+
+  // Update datalist suggestions
+  const dl = document.getElementById('topic-suggestions');
+  if(dl) dl.innerHTML = topics.map(t=>`<option value="${esc(t)}">`).join('');
+
+  let list=[...D.thoughts].sort((a,b)=>b.createdAt-a.createdAt);
+  if(thoughtTopicFilter!=='Alle') list=list.filter(t=>(t.topic||'Allgemein')===thoughtTopicFilter);
+
+  const el=document.getElementById('thoughts-list');
+  if(!list.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">💡</div><h3>${thoughtTopicFilter!=='Alle'?'Keine Thoughts in "'+thoughtTopicFilter+'"':'Keine Thoughts'}</h3><p>Brain Dump nutzen oder manuell hinzufügen.</p></div>`;
+    return;
+  }
+
+  // Group by topic
+  const grouped={};
+  list.forEach(t=>{ const tp=t.topic||'Allgemein'; if(!grouped[tp]) grouped[tp]=[]; grouped[tp].push(t); });
+
+  let html='';
+  Object.entries(grouped).forEach(([topic,items])=>{
+    if(thoughtTopicFilter==='Alle') html+=`<div style="margin-bottom:6px;margin-top:16px"><span class="topic-badge" onclick="setThoughtTopicStr('${esc(topic)}')">${esc(topic)}</span><span style="font-size:11px;color:var(--sub);margin-left:8px">${items.length} Eintr${items.length===1?'ag':'äge'}</span></div>`;
+    html+=items.map(t=>`<div class="thought-card">
+      <div class="thought-text">${esc(t.content)}</div>
+      <div class="card-actions" style="flex-shrink:0">
+        <span class="date-label" style="margin-right:4px">${fmtDate(t.createdAt)}</span>
+        <button class="icon-btn" onclick="openEditThought('${t.id}')" title="Bearbeiten">✏</button>
+        <button class="icon-btn del" onclick="delThought('${t.id}')" title="Löschen">×</button>
+      </div>
+    </div>`).join('');
+  });
+  el.innerHTML=html;
+}
+
+function setThoughtTopic(tp, el){
+  thoughtTopicFilter=tp;
+  document.querySelectorAll('#thought-ftabs .ftab').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  renderThoughts();
+}
+function setThoughtTopicStr(tp){
+  thoughtTopicFilter=tp;
+  renderThoughts();
+}
+
+async function delThought(id){ await fsDel('thoughts',id); toast('Thought gelöscht'); }
+
+async function addThoughtManual(){
+  const content=document.getElementById('th-text').value.trim();
+  if(!content){toast('Bitte etwas eingeben','err');return;}
+  const topic=document.getElementById('th-topic').value.trim()||'Allgemein';
+  await fsAdd('thoughts',{id:uid(),content,topic,createdAt:Date.now()});
+  document.getElementById('th-text').value='';
+  document.getElementById('th-topic').value='';
+  toggleForm('add-thought-form'); toast('Thought gespeichert!');
+}
+
+function openEditThought(id){
+  const t=D.thoughts.find(x=>x.id===id); if(!t) return;
+  const topics=getExistingTopics();
+  modalMode={type:'thought',id};
+  document.getElementById('modal-title').textContent='Thought bearbeiten';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><textarea class="form-ta" id="m-content" style="min-height:120px">${esc(t.content)}</textarea></div>
+    <div class="form-row">
+      <input type="text" id="m-topic" value="${esc(t.topic||'Allgemein')}" placeholder="Thema" list="m-topic-list" />
+      <datalist id="m-topic-list">${topics.map(tp=>`<option value="${esc(tp)}">`).join('')}</datalist>
+    </div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-content').focus(),50);
+}
+
+// ── SNIPPETS ─────────────────────────────────────────────────
+function setSnipFilter(f,el){ snipFilter=f; document.querySelectorAll('#sn-ftabs .ftab').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderSnips(); }
+function renderSnips(){
+  const q=(document.getElementById('snip-search')?.value||'').toLowerCase();
+  let list=[...D.snippets].sort((a,b)=>b.createdAt-a.createdAt);
+  if(snipFilter!=='Alle') list=list.filter(s=>s.category===snipFilter);
+  if(q) list=list.filter(s=>s.title.toLowerCase().includes(q)||s.content.toLowerCase().includes(q));
+  const el=document.getElementById('snippets-list');
+  if(!list.length){ el.innerHTML='<div class="empty"><div class="empty-icon">⌨</div><h3>Keine Snippets</h3><p>SSH-Commands, IPs, PowerShell-Befehle hinzufügen.</p></div>'; return; }
+  el.innerHTML=list.map(s=>`<div class="snippet-card">
+    <div class="snippet-head">
+      <div><span class="snippet-name">${esc(s.title)}</span><span class="snippet-cat">${esc(s.category)}</span></div>
+      <div style="display:flex;gap:6px">
+        <button class="copy-btn" id="cp-${s.id}" onclick="copySnip('${s.id}')">📋 Kopieren</button>
+        <button class="icon-btn" onclick="openEditSnip('${s.id}')" title="Bearbeiten">✏</button>
+        <button class="icon-btn del" onclick="delSnip('${s.id}')" title="Löschen">×</button>
+      </div>
+    </div>
+    <div class="snippet-code">${esc(s.content)}</div>
+  </div>`).join('');
+}
+function copySnip(id){
+  const s=D.snippets.find(x=>x.id===id); if(!s) return;
+  navigator.clipboard.writeText(s.content).then(()=>{
+    const btn=document.getElementById('cp-'+id); btn.textContent='✓ Kopiert!'; btn.classList.add('ok');
+    setTimeout(()=>{btn.textContent='📋 Kopieren';btn.classList.remove('ok');},2000);
+  }).catch(()=>toast('Kopieren fehlgeschlagen','err'));
+}
+async function delSnip(id){ await fsDel('snippets',id); toast('Snippet gelöscht'); }
+async function addSnippet(){
+  const title=document.getElementById('sn-title').value.trim(), content=document.getElementById('sn-content').value.trim();
+  if(!title||!content){toast('Bitte Titel und Inhalt eingeben','err');return;}
+  await fsAdd('snippets',{id:uid(),title,content,category:document.getElementById('sn-cat').value,createdAt:Date.now()});
+  document.getElementById('sn-title').value=''; document.getElementById('sn-content').value='';
+  toggleForm('add-snippet-form'); toast('Snippet gespeichert!');
+}
+function openEditSnip(id){
+  const s=D.snippets.find(x=>x.id===id); if(!s) return;
+  modalMode={type:'snippet',id};
+  document.getElementById('modal-title').textContent='Snippet bearbeiten';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><input type="text" id="m-sn-title" value="${esc(s.title)}" /></div>
+    <div class="form-row"><select id="m-sn-cat">${['SSH','PowerShell','IP','CMD','Sonstiges'].map(c=>`<option value="${c}"${s.category===c?' selected':''}>${c}</option>`).join('')}</select></div>
+    <div class="form-row"><textarea class="form-ta" id="m-sn-content" style="font-family:'Consolas',monospace;min-height:100px">${esc(s.content)}</textarea></div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-sn-title').focus(),50);
+}
+
+// ── MODAL ─────────────────────────────────────────────────────
+function closeModal(){ document.getElementById('modal').style.display='none'; modalMode=null; }
+async function saveModal(){
+  if(!modalMode) return;
+  if(modalMode.type==='task'){
+    const t=D.tasks.find(x=>x.id===modalMode.id); if(!t) return;
+    const title=document.getElementById('m-title').value.trim();
+    if(!title){toast('Titel darf nicht leer sein','err');return;}
+    t.title=title; t.priority=document.getElementById('m-prio').value;
+    t.context=document.getElementById('m-ctx').value.trim();
+    t.dueDate=document.getElementById('m-date').value||null;
+    t.estimatedTime=document.getElementById('m-est').value.trim()||null;
+    await fsUpdate('tasks',t); closeModal(); toast('Task aktualisiert!');
+  } else if(modalMode.type==='thought'){
+    const t=D.thoughts.find(x=>x.id===modalMode.id); if(!t) return;
+    const c=document.getElementById('m-content').value.trim();
+    if(!c){toast('Inhalt darf nicht leer sein','err');return;}
+    t.content=c; t.topic=document.getElementById('m-topic')?.value.trim()||t.topic||'Allgemein';
+    await fsUpdate('thoughts',t); closeModal(); toast('Thought aktualisiert!');
+  } else if(modalMode.type==='snippet'){
+    const s=D.snippets.find(x=>x.id===modalMode.id); if(!s) return;
+    const title=document.getElementById('m-sn-title').value.trim(), content=document.getElementById('m-sn-content').value.trim();
+    if(!title||!content){toast('Titel und Inhalt darf nicht leer sein','err');return;}
+    s.title=title; s.content=content; s.category=document.getElementById('m-sn-cat').value;
+    await fsUpdate('snippets',s); closeModal(); toast('Snippet aktualisiert!');
+  }
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+// ── SETTINGS ─────────────────────────────────────────────────
+function saveKey(){
+  S.groqKey=document.getElementById('api-key-in').value.trim();
+  saveSettings(); updateApiIndicator(); toast('API Key gespeichert!');
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='minddump-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url);
+}
+function importTrigger(){ document.getElementById('import-file').click(); }
+function importData(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try {
+      const imp=JSON.parse(ev.target.result);
+      if(!imp.tasks||!imp.thoughts||!imp.snippets) throw new Error('Ungültiges Format');
+      D=imp; saveLocal(); toast(`Importiert: ${D.tasks.length} Tasks, ${D.thoughts.length} Thoughts, ${D.snippets.length} Snippets`);
+    } catch(err){ toast('Import fehlgeschlagen: '+err.message,'err'); }
+  };
+  reader.readAsText(file); e.target.value='';
+}
+function clearAll(){
+  if(confirm('Wirklich ALLE Daten löschen?')){
+    D={tasks:[],thoughts:[],snippets:[]}; saveLocal();
+    renderTasks();renderThoughts();renderSnips();
+    toast('Alle Daten gelöscht');
+  }
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+function init() {
+  loadLocal();
+  if(S.groqKey) document.getElementById('api-key-in').value=S.groqKey;
+  updateApiIndicator();
+  badges();
+  renderUserArea();
+
+  // Auto-connect Firebase (hardcoded config)
+  try {
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyB6SVkNsSi6wEIGC1-z4oNbxgHb3hm-Pp4",
+      authDomain: "minddump-13c56.firebaseapp.com",
+      projectId: "minddump-13c56",
+      storageBucket: "minddump-13c56.firebasestorage.app",
+      messagingSenderId: "224116821810",
+      appId: "1:224116821810:web:d7b8c881c1a31ebe2a512b"
+    };
+    firebase.apps.forEach(a=>{ try{a.delete();}catch(e){} });
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db=firebase.firestore();
+    auth=firebase.auth();
+    auth.onAuthStateChanged(user=>{
+      currentUser=user;
+      renderUserArea();
+      if(user){ subscribeFS(); }
+      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; }
+    });
+    updateFBStatus(true);
+  } catch(e) { console.warn('Firebase auto-init failed:', e.message); }
+}
+
+init();
+</script>
+</body>
+</html>
