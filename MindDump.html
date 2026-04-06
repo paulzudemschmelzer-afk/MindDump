@@ -7,6 +7,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -432,6 +433,15 @@ select option { background:#1c1c1c; }
       <div class="info-box info-green">✓ Dann diese URL auf dem Handy als Lesezeichen oder als Web-App zum Homescreen hinzufügen.</div>
     </div>
 
+    <!-- GOOGLE CALENDAR -->
+    <div class="set-card">
+      <h3>Google Calendar Sync</h3>
+      <p>Tasks mit Datum werden automatisch als Kalender-Events angelegt.</p>
+      <div style="margin-top:10px">
+        <button id="gcal-btn" class="btn btn-ghost" onclick="connectGCal()">Mit Google Calendar verbinden</button>
+      </div>
+    </div>
+
     <!-- DATA -->
     <div class="set-card">
       <h3>Daten</h3>
@@ -491,16 +501,19 @@ function col(name) { return db.collection(`users/${currentUser.uid}/${name}`); }
 function omitId({id,...r}) { return r; }
 
 async function fsAdd(colName, item) {
+  if(colName==='tasks'&&gcalToken&&item.dueDate){ const eid=await gcalCreate(item); if(eid) item.gcalEventId=eid; }
   if(useFS()) { await col(colName).doc(item.id).set(omitId(item)); }
   else { D[colName].push(item); saveLocal(); rerender(colName); badges(); }
 }
 
 async function fsUpdate(colName, item) {
+  if(colName==='tasks'&&gcalToken){ if(item.gcalEventId) await gcalUpdate(item); else if(item.dueDate){ const eid=await gcalCreate(item); if(eid) item.gcalEventId=eid; } }
   if(useFS()) { await col(colName).doc(item.id).set(omitId(item)); }
   else { const i=D[colName].findIndex(x=>x.id===item.id); if(i>=0) D[colName][i]=item; saveLocal(); rerender(colName); badges(); }
 }
 
 async function fsDel(colName, id) {
+  if(colName==='tasks'&&gcalToken){ const t=D.tasks.find(x=>x.id===id); if(t?.gcalEventId) await gcalDelete(t.gcalEventId); }
   if(useFS()) { await col(colName).doc(id).delete(); }
   else { D[colName]=D[colName].filter(x=>x.id!==id); saveLocal(); rerender(colName); badges(); }
 }
@@ -1243,6 +1256,61 @@ function init() {
     updateFBStatus(true);
   } catch(e) { console.warn('Firebase auto-init failed:', e.message); }
 }
+
+// ── GOOGLE CALENDAR ──────────────────────────────────────────
+const GCAL_CLIENT_ID='224116821810-cj9bn4d6568nk84foseia64k32al9qn7.apps.googleusercontent.com';
+const GCAL_SCOPE='https://www.googleapis.com/auth/calendar.events';
+let gcalToken=null, gcalTokenClient=null;
+
+function initGCal(){
+  if(!window.google?.accounts) return;
+  gcalTokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:GCAL_CLIENT_ID, scope:GCAL_SCOPE,
+    callback:r=>{ if(r.error){toast('GCal Fehler: '+r.error,'err');return;} gcalToken=r.access_token; updateGCalBtn(); toast('Google Calendar verbunden! ✓'); }
+  });
+  updateGCalBtn();
+}
+
+function connectGCal(){ if(gcalTokenClient) gcalTokenClient.requestAccessToken(); else toast('Seite neu laden und nochmal versuchen','err'); }
+function disconnectGCal(){ gcalToken=null; google.accounts.oauth2.revoke(gcalToken,()=>{}); updateGCalBtn(); toast('Google Calendar getrennt'); }
+function updateGCalBtn(){
+  const btn=document.getElementById('gcal-btn');
+  if(!btn) return;
+  if(gcalToken){ btn.textContent='✓ Google Calendar verbunden'; btn.style.background='rgba(16,185,129,.15)'; btn.style.borderColor='rgba(16,185,129,.3)'; btn.style.color='#34d399'; btn.onclick=disconnectGCal; }
+  else { btn.textContent='Mit Google Calendar verbinden'; btn.style.background=''; btn.style.borderColor=''; btn.style.color=''; btn.onclick=connectGCal; }
+}
+
+function gcalNextDay(ds){ const d=new Date(ds); d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); }
+function gcalColor(p){ return p==='hoch'?'11':p==='niedrig'?'10':'9'; }
+
+async function gcalCreate(task){
+  if(!gcalToken||!task.dueDate) return null;
+  const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{
+    method:'POST', headers:{'Authorization':'Bearer '+gcalToken,'Content-Type':'application/json'},
+    body:JSON.stringify({ summary:task.title, description:task.context||'', colorId:gcalColor(task.priority),
+      start:{date:task.dueDate}, end:{date:gcalNextDay(task.dueDate)} })
+  });
+  if(!r.ok) return null;
+  return (await r.json()).id;
+}
+
+async function gcalUpdate(task){
+  if(!gcalToken||!task.gcalEventId) return;
+  await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.gcalEventId}`,{
+    method:'PUT', headers:{'Authorization':'Bearer '+gcalToken,'Content-Type':'application/json'},
+    body:JSON.stringify({ summary:task.title, description:task.context||'', colorId:gcalColor(task.priority),
+      start:{date:task.dueDate||new Date().toISOString().slice(0,10)}, end:{date:gcalNextDay(task.dueDate||new Date().toISOString().slice(0,10))} })
+  });
+}
+
+async function gcalDelete(eventId){
+  if(!gcalToken||!eventId) return;
+  await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,{
+    method:'DELETE', headers:{'Authorization':'Bearer '+gcalToken}
+  });
+}
+
+setTimeout(()=>{ if(window.google?.accounts) initGCal(); else { const s=document.querySelector('script[src*="gsi"]'); if(s) s.onload=initGCal; } },1000);
 
 init();
 </script>
