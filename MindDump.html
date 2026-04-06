@@ -1048,7 +1048,7 @@ function renderThoughts(){
 
   const el=document.getElementById('thoughts-list');
   if(!list.length){
-    el.innerHTML=`<div class="empty"><div class="empty-icon">💡</div><h3>${thoughtTopicFilter!=='Alle'?'Keine Thoughts in "'+thoughtTopicFilter+'"':'Keine Thoughts'}</h3><p>Brain Dump nutzen oder manuell hinzufügen.</p></div>`;
+    el.innerHTML=`<div class="empty"><div class="empty-icon">💡</div><h3>${thoughtTopicFilter!=='Alle'?'Keine Thoughts in &quot;'+esc(thoughtTopicFilter)+'&quot;':'Keine Thoughts'}</h3><p>Brain Dump nutzen oder manuell hinzufügen.</p></div>`;
     return;
   }
 
