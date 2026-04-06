@@ -541,6 +541,21 @@ function subscribeFS() {
       }, err=>console.error(name,err))
     );
   });
+  // Sync API key from Firebase
+  db.collection('settings').doc(currentUser.uid).get().then(doc=>{
+    if(doc.exists && doc.data().groqKey) {
+      S.groqKey = doc.data().groqKey;
+      saveSettings();
+      updateApiIndicator();
+      const inp = document.getElementById('api-key-in');
+      if(inp) inp.value = S.groqKey;
+    }
+  });
+}
+
+function saveApiKeyToFirebase() {
+  if(!db || !currentUser || !S.groqKey) return;
+  db.collection('settings').doc(currentUser.uid).set({ groqKey: S.groqKey }, { merge: true });
 }
 
 function signIn() {
@@ -556,15 +571,35 @@ function signOutUser() {
 
 function renderUserArea() {
   const el = document.getElementById('user-area');
-  if(!auth) { el.innerHTML=''; return; }
+  if(!auth) { el.innerHTML=''; showLoginGate(true); return; }
   if(currentUser) {
     el.innerHTML=`<div class="user-card">
       <img class="user-avatar" src="${currentUser.photoURL||''}" onerror="this.style.display='none'" />
       <span class="user-name">${currentUser.displayName||currentUser.email||'Angemeldet'}</span>
       <button class="icon-btn" onclick="signOutUser()" title="Abmelden" style="font-size:13px;color:var(--sub)">↪</button>
     </div>`;
+    showLoginGate(false);
   } else {
     el.innerHTML=`<button class="sign-btn" onclick="signIn()">Mit Google anmelden</button>`;
+    showLoginGate(true);
+  }
+}
+
+function showLoginGate(show) {
+  let gate = document.getElementById('login-gate');
+  if(show) {
+    if(!gate) {
+      gate = document.createElement('div');
+      gate.id = 'login-gate';
+      gate.style.cssText = 'position:fixed;inset:0;background:#111;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;';
+      gate.innerHTML = `<div style="font-size:28px;font-weight:700;">Mind<span style="color:#a78bfa">Dump</span></div>
+        <p style="color:#777;font-size:14px;">Bitte anmelden um fortzufahren</p>
+        <button onclick="signIn()" style="padding:12px 28px;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;">Mit Google anmelden</button>`;
+      document.body.appendChild(gate);
+    }
+    gate.style.display = 'flex';
+  } else {
+    if(gate) gate.style.display = 'none';
   }
 }
 
@@ -1053,7 +1088,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
 // ── SETTINGS ─────────────────────────────────────────────────
 function saveKey(){
   S.groqKey=document.getElementById('api-key-in').value.trim();
-  saveSettings(); updateApiIndicator(); toast('API Key gespeichert!');
+  saveSettings(); updateApiIndicator(); saveApiKeyToFirebase(); toast('API Key gespeichert!');
 }
 function exportData(){
   const blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
