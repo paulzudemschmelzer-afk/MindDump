@@ -1099,11 +1099,22 @@ function importTrigger(){ document.getElementById('import-file').click(); }
 function importData(e){
   const file=e.target.files[0]; if(!file) return;
   const reader=new FileReader();
-  reader.onload=ev=>{
+  reader.onload=async ev=>{
     try {
       const imp=JSON.parse(ev.target.result);
       if(!imp.tasks||!imp.thoughts||!imp.snippets) throw new Error('Ungültiges Format');
-      D=imp; saveLocal(); toast(`Importiert: ${D.tasks.length} Tasks, ${D.thoughts.length} Thoughts, ${D.snippets.length} Snippets`);
+      if(currentUser && db) {
+        toast('Lade zu Firebase hoch...');
+        for(const name of ['tasks','thoughts','snippets']) {
+          for(const item of imp[name]) {
+            const {id,...data}=item;
+            await col(name).doc(id).set(data);
+          }
+        }
+        toast(`Zu Firebase hochgeladen: ${imp.tasks.length} Tasks, ${imp.thoughts.length} Thoughts, ${imp.snippets.length} Snippets`);
+      } else {
+        D=imp; saveLocal(); toast(`Importiert: ${D.tasks.length} Tasks, ${D.thoughts.length} Thoughts, ${D.snippets.length} Snippets`);
+      }
     } catch(err){ toast('Import fehlgeschlagen: '+err.message,'err'); }
   };
   reader.readAsText(file); e.target.value='';
