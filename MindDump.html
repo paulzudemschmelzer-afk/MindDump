@@ -367,7 +367,7 @@ select option { background:#1c1c1c; }
       </div>
     </div>
     <div class="search-row">
-      <input class="search-input" id="snip-search" placeholder="Snippets durchsuchen..." oninput="renderSnips()" />
+      <input class="search-input" id="snip-search" placeholder="Snippets durchsuchen..." oninput="debouncedRenderSnips()" />
     </div>
     <div class="ftabs" id="sn-ftabs">
       <button class="ftab active" onclick="setSnipFilter('Alle',this)">Alle</button>
@@ -392,7 +392,7 @@ select option { background:#1c1c1c; }
         <input type="password" id="api-key-in" placeholder="gsk_..." />
         <button class="btn btn-primary" onclick="saveKey()" style="flex:0;white-space:nowrap">Speichern</button>
       </div>
-      <div class="info-box info-purple">🔒 Wird nur lokal gespeichert, geht direkt an Groq.</div>
+      <div class="info-box info-purple">🔒 Wird lokal gespeichert und bei Anmeldung mit Firebase synchronisiert. Anfragen gehen direkt an Groq.</div>
     </div>
 
     <!-- FIREBASE SYNC -->
@@ -458,7 +458,7 @@ select option { background:#1c1c1c; }
 </main>
 
 <!-- EDIT MODAL -->
-<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
+<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this)confirmCloseModal()">
   <div class="modal">
     <h3 id="modal-title">Bearbeiten</h3>
     <div id="modal-body"></div>
@@ -486,6 +486,9 @@ let unsubListeners = [];
 
 const DAYS = ['So','Mo','Di','Mi','Do','Fr','Sa'];
 const MONTHS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+
+function debounce(fn, ms) { let t; return function(...a) { clearTimeout(t); t=setTimeout(()=>fn.apply(this,a), ms); }; }
+const debouncedRenderSnips = debounce(renderSnips, 200);
 
 // ── LOCAL STORAGE ─────────────────────────────────────────────
 function loadLocal() {
@@ -600,8 +603,8 @@ function renderUserArea() {
   if(!auth) { el.innerHTML=''; showLoginGate(true); return; }
   if(currentUser) {
     el.innerHTML=`<div class="user-card">
-      <img class="user-avatar" src="${currentUser.photoURL||''}" onerror="this.style.display='none'" />
-      <span class="user-name">${currentUser.displayName||currentUser.email||'Angemeldet'}</span>
+      <img class="user-avatar" src="${esc(currentUser.photoURL||'')}" onerror="this.style.display='none'" />
+      <span class="user-name">${esc(currentUser.displayName||currentUser.email||'Angemeldet')}</span>
       <button class="icon-btn" onclick="signOutUser()" title="Abmelden" style="font-size:13px;color:var(--sub)">↪</button>
     </div>`;
     showLoginGate(false);
@@ -636,7 +639,7 @@ function updateFBStatus(ok) {
 
 // ── UTILS ─────────────────────────────────────────────────────
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2); }
-function esc(s) { if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s) { if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function fmtDate(ts) { if(!ts) return ''; return new Date(ts).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}); }
 function fmtDue(ds) {
   if(!ds) return '';
@@ -1156,6 +1159,7 @@ function openEditSnip(id){
 
 // ── MODAL ─────────────────────────────────────────────────────
 function closeModal(){ document.getElementById('modal').style.display='none'; modalMode=null; }
+function confirmCloseModal(){ if(confirm('Änderungen verwerfen?')) closeModal(); }
 async function saveModal(){
   if(!modalMode) return;
   if(modalMode.type==='task'){
@@ -1181,7 +1185,7 @@ async function saveModal(){
     await fsUpdate('snippets',s); closeModal(); toast('Snippet aktualisiert!');
   }
 }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&modalMode) confirmCloseModal(); });
 
 // ── SETTINGS ─────────────────────────────────────────────────
 function saveKey(){
@@ -1211,7 +1215,7 @@ function importData(e){
         }
         toast(`Zu Firebase hochgeladen: ${imp.tasks.length} Tasks, ${imp.thoughts.length} Thoughts, ${imp.snippets.length} Snippets`);
       } else {
-        D=imp; saveLocal(); toast(`Importiert: ${D.tasks.length} Tasks, ${D.thoughts.length} Thoughts, ${D.snippets.length} Snippets`);
+        D=imp; saveLocal(); renderTasks(); renderThoughts(); renderSnips(); toast(`Importiert: ${D.tasks.length} Tasks, ${D.thoughts.length} Thoughts, ${D.snippets.length} Snippets`);
       }
     } catch(err){ toast('Import fehlgeschlagen: '+err.message,'err'); }
   };
@@ -1272,7 +1276,7 @@ function initGCal(){
 }
 
 function connectGCal(){ if(gcalTokenClient) gcalTokenClient.requestAccessToken(); else toast('Seite neu laden und nochmal versuchen','err'); }
-function disconnectGCal(){ gcalToken=null; google.accounts.oauth2.revoke(gcalToken,()=>{}); updateGCalBtn(); toast('Google Calendar getrennt'); }
+function disconnectGCal(){ const token=gcalToken; gcalToken=null; if(token) google.accounts.oauth2.revoke(token,()=>{}); updateGCalBtn(); toast('Google Calendar getrennt'); }
 function updateGCalBtn(){
   const btn=document.getElementById('gcal-btn');
   if(!btn) return;
@@ -1285,29 +1289,37 @@ function gcalColor(p){ return p==='hoch'?'11':p==='niedrig'?'10':'9'; }
 
 async function gcalCreate(task){
   if(!gcalToken||!task.dueDate) return null;
-  const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{
-    method:'POST', headers:{'Authorization':'Bearer '+gcalToken,'Content-Type':'application/json'},
-    body:JSON.stringify({ summary:task.title, description:task.context||'', colorId:gcalColor(task.priority),
-      start:{date:task.dueDate}, end:{date:gcalNextDay(task.dueDate)} })
-  });
-  if(!r.ok) return null;
-  return (await r.json()).id;
+  try {
+    const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{
+      method:'POST', headers:{'Authorization':'Bearer '+gcalToken,'Content-Type':'application/json'},
+      body:JSON.stringify({ summary:task.title, description:task.context||'', colorId:gcalColor(task.priority),
+        start:{date:task.dueDate}, end:{date:gcalNextDay(task.dueDate)} })
+    });
+    if(!r.ok){ toast('GCal: Event erstellen fehlgeschlagen','err'); return null; }
+    return (await r.json()).id;
+  } catch(e){ toast('GCal-Sync fehlgeschlagen','err'); return null; }
 }
 
 async function gcalUpdate(task){
   if(!gcalToken||!task.gcalEventId) return;
-  await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.gcalEventId}`,{
-    method:'PUT', headers:{'Authorization':'Bearer '+gcalToken,'Content-Type':'application/json'},
-    body:JSON.stringify({ summary:task.title, description:task.context||'', colorId:gcalColor(task.priority),
-      start:{date:task.dueDate||new Date().toISOString().slice(0,10)}, end:{date:gcalNextDay(task.dueDate||new Date().toISOString().slice(0,10))} })
-  });
+  try {
+    const r=await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(task.gcalEventId)}`,{
+      method:'PUT', headers:{'Authorization':'Bearer '+gcalToken,'Content-Type':'application/json'},
+      body:JSON.stringify({ summary:task.title, description:task.context||'', colorId:gcalColor(task.priority),
+        start:{date:task.dueDate||new Date().toISOString().slice(0,10)}, end:{date:gcalNextDay(task.dueDate||new Date().toISOString().slice(0,10))} })
+    });
+    if(!r.ok) toast('GCal: Event aktualisieren fehlgeschlagen','err');
+  } catch(e){ toast('GCal-Sync fehlgeschlagen','err'); }
 }
 
 async function gcalDelete(eventId){
   if(!gcalToken||!eventId) return;
-  await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,{
-    method:'DELETE', headers:{'Authorization':'Bearer '+gcalToken}
-  });
+  try {
+    const r=await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(eventId)}`,{
+      method:'DELETE', headers:{'Authorization':'Bearer '+gcalToken}
+    });
+    if(!r.ok) toast('GCal: Event löschen fehlgeschlagen','err');
+  } catch(e){ toast('GCal-Sync fehlgeschlagen','err'); }
 }
 
 setTimeout(()=>{ if(window.google?.accounts) initGCal(); else { const s=document.querySelector('script[src*="gsi"]'); if(s) s.onload=initGCal; } },1000);
