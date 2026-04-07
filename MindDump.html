@@ -99,6 +99,13 @@ textarea::placeholder { color:#444; }
 .kat-tech { background:rgba(124,58,237,.12); color:#a78bfa; }
 .kat-familie { background:rgba(236,72,153,.12); color:#f472b6; }
 .kat-sonstiges { background:rgba(107,114,128,.12); color:#9ca3af; }
+.kat-group { margin-bottom:12px; }
+.kat-header { display:flex; align-items:center; gap:8px; padding:10px 14px; background:rgba(124,58,237,.06); border:1px solid var(--border); border-radius:10px; cursor:pointer; margin-bottom:6px; transition:background .15s; }
+.kat-header:hover { background:rgba(124,58,237,.12); }
+.kat-arrow { font-size:10px; color:var(--sub); min-width:14px; }
+.kat-icon { font-size:15px; }
+.kat-name { font-size:14px; font-weight:600; }
+.kat-count { margin-left:auto; background:var(--accent); color:#fff; font-size:11px; padding:1px 7px; border-radius:10px; font-weight:600; }
 .card-actions { display:flex; gap:4px; flex-shrink:0; }
 
 /* THOUGHT CARD */
@@ -862,6 +869,12 @@ let taskKatFilter = 'alle';
 function setTaskFilter(f,el){ taskFilter=f; document.querySelectorAll('#tab-tasks .ftab').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderTasks(); }
 function setTaskKatFilter(k,el){ taskKatFilter=k; document.querySelectorAll('#kat-ftabs .ftab').forEach(b=>b.classList.remove('active')); if(el) el.classList.add('active'); renderTasks(); }
 
+const KAT_LABELS = {geld:'Geld',haushalt:'Haushalt',einkaufen:'Einkaufen',business:'Business',schule:'Schule',tech:'Tech',familie:'Familie',sonstiges:'Sonstiges'};
+const KAT_ICONS = {geld:'💰',haushalt:'🏠',einkaufen:'🛒',business:'💼',schule:'📚',tech:'💻',familie:'👨‍👩‍👦',sonstiges:'📋'};
+let katCollapsed = {};
+
+function toggleKatCollapse(k){ katCollapsed[k]=!katCollapsed[k]; renderTasks(); }
+
 function renderTasks() {
   let list=[...D.tasks].sort((a,b)=>{ if(a.done!==b.done) return a.done?1:-1; const o={hoch:0,mittel:1,niedrig:2}; return (o[a.priority]??1)-(o[b.priority]??1); });
   if(taskFilter==='open') list=list.filter(t=>!t.done);
@@ -875,32 +888,53 @@ function renderTasks() {
   const katFtabs=document.getElementById('kat-ftabs');
   if(katFtabs){
     katFtabs.innerHTML=`<button class=\"ftab ${taskKatFilter==='alle'?'active':''}\" onclick=\"setTaskKatFilter('alle',this)\">Alle</button>`+
-      katOrder.filter(k=>katCounts[k]).map(k=>`<button class=\"ftab ${taskKatFilter===k?'active':''}\" onclick=\"setTaskKatFilter('${k}',this)\">${k} (${katCounts[k]})</button>`).join('');
+      katOrder.filter(k=>katCounts[k]).map(k=>`<button class=\"ftab ${taskKatFilter===k?'active':''}\" onclick=\"setTaskKatFilter('${k}',this)\">${KAT_ICONS[k]||''} ${KAT_LABELS[k]||k} (${katCounts[k]})</button>`).join('');
   }
   const el=document.getElementById('tasks-list');
   if(!list.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">✓</div><h3>${taskFilter==='done'?'Noch nichts erledigt':'Keine offenen Tasks'}</h3><p>Brain Dump nutzen oder manuell hinzufügen.</p></div>`; return; }
-  el.innerHTML=list.map(t=>{
-    const pc='prio-'+(t.priority||'mittel').toLowerCase();
-    const kat=t.kategorie||'sonstiges';
-    return `<div class="task-card ${t.done?'done':''}">
-      <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
-      <div class="task-body">
-        <div class="task-title">${esc(t.title)}</div>
-        ${t.context?`<div class="task-ctx">${esc(t.context)}</div>`:''}
-        <div class="task-meta">
-          <span class="kat-badge kat-${kat}" onclick="setTaskKatFilter('${kat}',this)">${kat}</span>
-          <span class="prio ${pc}">${t.priority||'mittel'}</span>
-          ${t.estimatedTime?`<span class="date-chip">⏱ ${esc(t.estimatedTime)}</span>`:''}
-          ${t.dueDate?`<span class="date-chip">📅 ${fmtDue(t.dueDate)}</span>`:''}
-          <span class="date-label">${fmtDate(t.createdAt)}</span>
-        </div>
-      </div>
-      <div class="card-actions">
-        <button class="icon-btn" onclick="openEditTask('${t.id}')" title="Bearbeiten">✏</button>
-        <button class="icon-btn del" onclick="delTask('${t.id}')" title="Löschen">×</button>
-      </div>
-    </div>`;
-  }).join('');
+
+  // Gruppieren nach Kategorie
+  const grouped={};
+  list.forEach(t=>{ const k=t.kategorie||'sonstiges'; if(!grouped[k]) grouped[k]=[]; grouped[k].push(t); });
+
+  let html='';
+  katOrder.filter(k=>grouped[k]).forEach(k=>{
+    const items=grouped[k];
+    const collapsed=katCollapsed[k];
+    html+=`<div class="kat-group">
+      <div class="kat-header" onclick="toggleKatCollapse('${k}')">
+        <span class="kat-arrow">${collapsed?'▶':'▼'}</span>
+        <span class="kat-icon">${KAT_ICONS[k]||''}</span>
+        <span class="kat-name">${KAT_LABELS[k]||k}</span>
+        <span class="kat-count">${items.length}</span>
+      </div>`;
+    if(!collapsed){
+      html+=items.map(t=>{
+        const pc='prio-'+(t.priority||'mittel').toLowerCase();
+        const kat=t.kategorie||'sonstiges';
+        return `<div class="task-card ${t.done?'done':''}">
+          <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
+          <div class="task-body">
+            <div class="task-title">${esc(t.title)}</div>
+            ${t.context?`<div class="task-ctx">${esc(t.context)}</div>`:''}
+            <div class="task-meta">
+              <span class="kat-badge kat-${kat}">${KAT_LABELS[kat]||kat}</span>
+              <span class="prio ${pc}">${t.priority||'mittel'}</span>
+              ${t.estimatedTime?`<span class="date-chip">⏱ ${esc(t.estimatedTime)}</span>`:''}
+              ${t.dueDate?`<span class="date-chip">📅 ${fmtDue(t.dueDate)}</span>`:''}
+              <span class="date-label">${fmtDate(t.createdAt)}</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="icon-btn" onclick="openEditTask('${t.id}')" title="Bearbeiten">✏</button>
+            <button class="icon-btn del" onclick="delTask('${t.id}')" title="Löschen">×</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    html+='</div>';
+  });
+  el.innerHTML=html;
 }
 
 async function toggleTask(id){ const t=D.tasks.find(x=>x.id===id); if(t){t.done=!t.done;await fsUpdate('tasks',t);} }
