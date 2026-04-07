@@ -107,7 +107,8 @@ textarea::placeholder { color:#444; }
 .kat-arrow { font-size:10px; color:var(--sub); min-width:14px; }
 .kat-icon { font-size:15px; }
 .kat-name { font-size:14px; font-weight:600; }
-.kat-count { margin-left:auto; background:var(--accent); color:#fff; font-size:11px; padding:1px 7px; border-radius:10px; font-weight:600; }
+.kat-count { background:var(--accent); color:#fff; font-size:11px; padding:1px 7px; border-radius:10px; font-weight:600; }
+.kat-actions { margin-left:auto; display:flex; gap:2px; }
 .card-actions { display:flex; gap:4px; flex-shrink:0; }
 
 /* THOUGHT CARD */
@@ -877,6 +878,25 @@ let katCollapsed = {};
 
 function toggleKatCollapse(k){ katCollapsed[k]=!katCollapsed[k]; renderTasks(); }
 
+function editKat(k){
+  const neu=prompt('Kategorie umbenennen:',KAT_LABELS[k]||k);
+  if(!neu||neu===k) return;
+  const slug=neu.toLowerCase().replace(/[^a-zäöüß]/g,'');
+  D.tasks.filter(t=>(t.kategorie||'sonstiges')===k).forEach(t=>{ t.kategorie=slug; });
+  if(currentUser&&db) D.tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
+  toast(`Kategorie umbenannt: ${KAT_LABELS[k]||k} → ${neu}`);
+  renderTasks();
+}
+
+function deleteKat(k){
+  const count=D.tasks.filter(t=>(t.kategorie||'sonstiges')===k&&!t.done).length;
+  if(!confirm(`${KAT_LABELS[k]||k} löschen? ${count} Task${count!==1?'s':''} wandern zu Sonstiges.`)) return;
+  D.tasks.filter(t=>(t.kategorie||'sonstiges')===k).forEach(t=>{ t.kategorie='sonstiges'; });
+  if(currentUser&&db) D.tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
+  toast(`${KAT_LABELS[k]||k} gelöscht — Tasks zu Sonstiges verschoben`);
+  renderTasks();
+}
+
 function renderTasks() {
   let list=[...D.tasks].sort((a,b)=>{ if(a.done!==b.done) return a.done?1:-1; const o={hoch:0,mittel:1,niedrig:2}; return (o[a.priority]??1)-(o[b.priority]??1); });
   if(taskFilter==='open') list=list.filter(t=>!t.done);
@@ -904,11 +924,15 @@ function renderTasks() {
     const items=grouped[k];
     const collapsed=katCollapsed[k];
     html+=`<div class="kat-group">
-      <div class="kat-header" onclick="toggleKatCollapse('${k}')">
-        <span class="kat-arrow">${collapsed?'▶':'▼'}</span>
+      <div class="kat-header">
+        <span class="kat-arrow" onclick="toggleKatCollapse('${k}')">${collapsed?'▶':'▼'}</span>
         <span class="kat-icon">${KAT_ICONS[k]||''}</span>
-        <span class="kat-name">${KAT_LABELS[k]||k}</span>
-        <span class="kat-count">${items.length}</span>
+        <span class="kat-name" onclick="toggleKatCollapse('${k}')">${KAT_LABELS[k]||k}</span>
+        <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
+        <span class="kat-actions">
+          <button class="icon-btn edit-btn" onclick="event.stopPropagation();editKat('${k}')" title="Umbenennen">✏</button>
+          <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Löschen">×</button>
+        </span>
       </div>`;
     if(!collapsed){
       html+=items.map(t=>{
