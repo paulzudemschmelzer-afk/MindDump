@@ -90,6 +90,15 @@ textarea::placeholder { color:#444; }
 .prio-niedrig,.prio-low { background:rgba(16,185,129,.12); color:#34d399; }
 .date-chip { font-size:11px; color:var(--accent2); background:rgba(124,58,237,.12); padding:2px 7px; border-radius:4px; }
 .date-label { font-size:11px; color:#444; }
+.kat-badge { font-size:11px; padding:2px 8px; border-radius:4px; font-weight:500; cursor:pointer; }
+.kat-geld { background:rgba(245,158,11,.12); color:#fbbf24; }
+.kat-haushalt { background:rgba(16,185,129,.12); color:#34d399; }
+.kat-einkaufen { background:rgba(59,130,246,.12); color:#60a5fa; }
+.kat-business { background:rgba(239,68,68,.12); color:#f87171; }
+.kat-schule { background:rgba(168,85,247,.12); color:#c084fc; }
+.kat-tech { background:rgba(124,58,237,.12); color:#a78bfa; }
+.kat-familie { background:rgba(236,72,153,.12); color:#f472b6; }
+.kat-sonstiges { background:rgba(107,114,128,.12); color:#9ca3af; }
 .card-actions { display:flex; gap:4px; flex-shrink:0; }
 
 /* THOUGHT CARD */
@@ -302,6 +311,7 @@ select option { background:#1c1c1c; }
       <button class="ftab" onclick="setTaskFilter('open',this)">Offen</button>
       <button class="ftab" onclick="setTaskFilter('done',this)">Erledigt</button>
     </div>
+    <div class="ftabs" id="kat-ftabs"></div>
     <div id="tasks-list"></div>
   </div>
 
@@ -486,6 +496,25 @@ let unsubListeners = [];
 
 const DAYS = ['So','Mo','Di','Mi','Do','Fr','Sa'];
 const MONTHS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+
+// === AUTO-KATEGORISIERUNG ===
+const KATEGORIEN = {
+  'geld':      ['geld','rechnung','taschengeld','bezahlen','abheben','überweisung','parkgebühr','einnahmen','ausgaben'],
+  'haushalt':  ['müll','wäsche','staub','saugen','aufräumen','bett','fenster','putzen','keller','zimmer','hygiene'],
+  'einkaufen': ['apotheke','medikament','kaufen','einkaufen','oral-b','bürste','supermarkt','shoppen'],
+  'business':  ['messe','unkraut','strom','vertrieb','kunden','angebot'],
+  'schule':    ['moodle','kurs','lern','schule','uni','studium'],
+  'tech':      ['claude','code','minddump','openclaw','api','cli','firebase','programmier','entwickl'],
+  'familie':   ['mama','mika','mutter','vater','familie','eltern'],
+};
+
+function autoKategorie(title, context) {
+  const text = (title + ' ' + (context || '')).toLowerCase();
+  for (const [kat, keywords] of Object.entries(KATEGORIEN)) {
+    if (keywords.some(kw => text.includes(kw))) return kat;
+  }
+  return 'sonstiges';
+}
 
 // ── LOCAL STORAGE ─────────────────────────────────────────────
 function loadLocal() {
@@ -809,7 +838,7 @@ async function saveSelected() {
   let nt=0, nth=0;
   (pendingResult.tasks||[]).forEach((t,i)=>{
     if(document.getElementById('dt-'+i)?.checked){
-      ps.push(fsAdd('tasks',{id:uid(),title:t.title,context:t.context||'',priority:t.priority||'mittel',dueDate:(t.dueDate&&t.dueDate!=='null')?t.dueDate:null,estimatedTime:(t.estimatedTime&&t.estimatedTime!=='null')?t.estimatedTime:null,done:false,createdAt:Date.now()}));
+      ps.push(fsAdd('tasks',{id:uid(),title:t.title,context:t.context||'',priority:t.priority||'mittel',kategorie:autoKategorie(t.title,t.context),dueDate:(t.dueDate&&t.dueDate!=='null')?t.dueDate:null,estimatedTime:(t.estimatedTime&&t.estimatedTime!=='null')?t.estimatedTime:null,done:false,createdAt:Date.now()}));
       nt++;
     }
   });
@@ -828,22 +857,38 @@ async function saveSelected() {
 }
 
 // ── TASKS ─────────────────────────────────────────────────────
+let taskKatFilter = 'alle';
+
 function setTaskFilter(f,el){ taskFilter=f; document.querySelectorAll('#tab-tasks .ftab').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderTasks(); }
+function setTaskKatFilter(k,el){ taskKatFilter=k; document.querySelectorAll('#kat-ftabs .ftab').forEach(b=>b.classList.remove('active')); if(el) el.classList.add('active'); renderTasks(); }
 
 function renderTasks() {
   let list=[...D.tasks].sort((a,b)=>{ if(a.done!==b.done) return a.done?1:-1; const o={hoch:0,mittel:1,niedrig:2}; return (o[a.priority]??1)-(o[b.priority]??1); });
   if(taskFilter==='open') list=list.filter(t=>!t.done);
   if(taskFilter==='done') list=list.filter(t=>t.done);
+  if(taskKatFilter!=='alle') list=list.filter(t=>(t.kategorie||'sonstiges')===taskKatFilter);
+
+  // Kategorie-Filter rendern
+  const katCounts={};
+  D.tasks.filter(t=>!t.done).forEach(t=>{ const k=t.kategorie||'sonstiges'; katCounts[k]=(katCounts[k]||0)+1; });
+  const katOrder=['geld','haushalt','einkaufen','business','schule','tech','familie','sonstiges'];
+  const katFtabs=document.getElementById('kat-ftabs');
+  if(katFtabs){
+    katFtabs.innerHTML=`<button class=\"ftab ${taskKatFilter==='alle'?'active':''}\" onclick=\"setTaskKatFilter('alle',this)\">Alle</button>`+
+      katOrder.filter(k=>katCounts[k]).map(k=>`<button class=\"ftab ${taskKatFilter===k?'active':''}\" onclick=\"setTaskKatFilter('${k}',this)\">${k} (${katCounts[k]})</button>`).join('');
+  }
   const el=document.getElementById('tasks-list');
   if(!list.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">✓</div><h3>${taskFilter==='done'?'Noch nichts erledigt':'Keine offenen Tasks'}</h3><p>Brain Dump nutzen oder manuell hinzufügen.</p></div>`; return; }
   el.innerHTML=list.map(t=>{
     const pc='prio-'+(t.priority||'mittel').toLowerCase();
+    const kat=t.kategorie||'sonstiges';
     return `<div class="task-card ${t.done?'done':''}">
       <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
       <div class="task-body">
         <div class="task-title">${esc(t.title)}</div>
         ${t.context?`<div class="task-ctx">${esc(t.context)}</div>`:''}
         <div class="task-meta">
+          <span class="kat-badge kat-${kat}" onclick="setTaskKatFilter('${kat}',this)">${kat}</span>
           <span class="prio ${pc}">${t.priority||'mittel'}</span>
           ${t.estimatedTime?`<span class="date-chip">⏱ ${esc(t.estimatedTime)}</span>`:''}
           ${t.dueDate?`<span class="date-chip">📅 ${fmtDue(t.dueDate)}</span>`:''}
@@ -864,7 +909,8 @@ async function delTask(id){ await fsDel('tasks',id); toast('Task gelöscht'); }
 async function addTaskManual(){
   const title=document.getElementById('t-title').value.trim();
   if(!title){toast('Bitte Titel eingeben','err');return;}
-  await fsAdd('tasks',{id:uid(),title,context:document.getElementById('t-ctx').value.trim(),priority:document.getElementById('t-prio').value,dueDate:document.getElementById('t-date').value||null,estimatedTime:document.getElementById('t-est').value.trim()||null,done:false,createdAt:Date.now()});
+  const ctx=document.getElementById('t-ctx').value.trim();
+  await fsAdd('tasks',{id:uid(),title,context:ctx,priority:document.getElementById('t-prio').value,kategorie:autoKategorie(title,ctx),dueDate:document.getElementById('t-date').value||null,estimatedTime:document.getElementById('t-est').value.trim()||null,done:false,createdAt:Date.now()});
   document.getElementById('t-title').value=''; document.getElementById('t-ctx').value=''; document.getElementById('t-date').value=''; document.getElementById('t-est').value='';
   toggleForm('add-task-form'); toast('Task gespeichert!');
 }
@@ -881,9 +927,12 @@ function openEditTask(id){
         <option value="mittel" ${t.priority==='mittel'?'selected':''}>Mittel</option>
         <option value="niedrig" ${t.priority==='niedrig'?'selected':''}>Niedrig</option>
       </select>
-      <input type="date" id="m-date" value="${t.dueDate||''}" style="max-width:180px" />
+      <select id="m-kat">
+        ${['geld','haushalt','einkaufen','business','schule','tech','familie','sonstiges'].map(k=>`<option value="${k}" ${(t.kategorie||'sonstiges')===k?'selected':''}>${k}</option>`).join('')}
+      </select>
     </div>
     <div class="form-row">
+      <input type="date" id="m-date" value="${t.dueDate||''}" style="max-width:180px" />
       <input type="text" id="m-est" value="${esc(t.estimatedTime||'')}" placeholder="Geschätzte Zeit (z.B. 30min, 2h)" />
     </div>
     <div class="form-row"><textarea class="form-ta" id="m-ctx">${esc(t.context)}</textarea></div>`;
@@ -1163,6 +1212,7 @@ async function saveModal(){
     const title=document.getElementById('m-title').value.trim();
     if(!title){toast('Titel darf nicht leer sein','err');return;}
     t.title=title; t.priority=document.getElementById('m-prio').value;
+    t.kategorie=document.getElementById('m-kat').value;
     t.context=document.getElementById('m-ctx').value.trim();
     t.dueDate=document.getElementById('m-date').value||null;
     t.estimatedTime=document.getElementById('m-est').value.trim()||null;
