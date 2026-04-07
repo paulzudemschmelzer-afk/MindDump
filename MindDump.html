@@ -240,6 +240,36 @@ select option { background:#1c1c1c; }
 .toast.ok { border-color:rgba(16,185,129,.35); }
 .toast.err { border-color:rgba(239,68,68,.35); }
 
+/* TAURUS CHAT */
+.taurus-wrap { display:flex; flex-direction:column; height:calc(100vh - 120px); max-width:960px; }
+.taurus-tabs { display:flex; gap:6px; margin-bottom:14px; }
+.taurus-status { display:flex; align-items:center; gap:7px; font-size:12px; margin-left:auto; padding:4px 10px; border-radius:6px; }
+.taurus-status.online { color:#34d399; background:rgba(16,185,129,.1); }
+.taurus-status.offline { color:#f87171; background:rgba(239,68,68,.08); }
+.chat-area { flex:1; overflow-y:auto; padding:8px 0; display:flex; flex-direction:column; gap:10px; min-height:0; }
+.chat-msg { max-width:85%; padding:12px 16px; border-radius:12px; font-size:14px; line-height:1.6; word-break:break-word; white-space:pre-wrap; }
+.chat-msg.user { align-self:flex-end; background:var(--accent); color:#fff; border-bottom-right-radius:4px; }
+.chat-msg.bot { align-self:flex-start; background:var(--card); border:1px solid var(--border); border-bottom-left-radius:4px; }
+.chat-msg .chat-time { font-size:10px; opacity:.5; margin-top:6px; display:block; }
+.chat-msg.bot .chat-time { text-align:left; }
+.chat-msg.user .chat-time { text-align:right; }
+.chat-msg.typing { color:var(--sub); font-style:italic; }
+.chat-input-row { display:flex; gap:8px; padding-top:12px; border-top:1px solid var(--border); margin-top:auto; }
+.chat-input { flex:1; padding:11px 16px; background:var(--card); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:14px; outline:none; font-family:inherit; resize:none; min-height:44px; max-height:120px; }
+.chat-input:focus { border-color:var(--accent); }
+.chat-send { padding:0 18px; background:var(--accent); color:#fff; border:none; border-radius:10px; cursor:pointer; font-size:15px; font-weight:600; transition:all .15s; }
+.chat-send:hover { background:#6d28d9; }
+.chat-send:disabled { opacity:.4; cursor:not-allowed; }
+.log-area { flex:1; overflow-y:auto; min-height:0; }
+.log-entry { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:8px; }
+.log-entry .log-time { font-size:11px; color:var(--sub); margin-bottom:6px; }
+.log-entry .log-role { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
+.log-entry .log-role.role-user { color:var(--accent2); }
+.log-entry .log-role.role-taurus { color:#34d399; }
+.log-entry .log-text { font-size:13px; line-height:1.6; white-space:pre-wrap; word-break:break-word; }
+.log-clear { font-size:12px; color:var(--sub); background:none; border:1px solid var(--border); border-radius:6px; padding:4px 10px; cursor:pointer; font-family:inherit; }
+.log-clear:hover { color:var(--text); border-color:#3a3a3a; }
+
 ::-webkit-scrollbar { width:5px; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:#2a2a2a; border-radius:3px; }
@@ -261,6 +291,7 @@ select option { background:#1c1c1c; }
     <button class="nav-btn" onclick="go('week')"><span class="nav-icon">📅</span>Woche</button>
     <button class="nav-btn" onclick="go('thoughts')"><span class="nav-icon">💡</span>Thoughts<span class="badge" id="b-thoughts">0</span></button>
     <button class="nav-btn" onclick="go('snippets')"><span class="nav-icon">⌨</span>Snippets<span class="badge" id="b-snippets">0</span></button>
+    <button class="nav-btn" onclick="go('taurus')"><span class="nav-icon">🤖</span>Taurus<span class="badge" id="b-taurus" style="background:#10b981">0</span></button>
     <button class="nav-btn" onclick="go('settings')" style="margin-top:auto"><span class="nav-icon">⚙</span>Settings</button>
   </nav>
   <div class="sidebar-bottom">
@@ -400,6 +431,29 @@ select option { background:#1c1c1c; }
     <div id="snippets-list"></div>
   </div>
 
+  <!-- TAURUS -->
+  <div class="tab-panel" id="tab-taurus">
+    <div class="taurus-wrap">
+      <div class="page-header header-row" style="margin-bottom:14px">
+        <div><h1>Taurus</h1><p>Dein AI-Agent auf dem VPS.</p></div>
+        <div class="taurus-status offline" id="taurus-status"><div class="dot"></div><span id="taurus-status-label">Offline</span></div>
+      </div>
+      <div class="taurus-tabs">
+        <button class="ftab active" id="tt-chat" onclick="setTaurusView('chat',this)">Chat</button>
+        <button class="ftab" id="tt-log" onclick="setTaurusView('log',this)">Activity Log<span class="badge" id="b-taurus-log" style="margin-left:6px;background:#10b981">0</span></button>
+        <button class="log-clear" onclick="clearTaurusLog()" style="margin-left:auto" title="Log leeren">Log leeren</button>
+      </div>
+      <div class="chat-area" id="taurus-chat">
+        <div class="empty" id="taurus-empty"><div class="empty-icon">🤖</div><h3>Taurus bereit</h3><p>Schreib eine Nachricht um loszulegen.</p></div>
+      </div>
+      <div class="log-area" id="taurus-log" style="display:none"></div>
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="taurus-input" placeholder="Nachricht an Taurus..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();taurusSend()}"></textarea>
+        <button class="chat-send" id="taurus-send-btn" onclick="taurusSend()">→</button>
+      </div>
+    </div>
+  </div>
+
   <!-- SETTINGS -->
   <div class="tab-panel" id="tab-settings">
     <div class="page-header"><h1>Settings</h1></div>
@@ -451,6 +505,24 @@ select option { background:#1c1c1c; }
         <li><div class="step-num">4</div><div>Deine URL: <b>deinname.github.io/minddump</b></div></li>
       </ol>
       <div class="info-box info-green">✓ Dann diese URL auf dem Handy als Lesezeichen oder als Web-App zum Homescreen hinzufügen.</div>
+    </div>
+
+    <!-- TAURUS -->
+    <div class="set-card">
+      <h3>Taurus (OpenClaw Agent)</h3>
+      <p>Verbinde MindDump mit deinem AI-Agenten auf dem VPS.</p>
+      <div class="form-row">
+        <input type="text" id="taurus-url-in" placeholder="http://localhost:18889" />
+      </div>
+      <div class="form-row">
+        <input type="password" id="taurus-token-in" placeholder="Gateway Token" />
+        <button class="btn btn-primary" onclick="saveTaurusConfig()" style="flex:0;white-space:nowrap">Speichern</button>
+      </div>
+      <div class="form-row" style="margin-top:4px">
+        <button class="btn btn-ghost btn-sm" onclick="testTaurusConnection()">Verbindung testen</button>
+        <span id="taurus-test-result" style="font-size:12px;color:var(--sub)"></span>
+      </div>
+      <div class="info-box info-purple">SSH-Tunnel muss laufen: localhost:18889 → VPS:18789</div>
     </div>
 
     <!-- GOOGLE CALENDAR -->
@@ -694,6 +766,7 @@ function go(tab) {
   if(tab==='thoughts') renderThoughts();
   if(tab==='snippets') renderSnips();
   if(tab==='week') renderWeek();
+  if(tab==='taurus') { renderTaurusChat(); checkTaurusStatus(); }
 }
 
 function badges() {
@@ -1335,6 +1408,190 @@ function clearAll(){
   }
 }
 
+// ── TAURUS ───────────────────────────────────────────────────
+let taurusView = 'chat';
+let taurusChat = JSON.parse(localStorage.getItem('md_taurus_chat')||'[]');
+let taurusLog = JSON.parse(localStorage.getItem('md_taurus_log')||'[]');
+let taurusBusy = false;
+
+function getTaurusConfig() {
+  const c = JSON.parse(localStorage.getItem('md_taurus_config')||'{}');
+  // Use /taurus proxy when served from minddump-server.py (same-origin, no CORS)
+  const defaultUrl = location.protocol === 'http:' ? location.origin + '/taurus' : (c.url||'http://localhost:8080/taurus');
+  return { url: c.url||defaultUrl, token: c.token||'9180ac92665faa0789ed95d995caf0dc39898cd99aac0888' };
+}
+
+function saveTaurusConfig() {
+  const url = document.getElementById('taurus-url-in').value.trim()||'http://localhost:18889';
+  const token = document.getElementById('taurus-token-in').value.trim();
+  localStorage.setItem('md_taurus_config', JSON.stringify({url,token}));
+  toast('Taurus Config gespeichert!');
+  checkTaurusStatus();
+}
+
+function loadTaurusSettings() {
+  const c = getTaurusConfig();
+  const u = document.getElementById('taurus-url-in');
+  const t = document.getElementById('taurus-token-in');
+  if(u) u.value = c.url;
+  if(t) t.value = c.token;
+}
+
+async function testTaurusConnection() {
+  const el = document.getElementById('taurus-test-result');
+  el.textContent = 'Teste...'; el.style.color = 'var(--sub)';
+  const ok = await checkTaurusStatus();
+  if(ok) { el.textContent = 'Verbunden!'; el.style.color = '#34d399'; }
+  else { el.textContent = 'Nicht erreichbar'; el.style.color = '#f87171'; }
+}
+
+async function checkTaurusStatus() {
+  const c = getTaurusConfig();
+  const el = document.getElementById('taurus-status');
+  const lbl = document.getElementById('taurus-status-label');
+  try {
+    const r = await fetch(c.url+'/health', {
+      headers: c.token ? {'Authorization':'Bearer '+c.token} : {},
+      signal: AbortSignal.timeout(4000)
+    });
+    if(r.ok) { el.className='taurus-status online'; lbl.textContent='Online'; return true; }
+    el.className='taurus-status offline'; lbl.textContent='Auth Fehler'; return false;
+  } catch(e) {
+    el.className='taurus-status offline'; lbl.textContent='Offline'; return false;
+  }
+}
+
+function setTaurusView(view, el) {
+  taurusView = view;
+  document.querySelectorAll('.taurus-tabs .ftab').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('taurus-chat').style.display = view==='chat'?'flex':'none';
+  document.getElementById('taurus-log').style.display = view==='log'?'block':'none';
+  if(view==='log') renderTaurusLog();
+}
+
+function renderTaurusChat() {
+  const el = document.getElementById('taurus-chat');
+  const empty = document.getElementById('taurus-empty');
+  if(!taurusChat.length) { empty.style.display='block'; el.innerHTML=''; el.appendChild(empty); return; }
+  empty.style.display='none';
+  el.innerHTML = taurusChat.map(m =>
+    `<div class="chat-msg ${m.role==='user'?'user':'bot'}${m.typing?' typing':''}">${m.typing?'Taurus denkt...':esc(m.content)}<span class="chat-time">${new Date(m.ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</span></div>`
+  ).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function renderTaurusLog() {
+  const el = document.getElementById('taurus-log');
+  const badge = document.getElementById('b-taurus-log');
+  if(badge) badge.textContent = taurusLog.length;
+  if(!taurusLog.length) { el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><h3>Kein Activity Log</h3><p>Hier erscheinen alle Nachrichten mit Taurus.</p></div>'; return; }
+  el.innerHTML = [...taurusLog].reverse().map(m =>
+    `<div class="log-entry"><div class="log-time">${new Date(m.ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</div><div class="log-role ${m.role==='user'?'role-user':'role-taurus'}">${m.role==='user'?'Du':'Taurus'}</div><div class="log-text">${esc(m.content)}</div></div>`
+  ).join('');
+}
+
+function clearTaurusLog() {
+  if(!confirm('Activity Log wirklich leeren?')) return;
+  taurusLog = []; localStorage.setItem('md_taurus_log', '[]');
+  renderTaurusLog(); toast('Log geleert');
+}
+
+function saveTaurusChat() { localStorage.setItem('md_taurus_chat', JSON.stringify(taurusChat)); }
+function saveTaurusLog() { localStorage.setItem('md_taurus_log', JSON.stringify(taurusLog)); }
+
+function addToLog(role, content) {
+  taurusLog.push({role, content, ts:Date.now()});
+  if(taurusLog.length>200) taurusLog = taurusLog.slice(-200);
+  saveTaurusLog();
+  const badge = document.getElementById('b-taurus-log');
+  if(badge) badge.textContent = taurusLog.length;
+  const tbadge = document.getElementById('b-taurus');
+  if(tbadge && role==='bot') tbadge.textContent = taurusLog.filter(m=>m.role==='bot').length;
+}
+
+async function taurusSend() {
+  if(taurusBusy) return;
+  const input = document.getElementById('taurus-input');
+  const msg = input.value.trim();
+  if(!msg) return;
+
+  const c = getTaurusConfig();
+  if(!c.token) { toast('Bitte Taurus Token in Settings eintragen','err'); go('settings'); return; }
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  taurusChat.push({role:'user', content:msg, ts:Date.now()});
+  addToLog('user', msg);
+  taurusChat.push({role:'bot', content:'', ts:Date.now(), typing:true});
+  saveTaurusChat();
+  renderTaurusChat();
+
+  taurusBusy = true;
+  document.getElementById('taurus-send-btn').disabled = true;
+
+  try {
+    const r = await fetch(c.url+'/v1/chat/completions', {
+      method:'POST',
+      headers: {
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+c.token
+      },
+      body: JSON.stringify({
+        messages: taurusChat.filter(m=>!m.typing).map(m=>({role:m.role==='user'?'user':'assistant',content:m.content})),
+        stream: true
+      })
+    });
+
+    if(!r.ok) {
+      const err = await r.text();
+      throw new Error('HTTP '+r.status+': '+err.slice(0,200));
+    }
+
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let botMsg = taurusChat[taurusChat.length-1];
+    botMsg.typing = false;
+    botMsg.content = '';
+    let buffer = '';
+
+    while(true) {
+      const {done, value} = await reader.read();
+      if(done) break;
+      buffer += decoder.decode(value, {stream:true});
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for(const line of lines) {
+        if(!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if(data==='[DONE]') continue;
+        try {
+          const j = JSON.parse(data);
+          const delta = j.choices?.[0]?.delta?.content;
+          if(delta) { botMsg.content += delta; renderTaurusChat(); }
+        } catch(e){}
+      }
+    }
+
+    if(!botMsg.content) botMsg.content = '(Keine Antwort)';
+    botMsg.ts = Date.now();
+    addToLog('bot', botMsg.content);
+    saveTaurusChat();
+    renderTaurusChat();
+
+  } catch(err) {
+    taurusChat.pop();
+    taurusChat.push({role:'bot', content:'Fehler: '+err.message, ts:Date.now()});
+    saveTaurusChat();
+    renderTaurusChat();
+    addToLog('bot', 'Fehler: '+err.message);
+  }
+
+  taurusBusy = false;
+  document.getElementById('taurus-send-btn').disabled = false;
+}
+
 // ── INIT ─────────────────────────────────────────────────────
 function init() {
   loadLocal();
@@ -1342,6 +1599,9 @@ function init() {
   updateApiIndicator();
   badges();
   renderUserArea();
+
+  // Taurus init
+  loadTaurusSettings();
 
   // Auto-connect Firebase (hardcoded config)
   try {
