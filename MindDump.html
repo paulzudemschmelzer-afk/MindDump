@@ -58,10 +58,8 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backg
 .btn-ghost { background:none; color:var(--sub); border:1px solid var(--border); }
 .btn-ghost:hover { color:var(--text); border-color:#3a3a3a; }
 .btn-sm { padding:6px 12px; font-size:12px; }
-.icon-btn { background:none; border:none; color:#555; cursor:pointer; font-size:15px; line-height:1; padding:4px 7px; border-radius:5px; transition:all .15s; }
+.icon-btn { background:none; border:none; color:#444; cursor:pointer; font-size:15px; line-height:1; padding:3px 6px; border-radius:5px; transition:all .15s; }
 .icon-btn:hover { color:var(--text); background:var(--card2); }
-.icon-btn.edit-btn { color:#fbbf24; font-size:17px; writing-mode:vertical-lr; }
-.icon-btn.edit-btn:hover { color:#f59e0b; background:rgba(245,158,11,.1); }
 .icon-btn.del:hover { color:var(--red); background:rgba(239,68,68,.1); }
 
 /* DUMP */
@@ -92,23 +90,6 @@ textarea::placeholder { color:#444; }
 .prio-niedrig,.prio-low { background:rgba(16,185,129,.12); color:#34d399; }
 .date-chip { font-size:11px; color:var(--accent2); background:rgba(124,58,237,.12); padding:2px 7px; border-radius:4px; }
 .date-label { font-size:11px; color:#444; }
-.kat-badge { font-size:11px; padding:2px 8px; border-radius:4px; font-weight:500; cursor:pointer; }
-.kat-geld { background:rgba(245,158,11,.12); color:#fbbf24; }
-.kat-haushalt { background:rgba(16,185,129,.12); color:#34d399; }
-.kat-einkaufen { background:rgba(59,130,246,.12); color:#60a5fa; }
-.kat-business { background:rgba(239,68,68,.12); color:#f87171; }
-.kat-schule { background:rgba(168,85,247,.12); color:#c084fc; }
-.kat-tech { background:rgba(124,58,237,.12); color:#a78bfa; }
-.kat-familie { background:rgba(236,72,153,.12); color:#f472b6; }
-.kat-sonstiges { background:rgba(107,114,128,.12); color:#9ca3af; }
-.kat-group { margin-bottom:12px; }
-.kat-header { display:flex; align-items:center; gap:8px; padding:10px 14px; background:rgba(124,58,237,.06); border:1px solid var(--border); border-radius:10px; cursor:pointer; margin-bottom:6px; transition:background .15s; }
-.kat-header:hover { background:rgba(124,58,237,.12); }
-.kat-arrow { font-size:10px; color:var(--sub); min-width:14px; }
-.kat-icon { font-size:15px; }
-.kat-name { font-size:14px; font-weight:600; }
-.kat-count { background:var(--accent); color:#fff; font-size:11px; padding:1px 7px; border-radius:10px; font-weight:600; }
-.kat-actions { margin-left:auto; display:flex; gap:2px; }
 .card-actions { display:flex; gap:4px; flex-shrink:0; }
 
 /* THOUGHT CARD */
@@ -240,36 +221,6 @@ select option { background:#1c1c1c; }
 .toast.ok { border-color:rgba(16,185,129,.35); }
 .toast.err { border-color:rgba(239,68,68,.35); }
 
-/* TAURUS CHAT */
-.taurus-wrap { display:flex; flex-direction:column; height:calc(100vh - 120px); max-width:960px; }
-.taurus-tabs { display:flex; gap:6px; margin-bottom:14px; }
-.taurus-status { display:flex; align-items:center; gap:7px; font-size:12px; margin-left:auto; padding:4px 10px; border-radius:6px; }
-.taurus-status.online { color:#34d399; background:rgba(16,185,129,.1); }
-.taurus-status.offline { color:#f87171; background:rgba(239,68,68,.08); }
-.chat-area { flex:1; overflow-y:auto; padding:8px 0; display:flex; flex-direction:column; gap:10px; min-height:0; }
-.chat-msg { max-width:85%; padding:12px 16px; border-radius:12px; font-size:14px; line-height:1.6; word-break:break-word; white-space:pre-wrap; }
-.chat-msg.user { align-self:flex-end; background:var(--accent); color:#fff; border-bottom-right-radius:4px; }
-.chat-msg.bot { align-self:flex-start; background:var(--card); border:1px solid var(--border); border-bottom-left-radius:4px; }
-.chat-msg .chat-time { font-size:10px; opacity:.5; margin-top:6px; display:block; }
-.chat-msg.bot .chat-time { text-align:left; }
-.chat-msg.user .chat-time { text-align:right; }
-.chat-msg.typing { color:var(--sub); font-style:italic; }
-.chat-input-row { display:flex; gap:8px; padding-top:12px; border-top:1px solid var(--border); margin-top:auto; }
-.chat-input { flex:1; padding:11px 16px; background:var(--card); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:14px; outline:none; font-family:inherit; resize:none; min-height:44px; max-height:120px; }
-.chat-input:focus { border-color:var(--accent); }
-.chat-send { padding:0 18px; background:var(--accent); color:#fff; border:none; border-radius:10px; cursor:pointer; font-size:15px; font-weight:600; transition:all .15s; }
-.chat-send:hover { background:#6d28d9; }
-.chat-send:disabled { opacity:.4; cursor:not-allowed; }
-.log-area { flex:1; overflow-y:auto; min-height:0; }
-.log-entry { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:8px; }
-.log-entry .log-time { font-size:11px; color:var(--sub); margin-bottom:6px; }
-.log-entry .log-role { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
-.log-entry .log-role.role-user { color:var(--accent2); }
-.log-entry .log-role.role-taurus { color:#34d399; }
-.log-entry .log-text { font-size:13px; line-height:1.6; white-space:pre-wrap; word-break:break-word; }
-.log-clear { font-size:12px; color:var(--sub); background:none; border:1px solid var(--border); border-radius:6px; padding:4px 10px; cursor:pointer; font-family:inherit; }
-.log-clear:hover { color:var(--text); border-color:#3a3a3a; }
-
 ::-webkit-scrollbar { width:5px; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:#2a2a2a; border-radius:3px; }
@@ -291,7 +242,6 @@ select option { background:#1c1c1c; }
     <button class="nav-btn" onclick="go('week')"><span class="nav-icon">📅</span>Woche</button>
     <button class="nav-btn" onclick="go('thoughts')"><span class="nav-icon">💡</span>Thoughts<span class="badge" id="b-thoughts">0</span></button>
     <button class="nav-btn" onclick="go('snippets')"><span class="nav-icon">⌨</span>Snippets<span class="badge" id="b-snippets">0</span></button>
-    <button class="nav-btn" onclick="go('taurus')"><span class="nav-icon">🤖</span>Taurus<span class="badge" id="b-taurus" style="background:#10b981">0</span></button>
     <button class="nav-btn" onclick="go('settings')" style="margin-top:auto"><span class="nav-icon">⚙</span>Settings</button>
   </nav>
   <div class="sidebar-bottom">
@@ -352,7 +302,6 @@ select option { background:#1c1c1c; }
       <button class="ftab" onclick="setTaskFilter('open',this)">Offen</button>
       <button class="ftab" onclick="setTaskFilter('done',this)">Erledigt</button>
     </div>
-    <div class="ftabs" id="kat-ftabs"></div>
     <div id="tasks-list"></div>
   </div>
 
@@ -431,28 +380,6 @@ select option { background:#1c1c1c; }
     <div id="snippets-list"></div>
   </div>
 
-  <!-- TAURUS -->
-  <div class="tab-panel" id="tab-taurus">
-    <div class="taurus-wrap">
-      <div class="page-header header-row" style="margin-bottom:14px">
-        <div><h1>Taurus</h1><p>Dein AI-Agent auf dem VPS.</p></div>
-        <div class="taurus-status offline" id="taurus-status"><div class="dot"></div><span id="taurus-status-label">Offline</span></div>
-      </div>
-      <div class="taurus-tabs">
-        <button class="ftab active" id="tt-chat" onclick="setTaurusView('chat',this)">Chat</button>
-        <button class="ftab" id="tt-log" onclick="setTaurusView('log',this)">Activity Log<span class="badge" id="b-taurus-log" style="margin-left:6px;background:#10b981">0</span></button>
-        <button class="log-clear" onclick="clearTaurusLog()" style="margin-left:auto" title="Log leeren">Log leeren</button>
-      </div>
-      <div class="chat-area" id="taurus-chat">
-        <div class="empty" id="taurus-empty"><div class="empty-icon">🤖</div><h3>Taurus bereit</h3><p>Schreib eine Nachricht um loszulegen.</p></div>
-      </div>
-      <div class="log-area" id="taurus-log" style="display:none"></div>
-      <div class="chat-input-row">
-        <textarea class="chat-input" id="taurus-input" placeholder="Nachricht an Taurus..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();taurusSend()}"></textarea>
-        <button class="chat-send" id="taurus-send-btn" onclick="taurusSend()">→</button>
-      </div>
-    </div>
-  </div>
 
   <!-- SETTINGS -->
   <div class="tab-panel" id="tab-settings">
@@ -507,23 +434,6 @@ select option { background:#1c1c1c; }
       <div class="info-box info-green">✓ Dann diese URL auf dem Handy als Lesezeichen oder als Web-App zum Homescreen hinzufügen.</div>
     </div>
 
-    <!-- TAURUS -->
-    <div class="set-card">
-      <h3>Taurus (OpenClaw Agent)</h3>
-      <p>Verbinde MindDump mit deinem AI-Agenten auf dem VPS.</p>
-      <div class="form-row">
-        <input type="text" id="taurus-url-in" placeholder="http://localhost:18889" />
-      </div>
-      <div class="form-row">
-        <input type="password" id="taurus-token-in" placeholder="Gateway Token" />
-        <button class="btn btn-primary" onclick="saveTaurusConfig()" style="flex:0;white-space:nowrap">Speichern</button>
-      </div>
-      <div class="form-row" style="margin-top:4px">
-        <button class="btn btn-ghost btn-sm" onclick="testTaurusConnection()">Verbindung testen</button>
-        <span id="taurus-test-result" style="font-size:12px;color:var(--sub)"></span>
-      </div>
-      <div class="info-box info-purple">SSH-Tunnel muss laufen: localhost:18889 → VPS:18789</div>
-    </div>
 
     <!-- GOOGLE CALENDAR -->
     <div class="set-card">
@@ -578,25 +488,6 @@ let unsubListeners = [];
 
 const DAYS = ['So','Mo','Di','Mi','Do','Fr','Sa'];
 const MONTHS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-
-// === AUTO-KATEGORISIERUNG ===
-const KATEGORIEN = {
-  'geld':      ['geld','rechnung','taschengeld','bezahlen','abheben','überweisung','parkgebühr','einnahmen','ausgaben'],
-  'haushalt':  ['müll','wäsche','staub','saugen','aufräumen','bett','fenster','putzen','keller','zimmer','hygiene'],
-  'einkaufen': ['apotheke','medikament','kaufen','einkaufen','oral-b','bürste','supermarkt','shoppen'],
-  'business':  ['messe','unkraut','strom','vertrieb','kunden','angebot'],
-  'schule':    ['moodle','kurs','lern','schule','uni','studium'],
-  'tech':      ['claude','code','minddump','openclaw','api','cli','firebase','programmier','entwickl'],
-  'familie':   ['mama','mika','mutter','vater','familie','eltern'],
-};
-
-function autoKategorie(title, context) {
-  const text = (title + ' ' + (context || '')).toLowerCase();
-  for (const [kat, keywords] of Object.entries(KATEGORIEN)) {
-    if (keywords.some(kw => text.includes(kw))) return kat;
-  }
-  return 'sonstiges';
-}
 
 // ── LOCAL STORAGE ─────────────────────────────────────────────
 function loadLocal() {
@@ -766,7 +657,6 @@ function go(tab) {
   if(tab==='thoughts') renderThoughts();
   if(tab==='snippets') renderSnips();
   if(tab==='week') renderWeek();
-  if(tab==='taurus') { renderTaurusChat(); checkTaurusStatus(); }
 }
 
 function badges() {
@@ -921,7 +811,7 @@ async function saveSelected() {
   let nt=0, nth=0;
   (pendingResult.tasks||[]).forEach((t,i)=>{
     if(document.getElementById('dt-'+i)?.checked){
-      ps.push(fsAdd('tasks',{id:uid(),title:t.title,context:t.context||'',priority:t.priority||'mittel',kategorie:autoKategorie(t.title,t.context),dueDate:(t.dueDate&&t.dueDate!=='null')?t.dueDate:null,estimatedTime:(t.estimatedTime&&t.estimatedTime!=='null')?t.estimatedTime:null,done:false,createdAt:Date.now()}));
+      ps.push(fsAdd('tasks',{id:uid(),title:t.title,context:t.context||'',priority:t.priority||'mittel',dueDate:(t.dueDate&&t.dueDate!=='null')?t.dueDate:null,estimatedTime:(t.estimatedTime&&t.estimatedTime!=='null')?t.estimatedTime:null,done:false,createdAt:Date.now()}));
       nt++;
     }
   });
@@ -940,100 +830,34 @@ async function saveSelected() {
 }
 
 // ── TASKS ─────────────────────────────────────────────────────
-let taskKatFilter = 'alle';
-
 function setTaskFilter(f,el){ taskFilter=f; document.querySelectorAll('#tab-tasks .ftab').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderTasks(); }
-function setTaskKatFilter(k,el){ taskKatFilter=k; document.querySelectorAll('#kat-ftabs .ftab').forEach(b=>b.classList.remove('active')); if(el) el.classList.add('active'); renderTasks(); }
-
-const KAT_LABELS = {geld:'Geld',haushalt:'Haushalt',einkaufen:'Einkaufen',business:'Business',schule:'Schule',tech:'Tech',familie:'Familie',sonstiges:'Sonstiges'};
-const KAT_ICONS = {geld:'💰',haushalt:'🏠',einkaufen:'🛒',business:'💼',schule:'📚',tech:'💻',familie:'👨‍👩‍👦',sonstiges:'📋'};
-let katCollapsed = {};
-
-function toggleKatCollapse(k){ katCollapsed[k]=!katCollapsed[k]; renderTasks(); }
-
-function editKat(k){
-  const neu=prompt('Kategorie umbenennen:',KAT_LABELS[k]||k);
-  if(!neu||neu===k) return;
-  const slug=neu.toLowerCase().replace(/[^a-zäöüß]/g,'');
-  D.tasks.filter(t=>(t.kategorie||'sonstiges')===k).forEach(t=>{ t.kategorie=slug; });
-  if(currentUser&&db) D.tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
-  toast(`Kategorie umbenannt: ${KAT_LABELS[k]||k} → ${neu}`);
-  renderTasks();
-}
-
-function deleteKat(k){
-  const count=D.tasks.filter(t=>(t.kategorie||'sonstiges')===k&&!t.done).length;
-  if(!confirm(`${KAT_LABELS[k]||k} löschen? ${count} Task${count!==1?'s':''} wandern zu Sonstiges.`)) return;
-  D.tasks.filter(t=>(t.kategorie||'sonstiges')===k).forEach(t=>{ t.kategorie='sonstiges'; });
-  if(currentUser&&db) D.tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
-  toast(`${KAT_LABELS[k]||k} gelöscht — Tasks zu Sonstiges verschoben`);
-  renderTasks();
-}
 
 function renderTasks() {
   let list=[...D.tasks].sort((a,b)=>{ if(a.done!==b.done) return a.done?1:-1; const o={hoch:0,mittel:1,niedrig:2}; return (o[a.priority]??1)-(o[b.priority]??1); });
   if(taskFilter==='open') list=list.filter(t=>!t.done);
   if(taskFilter==='done') list=list.filter(t=>t.done);
-  if(taskKatFilter!=='alle') list=list.filter(t=>(t.kategorie||'sonstiges')===taskKatFilter);
-
-  // Kategorie-Filter rendern
-  const katCounts={};
-  D.tasks.filter(t=>!t.done).forEach(t=>{ const k=t.kategorie||'sonstiges'; katCounts[k]=(katCounts[k]||0)+1; });
-  const katOrder=['geld','haushalt','einkaufen','business','schule','tech','familie','sonstiges'];
-  const katFtabs=document.getElementById('kat-ftabs');
-  if(katFtabs){
-    katFtabs.innerHTML=`<button class=\"ftab ${taskKatFilter==='alle'?'active':''}\" onclick=\"setTaskKatFilter('alle',this)\">Alle</button>`+
-      katOrder.filter(k=>katCounts[k]).map(k=>`<button class=\"ftab ${taskKatFilter===k?'active':''}\" onclick=\"setTaskKatFilter('${k}',this)\">${KAT_ICONS[k]||''} ${KAT_LABELS[k]||k} (${katCounts[k]})</button>`).join('');
-  }
   const el=document.getElementById('tasks-list');
   if(!list.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">✓</div><h3>${taskFilter==='done'?'Noch nichts erledigt':'Keine offenen Tasks'}</h3><p>Brain Dump nutzen oder manuell hinzufügen.</p></div>`; return; }
-
-  // Gruppieren nach Kategorie
-  const grouped={};
-  list.forEach(t=>{ const k=t.kategorie||'sonstiges'; if(!grouped[k]) grouped[k]=[]; grouped[k].push(t); });
-
-  let html='';
-  katOrder.filter(k=>grouped[k]).forEach(k=>{
-    const items=grouped[k];
-    const collapsed=katCollapsed[k];
-    html+=`<div class="kat-group">
-      <div class="kat-header">
-        <span class="kat-arrow" onclick="toggleKatCollapse('${k}')">${collapsed?'▶':'▼'}</span>
-        <span class="kat-icon">${KAT_ICONS[k]||''}</span>
-        <span class="kat-name" onclick="toggleKatCollapse('${k}')">${KAT_LABELS[k]||k}</span>
-        <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
-        <span class="kat-actions">
-          <button class="icon-btn edit-btn" onclick="event.stopPropagation();editKat('${k}')" title="Umbenennen">✏</button>
-          <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Löschen">×</button>
-        </span>
-      </div>`;
-    if(!collapsed){
-      html+=items.map(t=>{
-        const pc='prio-'+(t.priority||'mittel').toLowerCase();
-        const kat=t.kategorie||'sonstiges';
-        return `<div class="task-card ${t.done?'done':''}">
-          <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
-          <div class="task-body">
-            <div class="task-title">${esc(t.title)}</div>
-            ${t.context?`<div class="task-ctx">${esc(t.context)}</div>`:''}
-            <div class="task-meta">
-              <span class="kat-badge kat-${kat}">${KAT_LABELS[kat]||kat}</span>
-              <span class="prio ${pc}">${t.priority||'mittel'}</span>
-              ${t.estimatedTime?`<span class="date-chip">⏱ ${esc(t.estimatedTime)}</span>`:''}
-              ${t.dueDate?`<span class="date-chip">📅 ${fmtDue(t.dueDate)}</span>`:''}
-              <span class="date-label">${fmtDate(t.createdAt)}</span>
-            </div>
-          </div>
-          <div class="card-actions">
-            <button class="icon-btn edit-btn" onclick="openEditTask('${t.id}')" title="Bearbeiten">✏</button>
-            <button class="icon-btn del" onclick="delTask('${t.id}')" title="Löschen">×</button>
-          </div>
-        </div>`;
-      }).join('');
-    }
-    html+='</div>';
-  });
-  el.innerHTML=html;
+  el.innerHTML=list.map(t=>{
+    const pc='prio-'+(t.priority||'mittel').toLowerCase();
+    return `<div class="task-card ${t.done?'done':''}">
+      <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
+      <div class="task-body">
+        <div class="task-title">${esc(t.title)}</div>
+        ${t.context?`<div class="task-ctx">${esc(t.context)}</div>`:''}
+        <div class="task-meta">
+          <span class="prio ${pc}">${t.priority||'mittel'}</span>
+          ${t.estimatedTime?`<span class="date-chip">⏱ ${esc(t.estimatedTime)}</span>`:''}
+          ${t.dueDate?`<span class="date-chip">📅 ${fmtDue(t.dueDate)}</span>`:''}
+          <span class="date-label">${fmtDate(t.createdAt)}</span>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="icon-btn" onclick="openEditTask('${t.id}')" title="Bearbeiten">✏</button>
+        <button class="icon-btn del" onclick="delTask('${t.id}')" title="Löschen">×</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 async function toggleTask(id){ const t=D.tasks.find(x=>x.id===id); if(t){t.done=!t.done;await fsUpdate('tasks',t);} }
@@ -1042,8 +866,7 @@ async function delTask(id){ await fsDel('tasks',id); toast('Task gelöscht'); }
 async function addTaskManual(){
   const title=document.getElementById('t-title').value.trim();
   if(!title){toast('Bitte Titel eingeben','err');return;}
-  const ctx=document.getElementById('t-ctx').value.trim();
-  await fsAdd('tasks',{id:uid(),title,context:ctx,priority:document.getElementById('t-prio').value,kategorie:autoKategorie(title,ctx),dueDate:document.getElementById('t-date').value||null,estimatedTime:document.getElementById('t-est').value.trim()||null,done:false,createdAt:Date.now()});
+  await fsAdd('tasks',{id:uid(),title,context:document.getElementById('t-ctx').value.trim(),priority:document.getElementById('t-prio').value,dueDate:document.getElementById('t-date').value||null,estimatedTime:document.getElementById('t-est').value.trim()||null,done:false,createdAt:Date.now()});
   document.getElementById('t-title').value=''; document.getElementById('t-ctx').value=''; document.getElementById('t-date').value=''; document.getElementById('t-est').value='';
   toggleForm('add-task-form'); toast('Task gespeichert!');
 }
@@ -1060,12 +883,9 @@ function openEditTask(id){
         <option value="mittel" ${t.priority==='mittel'?'selected':''}>Mittel</option>
         <option value="niedrig" ${t.priority==='niedrig'?'selected':''}>Niedrig</option>
       </select>
-      <select id="m-kat">
-        ${['geld','haushalt','einkaufen','business','schule','tech','familie','sonstiges'].map(k=>`<option value="${k}" ${(t.kategorie||'sonstiges')===k?'selected':''}>${k}</option>`).join('')}
-      </select>
+      <input type="date" id="m-date" value="${t.dueDate||''}" style="max-width:180px" />
     </div>
     <div class="form-row">
-      <input type="date" id="m-date" value="${t.dueDate||''}" style="max-width:180px" />
       <input type="text" id="m-est" value="${esc(t.estimatedTime||'')}" placeholder="Geschätzte Zeit (z.B. 30min, 2h)" />
     </div>
     <div class="form-row"><textarea class="form-ta" id="m-ctx">${esc(t.context)}</textarea></div>`;
@@ -1345,7 +1165,6 @@ async function saveModal(){
     const title=document.getElementById('m-title').value.trim();
     if(!title){toast('Titel darf nicht leer sein','err');return;}
     t.title=title; t.priority=document.getElementById('m-prio').value;
-    t.kategorie=document.getElementById('m-kat').value;
     t.context=document.getElementById('m-ctx').value.trim();
     t.dueDate=document.getElementById('m-date').value||null;
     t.estimatedTime=document.getElementById('m-est').value.trim()||null;
@@ -1408,190 +1227,6 @@ function clearAll(){
   }
 }
 
-// ── TAURUS ───────────────────────────────────────────────────
-let taurusView = 'chat';
-let taurusChat = JSON.parse(localStorage.getItem('md_taurus_chat')||'[]');
-let taurusLog = JSON.parse(localStorage.getItem('md_taurus_log')||'[]');
-let taurusBusy = false;
-
-function getTaurusConfig() {
-  const c = JSON.parse(localStorage.getItem('md_taurus_config')||'{}');
-  // Use /taurus proxy when served from minddump-server.py (same-origin, no CORS)
-  const defaultUrl = location.protocol === 'http:' ? location.origin + '/taurus' : (c.url||'http://localhost:8080/taurus');
-  return { url: c.url||defaultUrl, token: c.token||'9180ac92665faa0789ed95d995caf0dc39898cd99aac0888' };
-}
-
-function saveTaurusConfig() {
-  const url = document.getElementById('taurus-url-in').value.trim()||'http://localhost:18889';
-  const token = document.getElementById('taurus-token-in').value.trim();
-  localStorage.setItem('md_taurus_config', JSON.stringify({url,token}));
-  toast('Taurus Config gespeichert!');
-  checkTaurusStatus();
-}
-
-function loadTaurusSettings() {
-  const c = getTaurusConfig();
-  const u = document.getElementById('taurus-url-in');
-  const t = document.getElementById('taurus-token-in');
-  if(u) u.value = c.url;
-  if(t) t.value = c.token;
-}
-
-async function testTaurusConnection() {
-  const el = document.getElementById('taurus-test-result');
-  el.textContent = 'Teste...'; el.style.color = 'var(--sub)';
-  const ok = await checkTaurusStatus();
-  if(ok) { el.textContent = 'Verbunden!'; el.style.color = '#34d399'; }
-  else { el.textContent = 'Nicht erreichbar'; el.style.color = '#f87171'; }
-}
-
-async function checkTaurusStatus() {
-  const c = getTaurusConfig();
-  const el = document.getElementById('taurus-status');
-  const lbl = document.getElementById('taurus-status-label');
-  try {
-    const r = await fetch(c.url+'/health', {
-      headers: c.token ? {'Authorization':'Bearer '+c.token} : {},
-      signal: AbortSignal.timeout(4000)
-    });
-    if(r.ok) { el.className='taurus-status online'; lbl.textContent='Online'; return true; }
-    el.className='taurus-status offline'; lbl.textContent='Auth Fehler'; return false;
-  } catch(e) {
-    el.className='taurus-status offline'; lbl.textContent='Offline'; return false;
-  }
-}
-
-function setTaurusView(view, el) {
-  taurusView = view;
-  document.querySelectorAll('.taurus-tabs .ftab').forEach(b=>b.classList.remove('active'));
-  if(el) el.classList.add('active');
-  document.getElementById('taurus-chat').style.display = view==='chat'?'flex':'none';
-  document.getElementById('taurus-log').style.display = view==='log'?'block':'none';
-  if(view==='log') renderTaurusLog();
-}
-
-function renderTaurusChat() {
-  const el = document.getElementById('taurus-chat');
-  const empty = document.getElementById('taurus-empty');
-  if(!taurusChat.length) { empty.style.display='block'; el.innerHTML=''; el.appendChild(empty); return; }
-  empty.style.display='none';
-  el.innerHTML = taurusChat.map(m =>
-    `<div class="chat-msg ${m.role==='user'?'user':'bot'}${m.typing?' typing':''}">${m.typing?'Taurus denkt...':esc(m.content)}<span class="chat-time">${new Date(m.ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</span></div>`
-  ).join('');
-  el.scrollTop = el.scrollHeight;
-}
-
-function renderTaurusLog() {
-  const el = document.getElementById('taurus-log');
-  const badge = document.getElementById('b-taurus-log');
-  if(badge) badge.textContent = taurusLog.length;
-  if(!taurusLog.length) { el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><h3>Kein Activity Log</h3><p>Hier erscheinen alle Nachrichten mit Taurus.</p></div>'; return; }
-  el.innerHTML = [...taurusLog].reverse().map(m =>
-    `<div class="log-entry"><div class="log-time">${new Date(m.ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</div><div class="log-role ${m.role==='user'?'role-user':'role-taurus'}">${m.role==='user'?'Du':'Taurus'}</div><div class="log-text">${esc(m.content)}</div></div>`
-  ).join('');
-}
-
-function clearTaurusLog() {
-  if(!confirm('Activity Log wirklich leeren?')) return;
-  taurusLog = []; localStorage.setItem('md_taurus_log', '[]');
-  renderTaurusLog(); toast('Log geleert');
-}
-
-function saveTaurusChat() { localStorage.setItem('md_taurus_chat', JSON.stringify(taurusChat)); }
-function saveTaurusLog() { localStorage.setItem('md_taurus_log', JSON.stringify(taurusLog)); }
-
-function addToLog(role, content) {
-  taurusLog.push({role, content, ts:Date.now()});
-  if(taurusLog.length>200) taurusLog = taurusLog.slice(-200);
-  saveTaurusLog();
-  const badge = document.getElementById('b-taurus-log');
-  if(badge) badge.textContent = taurusLog.length;
-  const tbadge = document.getElementById('b-taurus');
-  if(tbadge && role==='bot') tbadge.textContent = taurusLog.filter(m=>m.role==='bot').length;
-}
-
-async function taurusSend() {
-  if(taurusBusy) return;
-  const input = document.getElementById('taurus-input');
-  const msg = input.value.trim();
-  if(!msg) return;
-
-  const c = getTaurusConfig();
-  if(!c.token) { toast('Bitte Taurus Token in Settings eintragen','err'); go('settings'); return; }
-
-  input.value = '';
-  input.style.height = 'auto';
-
-  taurusChat.push({role:'user', content:msg, ts:Date.now()});
-  addToLog('user', msg);
-  taurusChat.push({role:'bot', content:'', ts:Date.now(), typing:true});
-  saveTaurusChat();
-  renderTaurusChat();
-
-  taurusBusy = true;
-  document.getElementById('taurus-send-btn').disabled = true;
-
-  try {
-    const r = await fetch(c.url+'/v1/chat/completions', {
-      method:'POST',
-      headers: {
-        'Content-Type':'application/json',
-        'Authorization':'Bearer '+c.token
-      },
-      body: JSON.stringify({
-        messages: taurusChat.filter(m=>!m.typing).map(m=>({role:m.role==='user'?'user':'assistant',content:m.content})),
-        stream: true
-      })
-    });
-
-    if(!r.ok) {
-      const err = await r.text();
-      throw new Error('HTTP '+r.status+': '+err.slice(0,200));
-    }
-
-    const reader = r.body.getReader();
-    const decoder = new TextDecoder();
-    let botMsg = taurusChat[taurusChat.length-1];
-    botMsg.typing = false;
-    botMsg.content = '';
-    let buffer = '';
-
-    while(true) {
-      const {done, value} = await reader.read();
-      if(done) break;
-      buffer += decoder.decode(value, {stream:true});
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
-      for(const line of lines) {
-        if(!line.startsWith('data: ')) continue;
-        const data = line.slice(6).trim();
-        if(data==='[DONE]') continue;
-        try {
-          const j = JSON.parse(data);
-          const delta = j.choices?.[0]?.delta?.content;
-          if(delta) { botMsg.content += delta; renderTaurusChat(); }
-        } catch(e){}
-      }
-    }
-
-    if(!botMsg.content) botMsg.content = '(Keine Antwort)';
-    botMsg.ts = Date.now();
-    addToLog('bot', botMsg.content);
-    saveTaurusChat();
-    renderTaurusChat();
-
-  } catch(err) {
-    taurusChat.pop();
-    taurusChat.push({role:'bot', content:'Fehler: '+err.message, ts:Date.now()});
-    saveTaurusChat();
-    renderTaurusChat();
-    addToLog('bot', 'Fehler: '+err.message);
-  }
-
-  taurusBusy = false;
-  document.getElementById('taurus-send-btn').disabled = false;
-}
-
 // ── INIT ─────────────────────────────────────────────────────
 function init() {
   loadLocal();
@@ -1599,9 +1234,6 @@ function init() {
   updateApiIndicator();
   badges();
   renderUserArea();
-
-  // Taurus init
-  loadTaurusSettings();
 
   // Auto-connect Firebase (hardcoded config)
   try {
