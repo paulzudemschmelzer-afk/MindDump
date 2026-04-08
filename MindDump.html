@@ -1418,7 +1418,7 @@ function getTaurusConfig() {
   const c = JSON.parse(localStorage.getItem('md_taurus_config')||'{}');
   // Use /taurus proxy when served from minddump-server.py (same-origin, no CORS)
   const defaultUrl = location.protocol === 'http:' ? location.origin + '/taurus' : (c.url||'http://localhost:8080/taurus');
-  return { url: c.url||defaultUrl, token: c.token||'REDACTED_TOKEN' };
+  return { url: c.url||defaultUrl, token: c.token||'' };
 }
 
 function saveTaurusConfig() {
