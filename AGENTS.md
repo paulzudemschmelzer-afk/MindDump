@@ -5,6 +5,55 @@
 
 ---
 
+## 0. SESSION-START — Wenn der Nutzer "MindDump" erwähnt
+
+**Trigger-Phrasen** (Deutsch und Englisch), bei denen du sofort in den
+MindDump-Kontext wechseln sollst:
+- "Ich will an MindDump weiterarbeiten"
+- "Lass uns MindDump weitermachen"
+- "Mach was an MindDump"
+- "MindDump: ..."
+- "Arbeite an MindDump"
+- "I want to work on MindDump"
+- "Continue MindDump"
+- jede andere Erwähnung von **MindDump** im Kontext einer Aufgabe
+
+**Was du dann automatisch tust — in dieser Reihenfolge:**
+
+1. **Repo holen / aktualisieren**
+   ```bash
+   # Repo-URL: https://github.com/paulzudemschmelzer-afk/MindDump
+   # Wenn lokal noch nicht vorhanden:
+   git clone https://github.com/paulzudemschmelzer-afk/MindDump.git
+   cd MindDump
+   # Wenn schon vorhanden:
+   git fetch origin && git checkout main && git pull origin main
+   ```
+
+2. **Diese Anleitung lesen** — `AGENTS.md` komplett, besonders:
+   - Abschnitt 3 (Sicherheits-Regeln)
+   - Abschnitt 6 (Was NICHT ohne Rückfrage)
+
+3. **Letzte Änderungen verstehen** — `CHANGELOG.md` lesen, mindestens die
+   obersten 5 Einträge, damit du weißt was zuletzt passiert ist.
+
+4. **Kurz-Status ans User-Chat melden**, z.B.:
+   > "MindDump-Kontext geladen. Letzter Stand: <neuester CHANGELOG-Eintrag>.
+   > Aktueller Branch: <branch>. Was soll ich machen?"
+
+5. **Erst dann** auf den eigentlichen Task warten oder ihn ausführen.
+
+**Wenn du keine konkrete Aufgabe bekommst:**
+Frag explizit nach. Fang nicht von dir aus an, "Verbesserungen" zu machen.
+
+**Persistenz / Gedächtnis:**
+Du hast (wahrscheinlich) kein langfristiges Gedächtnis zwischen Sessions.
+Deshalb sind `AGENTS.md` und `CHANGELOG.md` dein **externes Gedächtnis** —
+beides liegt im Repo und ist immer aktuell. Lies sie bei jedem Session-Start
+neu, statt dich auf Erinnerungen zu verlassen.
+
+---
+
 ## 1. Projekt-Übersicht
 
 **MindDump** ist eine schlanke Single-File Web-App zur Verwaltung von Gedanken,
@@ -171,3 +220,26 @@ Wenn etwas schiefgeht (Token geleakt, Daten gelöscht, kaputter Commit auf `main
 3. Auf Anweisung warten
 
 Lieber einmal zu viel fragen als einmal zu wenig.
+
+---
+
+## 9. SESSION-ENDE — Bevor du eine MindDump-Session beendest
+
+Bevor du dem Nutzer "fertig" meldest, prüfe folgende Checkliste:
+
+- [ ] Alle gewünschten Änderungen sind gemacht und im Browser getestet
+- [ ] **Secret-Scan** lief sauber durch:
+      `grep -nE '(sk-[a-zA-Z0-9]{20,}|gsk_[a-zA-Z0-9]{20,}|[a-f0-9]{40,})' MindDump.html`
+- [ ] **CHANGELOG.md** hat einen neuen Eintrag (oben) für deine Änderung
+- [ ] Commit-Message ist beschreibend und kurz (≤70 Zeichen Titel)
+- [ ] Push ist erfolgreich auf den richtigen Branch (NICHT force-push auf `main`)
+- [ ] Kurze Zusammenfassung an den Nutzer mit:
+  - Was geändert wurde
+  - Welche Datei(en)
+  - Commit-Hash
+  - Eventuelle offene Punkte / nächste Schritte
+
+**Wenn die Session abgebrochen wird (Nutzer geht offline):**
+Lass keine halben Edits liegen. Entweder fertigmachen + committen, oder
+mit `git stash` zwischenparken und im nächsten Session-Start fortsetzen.
+Niemals halbfertigen Code auf `main` pushen.

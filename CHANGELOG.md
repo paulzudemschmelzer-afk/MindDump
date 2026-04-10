@@ -6,12 +6,25 @@
 
 ---
 
+## [2026-04-10] — AGENTS.md erweitert um Session-Start/Ende
+- **Geändert:** Neue Abschnitte 0 (Session-Start) und 9 (Session-Ende)
+  in `AGENTS.md`. Definiert Trigger-Phrasen wie "Ich will an MindDump
+  weiterarbeiten" und beschreibt was Taurus dann automatisch tun soll
+  (Repo pullen, AGENTS + CHANGELOG lesen, Status melden, dann auf Task warten)
+- **Warum:** Taurus hat kein langfristiges Gedächtnis zwischen Sessions —
+  AGENTS.md und CHANGELOG.md dienen als externes Gedächtnis und müssen
+  bei jedem Session-Start gelesen werden
+- **Agent:** Claude (Review-Session)
+- **Commit:** _(wird beim Commit ergänzt)_
+
+---
+
 ## [2026-04-10] — AGENTS.md & CHANGELOG.md angelegt
 - **Geändert:** Neue Dateien `AGENTS.md` und `CHANGELOG.md` im Repo-Root
 - **Warum:** Damit der Taurus Agent (OpenClaw) eine klare Anleitung hat,
   wie er sicher am Code arbeitet, ohne sensitive Informationen zu leaken
 - **Agent:** Claude (Review-Session)
-- **Commit:** _(wird beim Commit ergänzt)_
+- **Commit:** `c633a9e`
 
 ---
 
