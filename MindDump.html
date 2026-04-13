@@ -97,8 +97,10 @@ textarea::placeholder { color:#444; }
 /* HEUTE */
 .heute-drop { min-height:80px; border:2px dashed var(--border); border-radius:10px; padding:14px; margin-bottom:16px; transition:border-color .15s, background .15s; }
 .heute-drop.drag-over { border-color:var(--accent); background:rgba(124,58,237,.06); }
-.heute-task { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:13px 15px; margin-bottom:7px; display:flex; gap:11px; align-items:flex-start; cursor:grab; user-select:none; }
-.heute-task:active { cursor:grabbing; }
+.heute-task { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:13px 15px; margin-bottom:7px; display:flex; gap:11px; align-items:flex-start; }
+.heute-drag-handle { color:#3a3a3a; cursor:grab; padding:2px 4px; font-size:20px; display:flex; align-items:center; flex-shrink:0; touch-action:none; user-select:none; line-height:1; margin-top:2px; }
+.heute-drag-handle:hover { color:#666; }
+.heute-drag-handle:active { cursor:grabbing; color:var(--accent2); }
 .heute-task.done { opacity:.4; }
 .heute-task.done .task-title { text-decoration:line-through; }
 .heute-task.heute-drag-over { border-color:var(--accent2); background:rgba(124,58,237,.08); transform:translateY(2px); }
@@ -643,7 +645,7 @@ async function fsDel(colName, id) {
 }
 
 function rerender(colName) {
-  if(colName==='tasks') { renderTasks(); if(currentTab==='week') renderWeek(); }
+  if(colName==='tasks') { renderTasks(); if(currentTab==='week') renderWeek(); if(currentTab==='heute') renderHeute(); }
   if(colName==='thoughts') renderThoughts();
   if(colName==='snippets') renderSnips();
 }
@@ -1164,6 +1166,7 @@ function openEditTask(id){
 
 // ── HEUTE ─────────────────────────────────────────────────────
 let heuteDragId = null;
+let touchDragId = null, touchClone = null, touchDragEl = null, touchDragMoved = false;
 
 function heuteDragStart(e, id) {
   heuteDragId = id;
@@ -1171,20 +1174,70 @@ function heuteDragStart(e, id) {
   e.stopPropagation();
 }
 
+async function reorderHeuteTasks(dragId, targetId) {
+  const todayStr = new Date().toISOString().slice(0,10);
+  const sorted = D.tasks.filter(t=>t.forToday||t.dueDate===todayStr)
+    .sort((a,b)=>(a.heuteOrder??9999)-(b.heuteOrder??9999));
+  const origIdx = sorted.findIndex(t=>t.id===dragId);
+  const targetIdx = sorted.findIndex(t=>t.id===targetId);
+  const movingDown = origIdx < targetIdx;
+  const dragged = sorted[origIdx];
+  const list = sorted.filter(t=>t.id!==dragId);
+  const ti = list.findIndex(t=>t.id===targetId);
+  list.splice(movingDown ? ti+1 : ti, 0, dragged);
+  await Promise.all(list.map((t,i)=>{ t.heuteOrder=i*10; return fsUpdate('tasks',t); }));
+  renderHeute();
+}
+
 async function heuteDrop(e, targetId) {
   e.preventDefault(); e.stopPropagation();
   document.querySelectorAll('.heute-task').forEach(el=>el.classList.remove('heute-drag-over'));
   if(!heuteDragId || heuteDragId===targetId) { heuteDragId=null; return; }
-  const dragged = D.tasks.find(x=>x.id===heuteDragId);
-  if(!dragged) { heuteDragId=null; return; }
-  const todayStr = new Date().toISOString().slice(0,10);
-  let list = D.tasks.filter(t=>t.forToday||t.dueDate===todayStr)
-    .sort((a,b)=>(a.heuteOrder??9999)-(b.heuteOrder??9999));
-  list = list.filter(t=>t.id!==heuteDragId);
-  const ti = list.findIndex(t=>t.id===targetId);
-  list.splice(ti, 0, dragged);
-  await Promise.all(list.map((t,i)=>{ t.heuteOrder=i*10; return fsUpdate('tasks',t); }));
+  await reorderHeuteTasks(heuteDragId, targetId);
   heuteDragId = null;
+}
+
+function heuteTouchStart(e, id) {
+  touchDragId = id;
+  touchDragEl = e.currentTarget;
+  touchDragMoved = false;
+}
+
+function heuteTouchMove(e, id) {
+  if(!touchDragId) return;
+  touchDragMoved = true;
+  e.preventDefault();
+  const touch = e.touches[0];
+  if(!touchClone) {
+    const rect = touchDragEl.getBoundingClientRect();
+    touchClone = touchDragEl.cloneNode(true);
+    Object.assign(touchClone.style, {position:'fixed',left:rect.left+'px',top:rect.top+'px',width:rect.width+'px',opacity:'0.85',pointerEvents:'none',zIndex:'9999',boxShadow:'0 8px 24px rgba(0,0,0,.5)',borderColor:'var(--accent2)',borderStyle:'solid',borderWidth:'1px',borderRadius:'10px',transform:'scale(1.02)'});
+    document.body.appendChild(touchClone);
+    touchDragEl.style.opacity = '0.3';
+  }
+  const h = touchDragEl.getBoundingClientRect().height;
+  touchClone.style.top = (touch.clientY - h/2) + 'px';
+  touchClone.style.visibility = 'hidden';
+  const under = document.elementFromPoint(touch.clientX, touch.clientY);
+  touchClone.style.visibility = '';
+  document.querySelectorAll('.heute-task').forEach(el=>el.classList.remove('heute-drag-over'));
+  const target = under?.closest('[data-task-id]');
+  if(target && target.dataset.taskId !== touchDragId) target.classList.add('heute-drag-over');
+}
+
+async function heuteTouchEnd(e) {
+  if(!touchDragId) return;
+  const touch = e.changedTouches[0];
+  if(touchClone) { touchClone.remove(); touchClone = null; }
+  if(touchDragEl) { touchDragEl.style.opacity = ''; touchDragEl = null; }
+  document.querySelectorAll('.heute-task').forEach(el=>el.classList.remove('heute-drag-over'));
+  if(touchDragMoved) {
+    const under = document.elementFromPoint(touch.clientX, touch.clientY);
+    const target = under?.closest('[data-task-id]');
+    const targetId = target?.dataset.taskId;
+    if(targetId && targetId !== touchDragId) await reorderHeuteTasks(touchDragId, targetId);
+  }
+  touchDragId = null;
 }
 
 function renderHeute() {
@@ -1204,11 +1257,16 @@ function renderHeute() {
   el.innerHTML = list.map(t => {
     const pc = 'prio-'+(t.priority||'mittel').toLowerCase();
     return `<div class="heute-task ${t.done?'done':''}"
-      draggable="true"
-      ondragstart="heuteDragStart(event,'${t.id}')"
+      data-task-id="${t.id}"
       ondragover="event.preventDefault();event.stopPropagation();this.classList.add('heute-drag-over')"
-      ondragleave="this.classList.remove('heute-drag-over')"
+      ondragleave="if(!this.contains(event.relatedTarget))this.classList.remove('heute-drag-over')"
       ondrop="this.classList.remove('heute-drag-over');heuteDrop(event,'${t.id}')">
+      <div class="heute-drag-handle"
+        draggable="true"
+        ondragstart="heuteDragStart(event,'${t.id}')"
+        ontouchstart="heuteTouchStart(event,'${t.id}')"
+        ontouchmove="heuteTouchMove(event,'${t.id}')"
+        ontouchend="heuteTouchEnd(event)">⇅</div>
       <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
       <div class="task-body" style="flex:1">
         <div class="task-title">${esc(t.title)}</div>
@@ -1219,6 +1277,7 @@ function renderHeute() {
           ${t.recurrence?.type?`<span class="recur-badge">🔁 ${RECUR_LABELS[t.recurrence.type]}</span>`:''}
         </div>
       </div>
+      <button class="icon-btn" onclick="openEditTask('${t.id}')" title="Bearbeiten">✏</button>
       <button class="icon-btn del" onclick="removeFromHeute('${t.id}')" title="Von Heute entfernen" style="font-size:13px">☀</button>
     </div>`;
   }).join('');
@@ -1445,6 +1504,7 @@ function renderThoughts(){
       <div class="thought-text">${esc(t.content)}</div>
       <div class="card-actions" style="flex-shrink:0">
         <span class="date-label" style="margin-right:4px">${fmtDate(t.createdAt)}</span>
+        <button class="icon-btn" onclick="thoughtToTask('${t.id}')" title="Als Task speichern" style="font-size:13px">✓</button>
         <button class="icon-btn" onclick="openEditThought('${t.id}')" title="Bearbeiten">✏</button>
         <button class="icon-btn del" onclick="delThought('${t.id}')" title="Löschen">×</button>
       </div>
@@ -1465,6 +1525,13 @@ function setThoughtTopicStr(tp){
 }
 
 async function delThought(id){ await fsDel('thoughts',id); toast('Thought gelöscht'); }
+
+async function thoughtToTask(id) {
+  const t = D.thoughts.find(x=>x.id===id); if(!t) return;
+  await fsAdd('tasks', {id:uid(), title:t.content.slice(0,80), context:t.content.length>80?t.content:'', priority:'mittel', dueDate:null, estimatedTime:null, done:false, createdAt:Date.now()});
+  await fsDel('thoughts', id);
+  toast('Thought → Task umgewandelt!');
+}
 
 async function addThoughtManual(){
   const content=document.getElementById('th-text').value.trim();
