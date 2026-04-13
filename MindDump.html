@@ -1119,7 +1119,7 @@ function renderTaskCategoryTabs(katCounts = {}) {
   katFtabs.innerHTML =
     `<button class="ftab ${taskKatFilter==='alle'?'active':''}" onclick="setTaskKatFilter('alle',this)">Alle</button>` +
     katOrder.map(k =>
-      `<button class="ftab ${taskKatFilter===k?'active':''}" onclick="setTaskKatFilter('${k}',this)">${getTaskCategoryIcon(k)} ${esc(getTaskCategoryLabel(k))} (${katCounts[k]||0})</button>`
+      `<button class="ftab ${taskKatFilter===k?'active':''}" onclick="setTaskKatFilter('${k}',this)" oncontextmenu="renameTaskCategory('${k}'); return false;" title="Rechtsklick zum Umbenennen">${getTaskCategoryIcon(k)} ${esc(getTaskCategoryLabel(k))} (${katCounts[k]||0})</button>`
     ).join('') +
     `<button class="ftab" onclick="openNewTaskCategoryPrompt()">+ Kategorie</button>`;
 }
@@ -1209,8 +1209,8 @@ function renderTasks() {
     html+=`<div class="kat-group">
       <div class="kat-header">
         <span class="kat-arrow" onclick="toggleKatCollapse('${k}')">${collapsed?'▶':'▼'}</span>
-        <span class="kat-icon" onclick="event.stopPropagation();renameTaskCategory('${k}')" title="Klicken zum Umbenennen">${getTaskCategoryIcon(k)}</span>
-        <span class="kat-name" onclick="event.stopPropagation();renameTaskCategory('${k}')" title="Klicken zum Umbenennen">${esc(getTaskCategoryLabel(k))}</span>
+        <span class="kat-icon" onclick="renameTaskCategory('${k}')" title="Klicken zum Umbenennen">${getTaskCategoryIcon(k)}</span>
+        <span class="kat-name" onclick="renameTaskCategory('${k}')" title="Klicken zum Umbenennen">${esc(getTaskCategoryLabel(k))}</span>
         <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
         <span class="kat-actions">
           <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Löschen">×</button>
