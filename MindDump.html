@@ -624,7 +624,7 @@ select option { background:#1c1c1c; }
 <script>
 // ── STATE ─────────────────────────────────────────────────────
 let D = { tasks:[], thoughts:[], snippets:[] };
-let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{} };
+let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{} };
 let pendingResult = null;
 let taskFilter = 'all';
 let taskTagFilter = null;
@@ -752,6 +752,7 @@ function subscribeFS() {
     if(doc.exists && doc.data().taskCategoryLabels && typeof doc.data().taskCategoryLabels === 'object') S.taskCategoryLabels = doc.data().taskCategoryLabels;
     if(doc.exists && Array.isArray(doc.data().taskCategoryOrder)) S.taskCategoryOrder = doc.data().taskCategoryOrder;
     if(doc.exists && doc.data().taskCategoryShowSubsCollapsed && typeof doc.data().taskCategoryShowSubsCollapsed === 'object') S.taskCategoryShowSubsCollapsed = doc.data().taskCategoryShowSubsCollapsed;
+    if(doc.exists && doc.data().taskCategoryParents && typeof doc.data().taskCategoryParents === 'object') S.taskCategoryParents = doc.data().taskCategoryParents;
     ensureTaskCategorySettings();
     saveSettings();
     renderTaskCategoryInputs();
@@ -1116,9 +1117,58 @@ function decodeDataValue(v){ try { return decodeURIComponent(v||''); } catch(e){
 function toggleSubkatCollapseFromEl(el){ if(!el) return; toggleSubkatCollapse(el.dataset.parentKey, decodeDataValue(el.dataset.subkey)); }
 function subkatDragStartFromEl(e,el){ if(!el) return; subkatDragStart(e, el.dataset.parentKey, decodeDataValue(el.dataset.subkey)); }
 function subkatTouchStartFromEl(e,el){ if(!el) return; katTouchStart(e, 'subkat', el.dataset.parentKey, decodeDataValue(el.dataset.subkey)); }
-function renameSubcategoryFromEl(el){ if(!el) return; renameSubcategory(el.dataset.parentKey, decodeDataValue(el.dataset.subkey)); }
-function restoreSubToKatFromEl(el){ if(!el) return; restoreSubToKat(el.dataset.parentKey, decodeDataValue(el.dataset.subkey)); }
-function deleteSubcategoryFromEl(el){ if(!el) return; deleteSubcategory(el.dataset.parentKey, decodeDataValue(el.dataset.subkey)); }
+function renameSubcategoryFromEl(el){
+  if(!el) return;
+  const parentKey=el.dataset.parentKey;
+  const subName=decodeDataValue(el.dataset.subkey);
+  const childKey=el.dataset.childKey||'';
+  if(childKey){
+    const current=getTaskCategoryLabel(childKey);
+    const next=prompt(`Subkategorie umbenennen:\n"${current}" → neuer Name:`, current);
+    if(!next || next.trim()==='' || next.trim()===current) return;
+    const newName=next.trim();
+    D.tasks.filter(t=>(t.kategorie||'sonstiges')===parentKey && t.subkategorie===current).forEach(t=>{ t.subkategorie=newName; });
+    registerTaskCategory(newName, childKey);
+    if(subkatCollapsed[parentKey+'::'+current]!==undefined){
+      subkatCollapsed[parentKey+'::'+newName]=subkatCollapsed[parentKey+'::'+current];
+      delete subkatCollapsed[parentKey+'::'+current];
+    }
+    const affected=D.tasks.filter(t=>(t.kategorie||'sonstiges')===parentKey && t.subkategorie===newName);
+    Promise.all(affected.map(t=>fsUpdate('tasks',t))).then(()=>{ renderTasks(); toast(`"${current}" → "${newName}"`); });
+    return;
+  }
+  renameSubcategory(parentKey, subName);
+}
+
+function restoreSubToKatFromEl(el){
+  if(!el) return;
+  const parentKey=el.dataset.parentKey;
+  const subName=decodeDataValue(el.dataset.subkey);
+  const childKey=el.dataset.childKey||'';
+  const targetKey=childKey || normalizeCategoryKey(subName);
+  if(!targetKey){ toast('Ungültiger Name','err'); return; }
+  const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===parentKey && t.subkategorie===subName);
+  tasks.forEach(t=>{ t.kategorie=targetKey; t.subkategorie=null; });
+  registerTaskCategory(subName, targetKey);
+  delete S.taskCategoryParents[targetKey];
+  saveSettings();
+  saveTaskCategoriesToFirebase();
+  Promise.all(tasks.map(t=>fsUpdate('tasks',t))).then(()=>{ renderTasks(); toast(`"${subName}" → eigene Kategorie (${tasks.length} Tasks)`); });
+}
+
+function deleteSubcategoryFromEl(el){
+  if(!el) return;
+  const parentKey=el.dataset.parentKey;
+  const subName=decodeDataValue(el.dataset.subkey);
+  const childKey=el.dataset.childKey||'';
+  const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===parentKey && t.subkategorie===subName);
+  if(!confirm(`Subkategorie "${subName}" auflösen? ${tasks.length} Task${tasks.length!==1?'s':''} bleiben in ${getTaskCategoryLabel(parentKey)}.`)) return;
+  tasks.forEach(t=>{ t.subkategorie=null; });
+  if(childKey) delete S.taskCategoryParents[childKey];
+  saveSettings();
+  saveTaskCategoriesToFirebase();
+  Promise.all(tasks.map(t=>fsUpdate('tasks',t))).then(()=>{ renderTasks(); toast(`Subkategorie "${subName}" aufgelöst`); });
+}
 
 function getExistingSubcategories(kat) {
   const subs=new Set();
@@ -1150,6 +1200,7 @@ function ensureTaskCategorySettings() {
   if(!S.taskCategoryLabels || typeof S.taskCategoryLabels !== 'object') S.taskCategoryLabels = {};
   if(!Array.isArray(S.taskCategoryOrder)) S.taskCategoryOrder = [];
   if(!S.taskCategoryShowSubsCollapsed || typeof S.taskCategoryShowSubsCollapsed !== 'object') S.taskCategoryShowSubsCollapsed = {};
+  if(!S.taskCategoryParents || typeof S.taskCategoryParents !== 'object') S.taskCategoryParents = {};
 }
 
 function syncTaskCategoryOrder(knownList=null) {
@@ -1185,10 +1236,25 @@ function getKnownTaskCategories() {
   return S.taskCategoryOrder.filter(k => known.includes(k));
 }
 
+function getTopLevelTaskCategories() {
+  ensureTaskCategorySettings();
+  return getKnownTaskCategories().filter(k => !S.taskCategoryParents[k]);
+}
+
+function getChildCategoryKeys(parentKey) {
+  ensureTaskCategorySettings();
+  return getKnownTaskCategories().filter(k => S.taskCategoryParents[k] === parentKey);
+}
+
+function findChildCategoryKey(parentKey, subName) {
+  const normalized = (subName||'').trim().toLowerCase();
+  return getChildCategoryKeys(parentKey).find(k => getTaskCategoryLabel(k).trim().toLowerCase() === normalized) || null;
+}
+
 function renderTaskCategoryOptions(selected='sonstiges', includeAuto=false) {
   const options = [];
   if(includeAuto) options.push(`<option value="auto" ${selected==='auto'?'selected':''}>Automatisch</option>`);
-  getKnownTaskCategories().forEach(k => {
+  getTopLevelTaskCategories().forEach(k => {
     options.push(`<option value="${k}" ${selected===k?'selected':''}>${esc(getTaskCategoryLabel(k))}</option>`);
   });
   return options.join('');
@@ -1227,7 +1293,8 @@ function saveTaskCategoriesToFirebase() {
     taskCategories: S.taskCategories,
     taskCategoryLabels: S.taskCategoryLabels,
     taskCategoryOrder: S.taskCategoryOrder,
-    taskCategoryShowSubsCollapsed: S.taskCategoryShowSubsCollapsed
+    taskCategoryShowSubsCollapsed: S.taskCategoryShowSubsCollapsed,
+    taskCategoryParents: S.taskCategoryParents
   }, { merge: true });
 }
 
@@ -1252,6 +1319,8 @@ function removeStoredTaskCategory(key) {
   S.taskCategoryOrder = S.taskCategoryOrder.filter(k => k !== key);
   delete S.taskCategoryLabels[key];
   delete S.taskCategoryShowSubsCollapsed[key];
+  delete S.taskCategoryParents[key];
+  Object.keys(S.taskCategoryParents).forEach(childKey=>{ if(S.taskCategoryParents[childKey]===key) delete S.taskCategoryParents[childKey]; });
   saveSettings();
   saveTaskCategoriesToFirebase();
   renderTaskCategoryInputs();
@@ -1275,7 +1344,7 @@ function openNewTaskCategoryPrompt(selectId='') {
 function renderTaskCategoryTabs(katCounts = {}) {
   const katFtabs = document.getElementById('kat-ftabs');
   if (!katFtabs) return;
-  const katOrder = getKnownTaskCategories();
+  const katOrder = getTopLevelTaskCategories();
   katFtabs.innerHTML =
     `<button class="ftab ${taskKatFilter==='alle'?'active':''}" onclick="setTaskKatFilter('alle',this)">Alle</button>` +
     katOrder.map(k =>
@@ -1420,9 +1489,10 @@ function katBodyDrop(e, host, targetK){
 function makeKatSubOf(srcK, targetK){
   const srcLabel=getTaskCategoryLabel(srcK);
   const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===srcK);
-  if(!tasks.length){toast('Keine Tasks zum Verschieben','err');return;}
+  S.taskCategoryParents[srcK]=targetK;
+  saveSettings();
+  saveTaskCategoriesToFirebase();
   tasks.forEach(t=>{ t.kategorie=targetK; t.subkategorie=srcLabel; });
-  removeStoredTaskCategory(srcK);
   katCollapsed[targetK]=true;
   subkatCollapsed[targetK+'::'+srcLabel]=true;
   S.taskCategoryShowSubsCollapsed[targetK]=true;
@@ -1778,15 +1848,16 @@ function renderTaskCard(t) {
   </div>`;
 }
 
-function renderSubcategoryGroup(k, sk, subItems) {
+function renderSubcategoryGroup(k, sk, subItems, childKey='') {
   const skKey=k+'::'+sk;
   const skCollapsed=subkatCollapsed[skKey]!==false;
   const subKey=encodeURIComponent(sk);
+  const childAttr=childKey?` data-child-key="${childKey}"`:'';
   let html=`<div class="subkat-group" data-subkat="${esc(sk)}" data-parent="${k}"
     ondragover="katBodyDragOver(event,this,'${k}')"
     ondragleave="if(!this.contains(event.relatedTarget))clearKatDropStates()"
     ondrop="katBodyDrop(event,this,'${k}')">
-    <div class="subkat-header" data-parent-key="${k}" data-subkey="${subKey}" onclick="toggleSubkatCollapseFromEl(this)">
+    <div class="subkat-header" data-parent-key="${k}" data-subkey="${subKey}"${childAttr} onclick="toggleSubkatCollapseFromEl(this)">
       <div class="heute-drag-handle"
         draggable="true"
         ondragstart="subkatDragStartFromEl(event,this.parentElement)"
@@ -1803,7 +1874,9 @@ function renderSubcategoryGroup(k, sk, subItems) {
         <button class="icon-btn del" onclick="event.stopPropagation();deleteSubcategoryFromEl(this.parentElement.parentElement)" title="Aufloesen">×</button>
       </span>
     </div>`;
-  if(!skCollapsed) html+=subItems.map(t=>renderTaskCard(t)).join('');
+  if(!skCollapsed){
+    html+=subItems.length ? subItems.map(t=>renderTaskCard(t)).join('') : `<div class="kat-empty">Keine Tasks in dieser Subkategorie.</div>`;
+  }
   html+='</div>';
   return html;
 }
@@ -1829,7 +1902,7 @@ function renderTasks() {
 
   renderTagFilterRow();
   // Kategorie-Filter rendern
-  const katOrder = getKnownTaskCategories();
+  const katOrder = getTopLevelTaskCategories();
   const countSource = D.tasks.filter(t => {
     if (taskFilter === 'open') return !t.done;
     if (taskFilter === 'done') return t.done;
@@ -1844,7 +1917,7 @@ function renderTasks() {
   // Gruppieren nach Kategorie
   const grouped={};
   list.forEach(t=>{ const k=t.kategorie||'sonstiges'; if(!grouped[k]) grouped[k]=[]; grouped[k].push(t); });
-  const visibleCategories = taskKatFilter==='alle' ? katOrder : [taskKatFilter];
+  const visibleCategories = taskKatFilter==='alle' ? katOrder : [taskKatFilter].filter(k=>katOrder.includes(k));
 
   let html='';
   visibleCategories.forEach(k=>{
@@ -1876,15 +1949,16 @@ function renderTasks() {
     const noSub=items.filter(t=>!t.subkategorie);
     const subGroups={};
     items.filter(t=>t.subkategorie).forEach(t=>{ if(!subGroups[t.subkategorie]) subGroups[t.subkategorie]=[]; subGroups[t.subkategorie].push(t); });
-    const subNames=Object.keys(subGroups).sort();
+    const childKeys=getChildCategoryKeys(k);
+    const subNames=[...new Set([...Object.keys(subGroups), ...childKeys.map(childKey=>getTaskCategoryLabel(childKey))])].sort();
     if(!collapsed){
-      if(!items.length) html+=`<div class="kat-empty">Keine Tasks in dieser Kategorie.</div>`;
+      if(!items.length && !subNames.length) html+=`<div class="kat-empty">Keine Tasks in dieser Kategorie.</div>`;
       else {
         html+=noSub.map(t=>renderTaskCard(t)).join('');
-        subNames.forEach(sk=>{ html+=renderSubcategoryGroup(k, sk, subGroups[sk]); });
+        subNames.forEach(sk=>{ html+=renderSubcategoryGroup(k, sk, subGroups[sk]||[], findChildCategoryKey(k, sk)||''); });
       }
     } else if(showSubsWhileCollapsed && subNames.length){
-      subNames.forEach(sk=>{ html+=renderSubcategoryGroup(k, sk, subGroups[sk]); });
+      subNames.forEach(sk=>{ html+=renderSubcategoryGroup(k, sk, subGroups[sk]||[], findChildCategoryKey(k, sk)||''); });
     }
     html+='</div>';
   });
@@ -2487,7 +2561,8 @@ function exportData(){
     taskCategories:S.taskCategories||[],
     taskCategoryLabels:S.taskCategoryLabels||{},
     taskCategoryOrder:S.taskCategoryOrder||[],
-    taskCategoryShowSubsCollapsed:S.taskCategoryShowSubsCollapsed||{}
+    taskCategoryShowSubsCollapsed:S.taskCategoryShowSubsCollapsed||{},
+    taskCategoryParents:S.taskCategoryParents||{}
   }},null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download='minddump-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url);
@@ -2512,6 +2587,7 @@ function importData(e){
         if(imp.meta?.taskCategoryLabels && typeof imp.meta.taskCategoryLabels === 'object') S.taskCategoryLabels = imp.meta.taskCategoryLabels;
         if(Array.isArray(imp.meta?.taskCategoryOrder)) S.taskCategoryOrder = imp.meta.taskCategoryOrder;
         if(imp.meta?.taskCategoryShowSubsCollapsed && typeof imp.meta.taskCategoryShowSubsCollapsed === 'object') S.taskCategoryShowSubsCollapsed = imp.meta.taskCategoryShowSubsCollapsed;
+        if(imp.meta?.taskCategoryParents && typeof imp.meta.taskCategoryParents === 'object') S.taskCategoryParents = imp.meta.taskCategoryParents;
         ensureTaskCategorySettings();
         saveSettings();
         saveTaskCategoriesToFirebase();
@@ -2524,6 +2600,7 @@ function importData(e){
         if(imp.meta?.taskCategoryLabels && typeof imp.meta.taskCategoryLabels === 'object') S.taskCategoryLabels = imp.meta.taskCategoryLabels;
         if(Array.isArray(imp.meta?.taskCategoryOrder)) S.taskCategoryOrder = imp.meta.taskCategoryOrder;
         if(imp.meta?.taskCategoryShowSubsCollapsed && typeof imp.meta.taskCategoryShowSubsCollapsed === 'object') S.taskCategoryShowSubsCollapsed = imp.meta.taskCategoryShowSubsCollapsed;
+        if(imp.meta?.taskCategoryParents && typeof imp.meta.taskCategoryParents === 'object') S.taskCategoryParents = imp.meta.taskCategoryParents;
         ensureTaskCategorySettings();
         saveSettings();
         renderTaskCategoryInputs();
