@@ -378,6 +378,7 @@ select option { background:#1c1c1c; }
       <button class="ftab" onclick="setTaskFilter('open',this)">Offen</button>
       <button class="ftab" onclick="setTaskFilter('done',this)">Erledigt</button>
     </div>
+    <div class="ftabs" id="task-sort-tabs"></div>
     <div class="ftabs" id="kat-ftabs"></div>
     <div id="tasks-list"></div>
   </div>
@@ -999,9 +1000,11 @@ async function saveSelected() {
 
 // ── TASKS ─────────────────────────────────────────────────────
 let taskKatFilter = 'alle';
+let taskSortMode = 'priority';
 
 function setTaskFilter(f,el){ taskFilter=f; document.querySelectorAll('#tab-tasks .ftab').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderTasks(); }
 function setTaskKatFilter(k,el){ taskKatFilter=k; document.querySelectorAll('#kat-ftabs .ftab').forEach(b=>b.classList.remove('active')); if(el) el.classList.add('active'); renderTasks(); }
+function setTaskSort(mode, el){ taskSortMode=mode; document.querySelectorAll('#task-sort-tabs .ftab').forEach(b=>b.classList.remove('active')); if(el) el.classList.add('active'); renderTasks(); }
 
 const KAT_LABELS = {geld:'Geld',haushalt:'Haushalt',einkaufen:'Einkaufen',business:'Business',schule:'Schule',tech:'Tech',familie:'Familie',sonstiges:'Sonstiges'};
 const KAT_ICONS = {geld:'💰',haushalt:'🏠',einkaufen:'🛒',business:'💼',schule:'📚',tech:'💻',familie:'👨‍👩‍👦',sonstiges:'📋'};
@@ -1118,6 +1121,19 @@ function renderTaskCategoryTabs(katCounts = {}) {
     `<button class="ftab" onclick="openNewTaskCategoryPrompt()">+ Kategorie</button>`;
 }
 
+function renderTaskSortTabs() {
+  const tabs = document.getElementById('task-sort-tabs');
+  if(!tabs) return;
+  const sorts = [
+    { id:'priority', label:'Prioritaet' },
+    { id:'newest', label:'Neueste' },
+    { id:'oldest', label:'Aelteste' }
+  ];
+  tabs.innerHTML = sorts.map(sort =>
+    `<button class="ftab ${taskSortMode===sort.id?'active':''}" onclick="setTaskSort('${sort.id}',this)">${sort.label}</button>`
+  ).join('');
+}
+
 function editKat(k){
   const neu=prompt('Kategorie umbenennen:',getTaskCategoryLabel(k));
   if(!neu||neu===k) return;
@@ -1143,7 +1159,15 @@ function deleteKat(k){
 }
 
 function renderTasks() {
-  let list=[...D.tasks].sort((a,b)=>{ if(a.done!==b.done) return a.done?1:-1; const o={hoch:0,mittel:1,niedrig:2}; return (o[a.priority]??1)-(o[b.priority]??1); });
+  let list=[...D.tasks].sort((a,b)=>{
+    if(a.done!==b.done) return a.done?1:-1;
+    if(taskSortMode==='newest') return (b.createdAt??0)-(a.createdAt??0);
+    if(taskSortMode==='oldest') return (a.createdAt??0)-(b.createdAt??0);
+    const o={hoch:0,mittel:1,niedrig:2};
+    const prio=(o[a.priority]??1)-(o[b.priority]??1);
+    if(prio!==0) return prio;
+    return (b.createdAt??0)-(a.createdAt??0);
+  });
   if(taskFilter==='open') list=list.filter(t=>!t.done);
   if(taskFilter==='done') list=list.filter(t=>t.done);
   if(taskKatFilter!=='alle') list=list.filter(t=>(t.kategorie||'sonstiges')===taskKatFilter);
@@ -1157,6 +1181,7 @@ function renderTasks() {
   });
   const katCounts={};
   countSource.forEach(t=>{ const k=t.kategorie||'sonstiges'; katCounts[k]=(katCounts[k]||0)+1; });
+  renderTaskSortTabs();
   renderTaskCategoryTabs(katCounts);
   const el=document.getElementById('tasks-list');
 
