@@ -93,6 +93,14 @@ textarea::placeholder { color:#444; }
 .date-chip { font-size:11px; color:var(--accent2); background:rgba(124,58,237,.12); padding:2px 7px; border-radius:4px; }
 .date-label { font-size:11px; color:#444; }
 .recur-badge { font-size:11px; padding:2px 7px; border-radius:4px; background:rgba(16,185,129,.1); color:#34d399; }
+
+/* HEUTE */
+.heute-drop { min-height:80px; border:2px dashed var(--border); border-radius:10px; padding:14px; margin-bottom:16px; transition:border-color .15s, background .15s; }
+.heute-drop.drag-over { border-color:var(--accent); background:rgba(124,58,237,.06); }
+.heute-task { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:13px 15px; margin-bottom:7px; display:flex; gap:11px; align-items:flex-start; }
+.heute-task.done { opacity:.4; }
+.heute-task.done .task-title { text-decoration:line-through; }
+.heute-empty-drop { text-align:center; padding:18px; color:#444; font-size:13px; pointer-events:none; }
 .kat-badge { font-size:11px; padding:2px 8px; border-radius:4px; font-weight:500; cursor:pointer; }
 .kat-geld { background:rgba(245,158,11,.12); color:#fbbf24; }
 .kat-haushalt { background:rgba(16,185,129,.12); color:#34d399; }
@@ -289,6 +297,7 @@ select option { background:#1c1c1c; }
   <nav>
     <button class="nav-btn active" onclick="go('braindump')"><span class="nav-icon">⚡</span>Brain Dump</button>
     <button class="nav-btn" onclick="go('tasks')"><span class="nav-icon">✓</span>Tasks<span class="badge" id="b-tasks">0</span></button>
+    <button class="nav-btn" onclick="go('heute')"><span class="nav-icon">☀</span>Heute<span class="badge" id="b-heute" style="background:#f59e0b">0</span></button>
     <button class="nav-btn" onclick="go('week')"><span class="nav-icon">📅</span>Woche</button>
     <button class="nav-btn" onclick="go('thoughts')"><span class="nav-icon">💡</span>Thoughts<span class="badge" id="b-thoughts">0</span></button>
     <button class="nav-btn" onclick="go('snippets')"><span class="nav-icon">⌨</span>Snippets<span class="badge" id="b-snippets">0</span></button>
@@ -363,6 +372,20 @@ select option { background:#1c1c1c; }
     </div>
     <div class="ftabs" id="kat-ftabs"></div>
     <div id="tasks-list"></div>
+  </div>
+
+  <!-- HEUTE -->
+  <div class="tab-panel" id="tab-heute">
+    <div class="page-header header-row">
+      <div><h1>Heute</h1><p>Dein Fokus für heute — Tasks reinziehen oder per ☀ markieren.</p></div>
+      <button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>
+    </div>
+    <div class="heute-drop" id="heute-drop"
+      ondragover="event.preventDefault();document.getElementById('heute-drop').classList.add('drag-over')"
+      ondragleave="document.getElementById('heute-drop').classList.remove('drag-over')"
+      ondrop="dropHeute(event)">
+      <div id="heute-list"></div>
+    </div>
   </div>
 
   <!-- WEEK CALENDAR -->
@@ -764,6 +787,7 @@ function go(tab) {
   document.querySelectorAll('.nav-btn').forEach(b=>{ if(b.getAttribute('onclick').includes("'"+tab+"'")) b.classList.add('active'); });
   currentTab=tab;
   if(tab==='tasks') renderTasks();
+  if(tab==='heute') renderHeute();
   if(tab==='thoughts') renderThoughts();
   if(tab==='snippets') renderSnips();
   if(tab==='week') renderWeek();
@@ -774,6 +798,8 @@ function badges() {
   document.getElementById('b-tasks').textContent=D.tasks.filter(t=>!t.done).length;
   document.getElementById('b-thoughts').textContent=D.thoughts.length;
   document.getElementById('b-snippets').textContent=D.snippets.length;
+  const todayStr=new Date().toISOString().slice(0,10);
+  document.getElementById('b-heute').textContent=D.tasks.filter(t=>!t.done&&(t.forToday||t.dueDate===todayStr)).length;
 }
 
 function updateApiIndicator() {
@@ -1027,6 +1053,7 @@ function renderTasks() {
             </div>
           </div>
           <div class="card-actions">
+            <button class="icon-btn" onclick="toggleForToday('${t.id}')" title="${t.forToday?'Von Heute entfernen':'Für heute markieren'}" style="color:${t.forToday?'#f59e0b':'#555'}">☀</button>
             <button class="icon-btn edit-btn" onclick="openEditTask('${t.id}')" title="Bearbeiten">✏</button>
             <button class="icon-btn del" onclick="delTask('${t.id}')" title="Löschen">×</button>
           </div>
@@ -1057,6 +1084,14 @@ async function toggleTask(id) {
   }
 }
 async function delTask(id){ await fsDel('tasks',id); toast('Task gelöscht'); }
+
+async function toggleForToday(id) {
+  const t = D.tasks.find(x => x.id === id);
+  if(!t) return;
+  t.forToday = !t.forToday;
+  await fsUpdate('tasks', t);
+  toast(t.forToday ? '☀ Zu Heute hinzugefügt' : 'Von Heute entfernt');
+}
 
 async function addTaskManual(){
   const title=document.getElementById('t-title').value.trim();
@@ -1101,6 +1136,65 @@ function openEditTask(id){
     <div class="form-row"><textarea class="form-ta" id="m-ctx">${esc(t.context)}</textarea></div>`;
   document.getElementById('modal').style.display='flex';
   setTimeout(()=>document.getElementById('m-title').focus(),50);
+}
+
+// ── HEUTE ─────────────────────────────────────────────────────
+function renderHeute() {
+  const todayStr = new Date().toISOString().slice(0,10);
+  const list = D.tasks.filter(t => t.forToday || t.dueDate === todayStr)
+    .sort((a,b) => { if(a.done!==b.done) return a.done?1:-1; const o={hoch:0,mittel:1,niedrig:2}; return (o[a.priority]??1)-(o[b.priority]??1); });
+  const el = document.getElementById('heute-list');
+  if(!list.length) {
+    el.innerHTML='<div class="heute-empty-drop">Tasks hierher ziehen oder per ☀ in der Task-Liste markieren</div>';
+    return;
+  }
+  el.innerHTML = list.map(t => {
+    const pc = 'prio-'+(t.priority||'mittel').toLowerCase();
+    return `<div class="heute-task ${t.done?'done':''}">
+      <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
+      <div class="task-body" style="flex:1">
+        <div class="task-title">${esc(t.title)}</div>
+        ${t.context?`<div class="task-ctx">${esc(t.context)}</div>`:''}
+        <div class="task-meta">
+          <span class="prio ${pc}">${t.priority||'mittel'}</span>
+          ${t.estimatedTime?`<span class="date-chip">⏱ ${esc(t.estimatedTime)}</span>`:''}
+          ${t.recurrence?.type?`<span class="recur-badge">🔁 ${RECUR_LABELS[t.recurrence.type]}</span>`:''}
+        </div>
+      </div>
+      <button class="icon-btn del" onclick="removeFromHeute('${t.id}')" title="Von Heute entfernen" style="font-size:13px">☀</button>
+    </div>`;
+  }).join('');
+  badges();
+}
+
+async function dropHeute(e) {
+  e.preventDefault();
+  document.getElementById('heute-drop').classList.remove('drag-over');
+  if(!draggedTaskId) return;
+  const t = D.tasks.find(x => x.id === draggedTaskId);
+  if(!t) return;
+  t.forToday = true;
+  await fsUpdate('tasks', t);
+  draggedTaskId = null;
+  renderHeute();
+}
+
+async function removeFromHeute(id) {
+  const t = D.tasks.find(x => x.id === id);
+  if(!t) return;
+  const todayStr = new Date().toISOString().slice(0,10);
+  // Only remove forToday flag; if it's due today by date we leave it alone
+  if(t.forToday) { t.forToday = false; await fsUpdate('tasks', t); }
+  renderHeute();
+}
+
+async function clearHeute() {
+  if(!confirm('Heute-Liste leeren? (Tasks bleiben erhalten)')) return;
+  const todayStr = new Date().toISOString().slice(0,10);
+  const ps = D.tasks.filter(t => t.forToday).map(t => { t.forToday=false; return fsUpdate('tasks',t); });
+  await Promise.all(ps);
+  renderHeute();
+  toast('Heute-Liste geleert');
 }
 
 // ── WEEK CALENDAR ─────────────────────────────────────────────
