@@ -1937,11 +1937,11 @@ function renderTasks() {
           ontouchend="katTouchEnd(event)"
           onclick="event.stopPropagation()">⇅</div>
         <span class="kat-arrow" onclick="toggleKatCollapse('${k}')">${collapsed?'▶':'▼'}</span>
+        <button class="kat-edit-link" onclick="event.stopPropagation();toggleCollapsedSubcategories('${k}')" title="Subkategorien im eingeklappten Zustand ein- oder ausblenden">Sub ${showCollapsedSubcategories(k)?'▲':'▼'}</button>
         <span class="kat-icon" onclick="renameTaskCategory('${k}')" title="Klicken zum Umbenennen">${getTaskCategoryIcon(k)}</span>
         <span class="kat-name" onclick="renameTaskCategory('${k}')" title="Klicken zum Umbenennen">${esc(getTaskCategoryLabel(k))}</span>
         <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
         <span class="kat-actions">
-          <button class="kat-edit-link" onclick="event.stopPropagation();toggleCollapsedSubcategories('${k}')" title="Subkategorien im eingeklappten Zustand ein- oder ausblenden">Sub ${showCollapsedSubcategories(k)?'▲':'▼'}</button>
           <button class="kat-edit-link" onclick="event.stopPropagation();renameTaskCategory('${k}')" title="Kategorie umbenennen">Bearbeiten</button>
           <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Loeschen">×</button>
         </span>
