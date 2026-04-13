@@ -126,6 +126,13 @@ textarea::placeholder { color:#444; }
 .kat-actions { margin-left:auto; display:flex; gap:2px; }
 .kat-edit-link { background:none; border:none; color:var(--sub); cursor:pointer; font:inherit; font-size:12px; padding:3px 6px; border-radius:6px; }
 .kat-edit-link:hover { color:var(--text); background:rgba(255,255,255,.05); }
+.subkat-group { margin:0 0 4px 18px; }
+.subkat-header { display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(124,58,237,.03); border:1px solid rgba(124,58,237,.08); border-radius:8px; cursor:pointer; margin-bottom:4px; font-size:13px; }
+.subkat-header:hover { background:rgba(124,58,237,.08); }
+.subkat-arrow { font-size:9px; color:var(--sub); min-width:12px; }
+.subkat-name { font-weight:500; color:var(--text); }
+.subkat-count { background:rgba(124,58,237,.2); color:var(--accent2); font-size:10px; padding:1px 6px; border-radius:8px; font-weight:600; }
+.subkat-actions { margin-left:auto; display:flex; gap:2px; }
 .card-actions { display:flex; gap:4px; flex-shrink:0; }
 
 /* THOUGHT CARD */
@@ -365,6 +372,10 @@ select option { background:#1c1c1c; }
         </select>
         <select id="t-kat" style="max-width:220px" title="Kategorie"></select>
         <button class="btn btn-ghost btn-sm" onclick="openNewTaskCategoryPrompt('t-kat')">+ Kategorie</button>
+      </div>
+      <div class="form-row">
+        <input type="text" id="t-subkat" placeholder="Subkategorie (optional, z.B. MindDump)" list="subkat-sugg-form" style="max-width:260px" />
+        <datalist id="subkat-sugg-form"></datalist>
       </div>
       <div class="form-row">
         <input type="date" id="t-date" style="max-width:175px" title="Fälligkeitsdatum (optional)" />
@@ -1088,8 +1099,35 @@ const KAT_LABELS = {geld:'Geld',haushalt:'Haushalt',einkaufen:'Einkaufen',busine
 const KAT_ICONS = {geld:'💰',haushalt:'🏠',einkaufen:'🛒',business:'💼',schule:'📚',tech:'💻',familie:'👨‍👩‍👦',sonstiges:'📋'};
 const DEFAULT_KAT_ORDER = ['geld','haushalt','einkaufen','business','schule','tech','familie','sonstiges'];
 let katCollapsed = {};
+let subkatCollapsed = {};
 
 function toggleKatCollapse(k){ katCollapsed[k]=katCollapsed[k]===false?true:false; renderTasks(); }
+function toggleSubkatCollapse(k,sk){ const key=k+'::'+sk; subkatCollapsed[key]=subkatCollapsed[key]!==false; renderTasks(); }
+
+function getExistingSubcategories(kat) {
+  const subs=new Set();
+  D.tasks.forEach(t=>{ if((t.kategorie||'sonstiges')===kat && t.subkategorie) subs.add(t.subkategorie); });
+  return [...subs].sort();
+}
+
+function renameSubcategory(kat, oldName) {
+  const newName=prompt(`Subkategorie umbenennen:\n"${oldName}" → neuer Name:`, oldName);
+  if(!newName||newName.trim()===''||newName.trim()===oldName) return;
+  const trimmed=newName.trim();
+  D.tasks.filter(t=>(t.kategorie||'sonstiges')===kat && t.subkategorie===oldName).forEach(t=>{ t.subkategorie=trimmed; });
+  if(currentUser&&db) D.tasks.forEach(t=>{ if(t.subkategorie===trimmed) fsUpdate('tasks',t); }); else saveLocal();
+  toast(`"${oldName}" → "${trimmed}"`);
+  renderTasks();
+}
+
+function deleteSubcategory(kat, subName) {
+  const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===kat && t.subkategorie===subName);
+  if(!confirm(`Subkategorie "${subName}" auflösen? ${tasks.length} Task${tasks.length!==1?'s':''} bleiben in ${getTaskCategoryLabel(kat)}.`)) return;
+  tasks.forEach(t=>{ t.subkategorie=null; });
+  if(currentUser&&db) tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
+  toast(`Subkategorie "${subName}" aufgelöst`);
+  renderTasks();
+}
 
 function ensureTaskCategorySettings() {
   if(!Array.isArray(S.taskCategories)) S.taskCategories = [];
@@ -1127,18 +1165,29 @@ function renderTaskCategoryOptions(selected='sonstiges', includeAuto=false) {
   return options.join('');
 }
 
+function updateSubkatSuggestions(selectId, datalistId) {
+  const sel=document.getElementById(selectId);
+  const dl=document.getElementById(datalistId);
+  if(!sel||!dl) return;
+  const kat=sel.value==='auto'?'':sel.value;
+  dl.innerHTML=kat?getExistingSubcategories(kat).map(s=>`<option value="${esc(s)}">`).join(''):'';
+}
+
 function renderTaskCategoryInputs() {
   const taskSelect = document.getElementById('t-kat');
   if(taskSelect) {
     const current = taskSelect.value || 'auto';
     taskSelect.innerHTML = renderTaskCategoryOptions(current, true);
     taskSelect.value = [...taskSelect.options].some(o=>o.value===current) ? current : 'auto';
+    taskSelect.onchange=()=>updateSubkatSuggestions('t-kat','subkat-sugg-form');
+    updateSubkatSuggestions('t-kat','subkat-sugg-form');
   }
   const modalSelect = document.getElementById('m-kat');
   if(modalSelect) {
     const current = modalSelect.value || 'sonstiges';
     modalSelect.innerHTML = renderTaskCategoryOptions(current, false);
     modalSelect.value = [...modalSelect.options].some(o=>o.value===current) ? current : 'sonstiges';
+    modalSelect.onchange=()=>updateSubkatSuggestions('m-kat','subkat-sugg-modal');
   }
 }
 
@@ -1247,6 +1296,33 @@ function deleteKat(k){
   renderTasks();
 }
 
+function renderTaskCard(t) {
+  const pc='prio-'+(t.priority||'mittel').toLowerCase();
+  const kat=t.kategorie||'sonstiges';
+  return `<div class="task-card ${t.done?'done':''}" draggable="true" ondragstart="dragTask(event,'${t.id}')">
+    <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
+    <div class="task-body">
+      <div class="task-title">${esc(t.title)}</div>
+      ${t.context?`<div class="task-ctx">${esc(t.context)}</div>`:''}
+      <div class="task-meta">
+        <span class="kat-badge kat-${kat}">${esc(getTaskCategoryLabel(kat))}</span>
+        ${t.subkategorie?`<span class="kat-badge" style="background:rgba(124,58,237,.12);color:var(--accent2)">${esc(t.subkategorie)}</span>`:''}
+        <span class="prio ${pc}">${t.priority||'mittel'}</span>
+        ${t.estimatedTime?`<span class="date-chip">⏱ ${esc(t.estimatedTime)}</span>`:''}
+        ${t.dueDate?`<span class="date-chip">📅 ${fmtDue(t.dueDate)}</span>`:''}
+        ${t.recurrence?.type?`<span class="recur-badge">🔁 ${RECUR_LABELS[t.recurrence.type]||t.recurrence.type}</span>`:''}
+        <span class="date-label">${fmtDate(t.createdAt)}</span>
+      </div>
+      ${t.tags?.length?`<div class="task-tags">${t.tags.map(tag=>`<span class="tag-chip" onclick="setTaskTagFilter('${esc(tag)}');event.stopPropagation()">#${esc(tag)}</span>`).join('')}</div>`:''}
+    </div>
+    <div class="card-actions">
+      <button class="icon-btn" onclick="toggleForToday('${t.id}')" title="${t.forToday?'Von Heute entfernen':'Für heute markieren'}" style="color:${t.forToday?'#f59e0b':'#555'}">☀</button>
+      <button class="icon-btn edit-btn" onclick="openEditTask('${t.id}')" title="Bearbeiten">✏</button>
+      <button class="icon-btn del" onclick="delTask('${t.id}')" title="Löschen">×</button>
+    </div>
+  </div>`;
+}
+
 function renderTasks() {
   let list=[...D.tasks].sort((a,b)=>{
     if(a.done!==b.done) return a.done?1:-1;
@@ -1297,31 +1373,29 @@ function renderTasks() {
         </span>
       </div>`;
     if(!collapsed){
-      html+=items.length ? items.map(t=>{
-        const pc='prio-'+(t.priority||'mittel').toLowerCase();
-        const kat=t.kategorie||'sonstiges';
-        return `<div class="task-card ${t.done?'done':''}" draggable="true" ondragstart="dragTask(event,'${t.id}')">
-          <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
-          <div class="task-body">
-            <div class="task-title">${esc(t.title)}</div>
-            ${t.context?`<div class="task-ctx">${esc(t.context)}</div>`:''}
-            <div class="task-meta">
-              <span class="kat-badge kat-${kat}">${esc(getTaskCategoryLabel(kat))}</span>
-              <span class="prio ${pc}">${t.priority||'mittel'}</span>
-              ${t.estimatedTime?`<span class="date-chip">⏱ ${esc(t.estimatedTime)}</span>`:''}
-              ${t.dueDate?`<span class="date-chip">📅 ${fmtDue(t.dueDate)}</span>`:''}
-              ${t.recurrence?.type?`<span class="recur-badge">🔁 ${RECUR_LABELS[t.recurrence.type]||t.recurrence.type}</span>`:''}
-              <span class="date-label">${fmtDate(t.createdAt)}</span>
-            </div>
-            ${t.tags?.length?`<div class="task-tags">${t.tags.map(tag=>`<span class="tag-chip" onclick="setTaskTagFilter('${esc(tag)}');event.stopPropagation()">#${esc(tag)}</span>`).join('')}</div>`:''}
-          </div>
-          <div class="card-actions">
-            <button class="icon-btn" onclick="toggleForToday('${t.id}')" title="${t.forToday?'Von Heute entfernen':'Für heute markieren'}" style="color:${t.forToday?'#f59e0b':'#555'}">☀</button>
-            <button class="icon-btn edit-btn" onclick="openEditTask('${t.id}')" title="Bearbeiten">✏</button>
-            <button class="icon-btn del" onclick="delTask('${t.id}')" title="Löschen">×</button>
-          </div>
-        </div>`;
-      }).join('') : `<div class="kat-empty">Keine Tasks in dieser Kategorie.</div>`;
+      if(!items.length) { html+=`<div class="kat-empty">Keine Tasks in dieser Kategorie.</div>`; }
+      else {
+        const noSub=items.filter(t=>!t.subkategorie);
+        const subGroups={};
+        items.filter(t=>t.subkategorie).forEach(t=>{ if(!subGroups[t.subkategorie]) subGroups[t.subkategorie]=[]; subGroups[t.subkategorie].push(t); });
+        html+=noSub.map(t=>renderTaskCard(t)).join('');
+        Object.keys(subGroups).sort().forEach(sk=>{
+          const skKey=k+'::'+sk;
+          const skCollapsed=subkatCollapsed[skKey]!==false;
+          html+=`<div class="subkat-group">
+            <div class="subkat-header" onclick="toggleSubkatCollapse('${k}','${esc(sk)}')">
+              <span class="subkat-arrow">${skCollapsed?'▶':'▼'}</span>
+              <span class="subkat-name">${esc(sk)}</span>
+              <span class="subkat-count">${subGroups[sk].length}</span>
+              <span class="subkat-actions">
+                <button class="kat-edit-link" onclick="event.stopPropagation();renameSubcategory('${k}','${esc(sk)}')" title="Umbenennen">Bearbeiten</button>
+                <button class="icon-btn del" onclick="event.stopPropagation();deleteSubcategory('${k}','${esc(sk)}')" title="Auflösen">×</button>
+              </span>
+            </div>`;
+          if(!skCollapsed) html+=subGroups[sk].map(t=>renderTaskCard(t)).join('');
+          html+='</div>';
+        });
+      }
     }
     html+='</div>';
   });
@@ -1363,8 +1437,9 @@ async function addTaskManual(){
   const recurVal=document.getElementById('t-recur').value;
   const katVal=document.getElementById('t-kat').value;
   const recurrence=recurVal?{type:recurVal}:null;
-  await fsAdd('tasks',{id:uid(),title,context:ctx,priority:document.getElementById('t-prio').value,kategorie:katVal==='auto'?autoKategorie(title,ctx):katVal,dueDate:document.getElementById('t-date').value||null,estimatedTime:document.getElementById('t-est').value.trim()||null,recurrence,tags:[...editingTags],done:false,createdAt:Date.now()});
-  document.getElementById('t-title').value=''; document.getElementById('t-ctx').value=''; document.getElementById('t-date').value=''; document.getElementById('t-est').value=''; document.getElementById('t-recur').value=''; document.getElementById('t-kat').value='auto';
+  const subkatVal=document.getElementById('t-subkat').value.trim()||null;
+  await fsAdd('tasks',{id:uid(),title,context:ctx,priority:document.getElementById('t-prio').value,kategorie:katVal==='auto'?autoKategorie(title,ctx):katVal,subkategorie:subkatVal,dueDate:document.getElementById('t-date').value||null,estimatedTime:document.getElementById('t-est').value.trim()||null,recurrence,tags:[...editingTags],done:false,createdAt:Date.now()});
+  document.getElementById('t-title').value=''; document.getElementById('t-ctx').value=''; document.getElementById('t-date').value=''; document.getElementById('t-est').value=''; document.getElementById('t-recur').value=''; document.getElementById('t-kat').value='auto'; document.getElementById('t-subkat').value='';
   editingTags=[]; syncTagWrap('form-tag-wrap');
   toggleForm('add-task-form'); toast('Task gespeichert!');
 }
@@ -1386,6 +1461,10 @@ function openEditTask(id){
         ${renderTaskCategoryOptions(t.kategorie||'sonstiges')}
       </select>
       <button class="btn btn-ghost btn-sm" onclick="openNewTaskCategoryPrompt('m-kat')">+ Kategorie</button>
+    </div>
+    <div class="form-row">
+      <input type="text" id="m-subkat" value="${esc(t.subkategorie||'')}" placeholder="Subkategorie (optional)" list="subkat-sugg-modal" style="max-width:260px" />
+      <datalist id="subkat-sugg-modal">${getExistingSubcategories(t.kategorie||'sonstiges').map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
     </div>
     <div class="form-row">
       <input type="date" id="m-date" value="${t.dueDate||''}" style="max-width:180px" />
@@ -1880,6 +1959,7 @@ async function saveModal(){
     if(!title){toast('Titel darf nicht leer sein','err');return;}
     t.title=title; t.priority=document.getElementById('m-prio').value;
     t.kategorie=document.getElementById('m-kat').value;
+    t.subkategorie=document.getElementById('m-subkat').value.trim()||null;
     t.context=document.getElementById('m-ctx').value.trim();
     t.dueDate=document.getElementById('m-date').value||null;
     t.estimatedTime=document.getElementById('m-est').value.trim()||null;
