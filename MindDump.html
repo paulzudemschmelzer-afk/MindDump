@@ -1157,11 +1157,14 @@ async function heuteDrop(e, targetId) {
   const dragged = D.tasks.find(x=>x.id===heuteDragId);
   if(!dragged) { heuteDragId=null; return; }
   const todayStr = new Date().toISOString().slice(0,10);
-  let list = D.tasks.filter(t=>t.forToday||t.dueDate===todayStr)
+  const sorted = D.tasks.filter(t=>t.forToday||t.dueDate===todayStr)
     .sort((a,b)=>(a.heuteOrder??9999)-(b.heuteOrder??9999));
-  list = list.filter(t=>t.id!==heuteDragId);
+  const origIdx = sorted.findIndex(t=>t.id===heuteDragId);
+  const targetOrigIdx = sorted.findIndex(t=>t.id===targetId);
+  const movingDown = origIdx < targetOrigIdx;
+  const list = sorted.filter(t=>t.id!==heuteDragId);
   const ti = list.findIndex(t=>t.id===targetId);
-  list.splice(ti, 0, dragged);
+  list.splice(movingDown ? ti+1 : ti, 0, dragged);
   await Promise.all(list.map((t,i)=>{ t.heuteOrder=i*10; return fsUpdate('tasks',t); }));
   heuteDragId = null;
   renderHeute();
