@@ -134,6 +134,8 @@ textarea::placeholder { color:#444; }
 .subkat-count { background:rgba(124,58,237,.2); color:var(--accent2); font-size:10px; padding:1px 6px; border-radius:8px; font-weight:600; }
 .subkat-actions { margin-left:auto; display:flex; gap:2px; }
 .kat-drag-over { outline:2px dashed var(--accent2) !important; background:rgba(124,58,237,.15) !important; }
+.kat-drop-before { box-shadow:inset 0 2px 0 var(--accent2); }
+.kat-drop-after { box-shadow:inset 0 -2px 0 var(--accent2); }
 .kat-restore-zone { display:none; padding:14px; text-align:center; color:var(--sub); font-size:13px; border:2px dashed var(--border); border-radius:10px; margin-top:8px; transition:background .15s, border-color .15s; }
 .kat-restore-zone.visible { display:block; }
 .kat-restore-zone.kat-drag-over { border-color:var(--accent2); background:rgba(124,58,237,.1); color:var(--accent2); }
@@ -621,7 +623,7 @@ select option { background:#1c1c1c; }
 <script>
 // ── STATE ─────────────────────────────────────────────────────
 let D = { tasks:[], thoughts:[], snippets:[] };
-let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{} };
+let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{} };
 let pendingResult = null;
 let taskFilter = 'all';
 let taskTagFilter = null;
@@ -747,6 +749,8 @@ function subscribeFS() {
     }
     if(doc.exists && Array.isArray(doc.data().taskCategories)) S.taskCategories = doc.data().taskCategories;
     if(doc.exists && doc.data().taskCategoryLabels && typeof doc.data().taskCategoryLabels === 'object') S.taskCategoryLabels = doc.data().taskCategoryLabels;
+    if(doc.exists && Array.isArray(doc.data().taskCategoryOrder)) S.taskCategoryOrder = doc.data().taskCategoryOrder;
+    if(doc.exists && doc.data().taskCategoryShowSubsCollapsed && typeof doc.data().taskCategoryShowSubsCollapsed === 'object') S.taskCategoryShowSubsCollapsed = doc.data().taskCategoryShowSubsCollapsed;
     ensureTaskCategorySettings();
     saveSettings();
     renderTaskCategoryInputs();
@@ -1136,6 +1140,18 @@ function deleteSubcategory(kat, subName) {
 function ensureTaskCategorySettings() {
   if(!Array.isArray(S.taskCategories)) S.taskCategories = [];
   if(!S.taskCategoryLabels || typeof S.taskCategoryLabels !== 'object') S.taskCategoryLabels = {};
+  if(!Array.isArray(S.taskCategoryOrder)) S.taskCategoryOrder = [];
+  if(!S.taskCategoryShowSubsCollapsed || typeof S.taskCategoryShowSubsCollapsed !== 'object') S.taskCategoryShowSubsCollapsed = {};
+}
+
+function syncTaskCategoryOrder(knownList=null) {
+  ensureTaskCategorySettings();
+  const known = knownList || [...new Set([...DEFAULT_KAT_ORDER, ...S.taskCategories, ...D.tasks.map(t=>t.kategorie||'sonstiges')])];
+  const next = [
+    ...S.taskCategoryOrder.filter(k => known.includes(k)),
+    ...known.filter(k => !S.taskCategoryOrder.includes(k))
+  ];
+  S.taskCategoryOrder = [...new Set(next)];
 }
 
 function getTaskCategoryLabel(k) {
@@ -1157,7 +1173,8 @@ function getKnownTaskCategories() {
     const kat = t.kategorie || 'sonstiges';
     if (!known.includes(kat)) known.push(kat);
   });
-  return known;
+  syncTaskCategoryOrder(known);
+  return S.taskCategoryOrder.filter(k => known.includes(k));
 }
 
 function renderTaskCategoryOptions(selected='sonstiges', includeAuto=false) {
@@ -1200,7 +1217,9 @@ function saveTaskCategoriesToFirebase() {
   ensureTaskCategorySettings();
   db.collection('settings').doc(currentUser.uid).set({
     taskCategories: S.taskCategories,
-    taskCategoryLabels: S.taskCategoryLabels
+    taskCategoryLabels: S.taskCategoryLabels,
+    taskCategoryOrder: S.taskCategoryOrder,
+    taskCategoryShowSubsCollapsed: S.taskCategoryShowSubsCollapsed
   }, { merge: true });
 }
 
@@ -1212,6 +1231,7 @@ function registerTaskCategory(name, preferredKey=null) {
   if(!DEFAULT_KAT_ORDER.includes(key) && !S.taskCategories.includes(key)) S.taskCategories.push(key);
   if((KAT_LABELS[key]||'').toLowerCase() !== label.toLowerCase()) S.taskCategoryLabels[key] = label;
   else delete S.taskCategoryLabels[key];
+  syncTaskCategoryOrder();
   saveSettings();
   saveTaskCategoriesToFirebase();
   renderTaskCategoryInputs();
@@ -1221,7 +1241,9 @@ function registerTaskCategory(name, preferredKey=null) {
 function removeStoredTaskCategory(key) {
   ensureTaskCategorySettings();
   S.taskCategories = S.taskCategories.filter(k => k !== key);
+  S.taskCategoryOrder = S.taskCategoryOrder.filter(k => k !== key);
   delete S.taskCategoryLabels[key];
+  delete S.taskCategoryShowSubsCollapsed[key];
   saveSettings();
   saveTaskCategoriesToFirebase();
   renderTaskCategoryInputs();
@@ -1289,12 +1311,41 @@ function editKat(k){
   renderTasks();
 }
 
+function showCollapsedSubcategories(k){
+  ensureTaskCategorySettings();
+  return !!S.taskCategoryShowSubsCollapsed[k];
+}
+
+function toggleCollapsedSubcategories(k){
+  ensureTaskCategorySettings();
+  if(S.taskCategoryShowSubsCollapsed[k]) delete S.taskCategoryShowSubsCollapsed[k];
+  else S.taskCategoryShowSubsCollapsed[k]=true;
+  saveSettings();
+  saveTaskCategoriesToFirebase();
+  renderTasks();
+}
+
+function reorderTaskCategories(dragKey,targetKey,placement='before'){
+  const order = getKnownTaskCategories().filter(k=>k!==dragKey);
+  const targetIdx = order.indexOf(targetKey);
+  if(targetIdx<0) return;
+  order.splice(placement==='after'?targetIdx+1:targetIdx,0,dragKey);
+  S.taskCategoryOrder = order;
+  saveSettings();
+  saveTaskCategoriesToFirebase();
+  renderTasks();
+}
+
 
 // ── KATEGORIE DRAG & DROP (HANDLE + TOUCH) ───────────────────
 let dragKatKey=null, dragSubkat=null, dragSubkatParent=null;
 let katTouchId=null, katTouchClone=null, katTouchEl=null, katTouchMoved=false;
 let katTouchType=null, katTouchSubName=null, katTouchParentK=null;
 let taskDragId=null, taskTouchDragId=null, taskTouchClone=null, taskTouchEl=null, taskTouchMoved=false;
+
+function clearKatDropStates(){
+  document.querySelectorAll('.kat-header').forEach(el=>el.classList.remove('kat-drag-over','kat-drop-before','kat-drop-after'));
+}
 
 function showSubkatRestoreZone(){
   const z=document.getElementById('kat-restore-zone');
@@ -1304,6 +1355,24 @@ function showSubkatRestoreZone(){
 function hideSubkatRestoreZone(){
   const z=document.getElementById('kat-restore-zone');
   if(z) z.classList.remove('visible');
+}
+
+function getKatDropIntent(targetEl, clientY){
+  if(!targetEl) return 'sub';
+  const rect=targetEl.getBoundingClientRect();
+  const offset=clientY-rect.top;
+  const edge=Math.max(16, rect.height*0.28);
+  if(offset<edge) return 'before';
+  if(offset>rect.height-edge) return 'after';
+  return 'sub';
+}
+
+function paintKatDropIntent(targetEl, intent){
+  clearKatDropStates();
+  if(!targetEl) return;
+  if(intent==='sub') targetEl.classList.add('kat-drag-over');
+  if(intent==='before') targetEl.classList.add('kat-drop-before');
+  if(intent==='after') targetEl.classList.add('kat-drop-after');
 }
 
 function makeKatSubOf(srcK, targetK){
@@ -1337,17 +1406,19 @@ function subkatDragStart(e,parentK,sk){
 function katDragOver(e,targetK){
   if((dragKatKey && dragKatKey!==targetK) || (dragSubkat && dragSubkatParent!==targetK)){
     e.preventDefault();
-    e.currentTarget.classList.add('kat-drag-over');
+    paintKatDropIntent(e.currentTarget, dragKatKey ? getKatDropIntent(e.currentTarget, e.clientY) : 'sub');
   }
 }
 
 function katDrop(e,targetK){
   e.preventDefault();
-  e.currentTarget.classList.remove('kat-drag-over');
+  const intent = dragKatKey ? getKatDropIntent(e.currentTarget, e.clientY) : 'sub';
+  clearKatDropStates();
   if(dragKatKey && dragKatKey!==targetK){
     const src=dragKatKey;
     dragKatKey=null;
-    makeKatSubOf(src,targetK);
+    if(intent==='sub') makeKatSubOf(src,targetK);
+    else reorderTaskCategories(src,targetK,intent);
     return;
   }
   if(dragSubkat && dragSubkatParent && dragSubkatParent!==targetK){
@@ -1389,7 +1460,8 @@ function restoreSubToKat(parentK,subName){
 document.addEventListener('dragend',()=>{
   dragKatKey=null; dragSubkat=null; dragSubkatParent=null; taskDragId=null;
   hideSubkatRestoreZone();
-  document.querySelectorAll('.kat-drag-over,.heute-drag-over').forEach(el=>el.classList.remove('kat-drag-over','heute-drag-over'));
+  clearKatDropStates();
+  document.querySelectorAll('.heute-drag-over').forEach(el=>el.classList.remove('heute-drag-over'));
 });
 
 function katTouchStart(e,type,k,sk){
@@ -1425,10 +1497,10 @@ function katTouchMove(e){
   katTouchClone.style.visibility='hidden';
   const under=document.elementFromPoint(touch.clientX,touch.clientY);
   katTouchClone.style.visibility='';
-  document.querySelectorAll('.kat-drag-over').forEach(el=>el.classList.remove('kat-drag-over'));
+  clearKatDropStates();
   const targetHeader=under?.closest('.kat-header[data-kat]');
   const restoreZone=under?.closest('.kat-restore-zone');
-  if(targetHeader) targetHeader.classList.add('kat-drag-over');
+  if(targetHeader) paintKatDropIntent(targetHeader, katTouchType==='kat' ? getKatDropIntent(targetHeader, touch.clientY) : 'sub');
   if(restoreZone && katTouchType==='subkat') restoreZone.classList.add('kat-drag-over');
 }
 
@@ -1437,7 +1509,7 @@ function katTouchEnd(e){
   const touch=e.changedTouches[0];
   if(katTouchClone){ katTouchClone.remove(); katTouchClone=null; }
   if(katTouchEl){ katTouchEl.style.opacity=''; katTouchEl=null; }
-  document.querySelectorAll('.kat-drag-over').forEach(el=>el.classList.remove('kat-drag-over'));
+  clearKatDropStates();
   hideSubkatRestoreZone();
   if(katTouchMoved){
     const under=document.elementFromPoint(touch.clientX,touch.clientY);
@@ -1445,7 +1517,11 @@ function katTouchEnd(e){
     const restoreZone=under?.closest('.kat-restore-zone');
     if(katTouchType==='kat' && targetHeader){
       const targetK=targetHeader.dataset.kat;
-      if(targetK!==katTouchId) makeKatSubOf(katTouchId,targetK);
+      const intent=getKatDropIntent(targetHeader, touch.clientY);
+      if(targetK!==katTouchId){
+        if(intent==='sub') makeKatSubOf(katTouchId,targetK);
+        else reorderTaskCategories(katTouchId,targetK,intent);
+      }
     } else if(katTouchType==='subkat'){
       if(restoreZone) restoreSubToKat(katTouchParentK,katTouchSubName);
       else if(targetHeader){
@@ -1622,6 +1698,32 @@ function renderTaskCard(t) {
   </div>`;
 }
 
+function renderSubcategoryGroup(k, sk, subItems) {
+  const skKey=k+'::'+sk;
+  const skCollapsed=subkatCollapsed[skKey]!==false;
+  let html=`<div class="subkat-group" data-subkat="${esc(sk)}" data-parent="${k}">
+    <div class="subkat-header" onclick="toggleSubkatCollapse('${k}','${esc(sk)}')">
+      <div class="heute-drag-handle"
+        draggable="true"
+        ondragstart="subkatDragStart(event,'${k}','${esc(sk)}')"
+        ontouchstart="katTouchStart(event,'subkat','${k}','${esc(sk)}')"
+        ontouchmove="katTouchMove(event)"
+        ontouchend="katTouchEnd(event)"
+        onclick="event.stopPropagation()">⇅</div>
+      <span class="subkat-arrow">${skCollapsed?'▶':'▼'}</span>
+      <span class="subkat-name">${esc(sk)}</span>
+      <span class="subkat-count">${subItems.length}</span>
+      <span class="subkat-actions">
+        <button class="kat-edit-link" onclick="event.stopPropagation();renameSubcategory('${k}','${esc(sk)}')" title="Umbenennen">Bearbeiten</button>
+        <button class="kat-edit-link" onclick="event.stopPropagation();restoreSubToKat('${k}','${esc(sk)}')" title="Als eigene Kategorie wiederherstellen">↑ Raus</button>
+        <button class="icon-btn del" onclick="event.stopPropagation();deleteSubcategory('${k}','${esc(sk)}')" title="Aufloesen">×</button>
+      </span>
+    </div>`;
+  if(!skCollapsed) html+=subItems.map(t=>renderTaskCard(t)).join('');
+  html+='</div>';
+  return html;
+}
+
 function renderTasks() {
   let list=[...D.tasks].sort((a,b)=>{
     if(a.done!==b.done) return a.done?1:-1;
@@ -1664,10 +1766,11 @@ function renderTasks() {
   visibleCategories.forEach(k=>{
     const items=grouped[k]||[];
     const collapsed=katCollapsed[k]!==false;
+    const showSubsWhileCollapsed = collapsed && showCollapsedSubcategories(k);
     html+=`<div class="kat-group" data-kat="${k}">
       <div class="kat-header" data-kat="${k}"
         ondragover="katDragOver(event,'${k}')"
-        ondragleave="if(!this.contains(event.relatedTarget))this.classList.remove('kat-drag-over')"
+        ondragleave="if(!this.contains(event.relatedTarget))clearKatDropStates()"
         ondrop="katDrop(event,'${k}')">
         <div class="heute-drag-handle"
           draggable="true"
@@ -1681,42 +1784,23 @@ function renderTasks() {
         <span class="kat-name" onclick="renameTaskCategory('${k}')" title="Klicken zum Umbenennen">${esc(getTaskCategoryLabel(k))}</span>
         <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
         <span class="kat-actions">
+          <button class="kat-edit-link" onclick="event.stopPropagation();toggleCollapsedSubcategories('${k}')" title="Subkategorien auch im eingeklappten Zustand anzeigen">${showCollapsedSubcategories(k)?'Subs an':'Subs aus'}</button>
           <button class="kat-edit-link" onclick="event.stopPropagation();renameTaskCategory('${k}')" title="Kategorie umbenennen">Bearbeiten</button>
           <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Loeschen">×</button>
         </span>
       </div>`;
+    const noSub=items.filter(t=>!t.subkategorie);
+    const subGroups={};
+    items.filter(t=>t.subkategorie).forEach(t=>{ if(!subGroups[t.subkategorie]) subGroups[t.subkategorie]=[]; subGroups[t.subkategorie].push(t); });
+    const subNames=Object.keys(subGroups).sort();
     if(!collapsed){
-      if(!items.length) { html+=`<div class="kat-empty">Keine Tasks in dieser Kategorie.</div>`; }
+      if(!items.length) html+=`<div class="kat-empty">Keine Tasks in dieser Kategorie.</div>`;
       else {
-        const noSub=items.filter(t=>!t.subkategorie);
-        const subGroups={};
-        items.filter(t=>t.subkategorie).forEach(t=>{ if(!subGroups[t.subkategorie]) subGroups[t.subkategorie]=[]; subGroups[t.subkategorie].push(t); });
         html+=noSub.map(t=>renderTaskCard(t)).join('');
-        Object.keys(subGroups).sort().forEach(sk=>{
-          const skKey=k+'::'+sk;
-          const skCollapsed=subkatCollapsed[skKey]!==false;
-          html+=`<div class="subkat-group" data-subkat="${esc(sk)}" data-parent="${k}">
-            <div class="subkat-header" onclick="toggleSubkatCollapse('${k}','${esc(sk)}')">
-              <div class="heute-drag-handle"
-                draggable="true"
-                ondragstart="subkatDragStart(event,'${k}','${esc(sk)}')"
-                ontouchstart="katTouchStart(event,'subkat','${k}','${esc(sk)}')"
-                ontouchmove="katTouchMove(event)"
-                ontouchend="katTouchEnd(event)"
-                onclick="event.stopPropagation()">⇅</div>
-              <span class="subkat-arrow">${skCollapsed?'▶':'▼'}</span>
-              <span class="subkat-name">${esc(sk)}</span>
-              <span class="subkat-count">${subGroups[sk].length}</span>
-              <span class="subkat-actions">
-                <button class="kat-edit-link" onclick="event.stopPropagation();renameSubcategory('${k}','${esc(sk)}')" title="Umbenennen">Bearbeiten</button>
-                <button class="kat-edit-link" onclick="event.stopPropagation();restoreSubToKat('${k}','${esc(sk)}')" title="Als eigene Kategorie wiederherstellen">↑ Raus</button>
-                <button class="icon-btn del" onclick="event.stopPropagation();deleteSubcategory('${k}','${esc(sk)}')" title="Auflösen">×</button>
-              </span>
-            </div>`;
-          if(!skCollapsed) html+=subGroups[sk].map(t=>renderTaskCard(t)).join('');
-          html+='</div>';
-        });
+        subNames.forEach(sk=>{ html+=renderSubcategoryGroup(k, sk, subGroups[sk]); });
       }
+    } else if(showSubsWhileCollapsed && subNames.length){
+      subNames.forEach(sk=>{ html+=renderSubcategoryGroup(k, sk, subGroups[sk]); });
     }
     html+='</div>';
   });
@@ -2315,7 +2399,12 @@ function saveKey(){
   saveSettings(); updateApiIndicator(); saveApiKeyToFirebase(); toast('API Key gespeichert!');
 }
 function exportData(){
-  const blob=new Blob([JSON.stringify({...D,meta:{taskCategories:S.taskCategories||[],taskCategoryLabels:S.taskCategoryLabels||{}}},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({...D,meta:{
+    taskCategories:S.taskCategories||[],
+    taskCategoryLabels:S.taskCategoryLabels||{},
+    taskCategoryOrder:S.taskCategoryOrder||[],
+    taskCategoryShowSubsCollapsed:S.taskCategoryShowSubsCollapsed||{}
+  }},null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download='minddump-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url);
 }
@@ -2337,6 +2426,8 @@ function importData(e){
         }
         if(Array.isArray(imp.meta?.taskCategories)) S.taskCategories = imp.meta.taskCategories;
         if(imp.meta?.taskCategoryLabels && typeof imp.meta.taskCategoryLabels === 'object') S.taskCategoryLabels = imp.meta.taskCategoryLabels;
+        if(Array.isArray(imp.meta?.taskCategoryOrder)) S.taskCategoryOrder = imp.meta.taskCategoryOrder;
+        if(imp.meta?.taskCategoryShowSubsCollapsed && typeof imp.meta.taskCategoryShowSubsCollapsed === 'object') S.taskCategoryShowSubsCollapsed = imp.meta.taskCategoryShowSubsCollapsed;
         ensureTaskCategorySettings();
         saveSettings();
         saveTaskCategoriesToFirebase();
@@ -2347,6 +2438,8 @@ function importData(e){
         D={tasks:imp.tasks,thoughts:imp.thoughts,snippets:imp.snippets}; saveLocal();
         if(Array.isArray(imp.meta?.taskCategories)) S.taskCategories = imp.meta.taskCategories;
         if(imp.meta?.taskCategoryLabels && typeof imp.meta.taskCategoryLabels === 'object') S.taskCategoryLabels = imp.meta.taskCategoryLabels;
+        if(Array.isArray(imp.meta?.taskCategoryOrder)) S.taskCategoryOrder = imp.meta.taskCategoryOrder;
+        if(imp.meta?.taskCategoryShowSubsCollapsed && typeof imp.meta.taskCategoryShowSubsCollapsed === 'object') S.taskCategoryShowSubsCollapsed = imp.meta.taskCategoryShowSubsCollapsed;
         ensureTaskCategorySettings();
         saveSettings();
         renderTaskCategoryInputs();
