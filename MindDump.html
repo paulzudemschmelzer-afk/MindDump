@@ -257,6 +257,8 @@ select option { background:#1c1c1c; }
 .dump-check input[type=checkbox]:not(:checked) ~ .thought-card { opacity:.4; }
 .topic-select-inline { margin-top:8px; display:flex; align-items:center; gap:8px; }
 .topic-select-inline label { font-size:11px; color:var(--sub); }
+.dump-task-routing { margin-top:8px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.dump-task-routing label { font-size:11px; color:var(--sub); }
 .topic-inp-sm { padding:4px 9px; background:#141414; border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px; outline:none; font-family:inherit; min-width:130px; }
 .topic-inp-sm:focus { border-color:var(--accent); }
 .save-sel-row { margin-top:18px; display:flex; gap:8px; align-items:center; }
@@ -1010,6 +1012,7 @@ function renderDumpResult(p) {
   const tasks=p.tasks||[], thoughts=p.thoughts||[];
   const existingTopics = getExistingTopics();
   const topicOpts = ['Allgemein',...existingTopics.filter(t=>t!=='Allgemein')].map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  const taskCategoryOptions = renderTaskCategoryOptions('sonstiges', false);
 
   let html='<div class="result-block">';
 
@@ -1017,8 +1020,10 @@ function renderDumpResult(p) {
     html+=`<div class="section-label" style="margin-top:24px">✓ ${tasks.length} Task${tasks.length>1?'s':''} — auswählen was gespeichert wird</div>`;
     tasks.forEach((t,i)=>{
       const pc='prio-'+(t.priority||'mittel').toLowerCase();
+      const suggestedCategory=autoKategorie(t.title||'', t.context||'');
       html+=`<div class="dump-check">
         <input type="checkbox" id="dt-${i}" checked onchange="updateSelCount()">
+        <div style="flex:1">
         <div class="task-card" style="flex:1;margin-bottom:0">
           <div class="task-body">
             <div class="task-title">${esc(t.title)}</div>
@@ -1027,6 +1032,14 @@ function renderDumpResult(p) {
               <span class="prio ${pc}">${t.priority||'mittel'}</span>
               ${t.dueDate&&t.dueDate!=='null'?`<span class="date-chip">📅 ${fmtDue(t.dueDate)}</span>`:''}
             </div>
+          </div>
+        </div>
+          <div class="dump-task-routing">
+            <label>Kategorie:</label>
+            <select class="topic-inp-sm" id="dt-kat-${i}" onchange="updateDumpTaskSubkatSuggestions(${i})" style="min-width:150px">${taskCategoryOptions}</select>
+            <label>Sub:</label>
+            <input class="topic-inp-sm" id="dt-subkat-${i}" list="dt-subkat-list-${i}" placeholder="optional" style="min-width:150px" />
+            <datalist id="dt-subkat-list-${i}"></datalist>
           </div>
         </div>
       </div><div style="margin-bottom:8px"></div>`;
@@ -1061,6 +1074,12 @@ function renderDumpResult(p) {
   }
   html+='</div>';
   document.getElementById('dump-result').innerHTML=html;
+  tasks.forEach((t,i)=>{
+    const suggestedCategory=autoKategorie(t.title||'', t.context||'');
+    const sel=document.getElementById('dt-kat-'+i);
+    if(sel) sel.value=suggestedCategory;
+    updateDumpTaskSubkatSuggestions(i);
+  });
 }
 
 function updateSelCount() {
@@ -1073,13 +1092,28 @@ function updateSelCount() {
   if(el) el.textContent=count;
 }
 
+function updateDumpTaskSubkatSuggestions(i) {
+  const sel=document.getElementById('dt-kat-'+i);
+  const dl=document.getElementById('dt-subkat-list-'+i);
+  if(!sel||!dl) return;
+  const kat=sel.value;
+  const existing=[
+    ...getExistingSubcategories(kat),
+    ...getChildCategoryKeys(kat).map(k=>getTaskCategoryLabel(k))
+  ];
+  dl.innerHTML=[...new Set(existing)].sort().map(name=>`<option value="${esc(name)}">`).join('');
+}
+
 async function saveSelected() {
   if(!pendingResult) return;
   const ps=[];
   let nt=0, nth=0;
   (pendingResult.tasks||[]).forEach((t,i)=>{
     if(document.getElementById('dt-'+i)?.checked){
-      ps.push(fsAdd('tasks',{id:uid(),title:t.title,context:t.context||'',priority:t.priority||'mittel',kategorie:autoKategorie(t.title,t.context),dueDate:(t.dueDate&&t.dueDate!=='null')?t.dueDate:null,estimatedTime:(t.estimatedTime&&t.estimatedTime!=='null')?t.estimatedTime:null,done:false,createdAt:Date.now()}));
+      const kategorie=document.getElementById('dt-kat-'+i)?.value||autoKategorie(t.title,t.context);
+      const subkategorie=document.getElementById('dt-subkat-'+i)?.value.trim()||null;
+      if(subkategorie) ensureTaskSubcategory(kategorie, subkategorie);
+      ps.push(fsAdd('tasks',{id:uid(),title:t.title,context:t.context||'',priority:t.priority||'mittel',kategorie,subkategorie,dueDate:(t.dueDate&&t.dueDate!=='null')?t.dueDate:null,estimatedTime:(t.estimatedTime&&t.estimatedTime!=='null')?t.estimatedTime:null,done:false,createdAt:Date.now()}));
       nt++;
     }
   });
@@ -1249,6 +1283,20 @@ function getChildCategoryKeys(parentKey) {
 function findChildCategoryKey(parentKey, subName) {
   const normalized = (subName||'').trim().toLowerCase();
   return getChildCategoryKeys(parentKey).find(k => getTaskCategoryLabel(k).trim().toLowerCase() === normalized) || null;
+}
+
+function ensureTaskSubcategory(parentKey, subName) {
+  const trimmed=(subName||'').trim();
+  if(!trimmed) return null;
+  let childKey=findChildCategoryKey(parentKey, trimmed);
+  if(!childKey){
+    childKey=registerTaskCategory(trimmed);
+  }
+  if(!childKey) return null;
+  S.taskCategoryParents[childKey]=parentKey;
+  saveSettings();
+  saveTaskCategoriesToFirebase();
+  return childKey;
 }
 
 function renderTaskCategoryOptions(selected='sonstiges', includeAuto=false) {
