@@ -1285,6 +1285,25 @@ function editKat(k){
   renderTasks();
 }
 
+function moveKatToSub(k){
+  const label=getTaskCategoryLabel(k);
+  const others=getKnownTaskCategories().filter(x=>x!==k);
+  if(!others.length){toast('Keine andere Kategorie vorhanden','err');return;}
+  const choices=others.map(x=>getTaskCategoryLabel(x)).join(', ');
+  const target=prompt(`"${label}" als Subkategorie verschieben unter:\n\nVerfügbar: ${choices}\n\nZiel-Kategorie eingeben:`);
+  if(!target||!target.trim()) return;
+  const targetKey=others.find(x=>getTaskCategoryLabel(x).toLowerCase()===target.trim().toLowerCase());
+  if(!targetKey){toast('Kategorie nicht gefunden','err');return;}
+  const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===k);
+  if(!tasks.length){toast('Keine Tasks in dieser Kategorie','err');return;}
+  tasks.forEach(t=>{ t.kategorie=targetKey; t.subkategorie=label; });
+  removeStoredTaskCategory(k);
+  if(taskKatFilter===k) taskKatFilter='alle';
+  if(currentUser&&db) tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
+  toast(`"${label}" → Subkategorie von "${getTaskCategoryLabel(targetKey)}" (${tasks.length} Tasks)`);
+  renderTasks();
+}
+
 function deleteKat(k){
   const count=D.tasks.filter(t=>(t.kategorie||'sonstiges')===k&&!t.done).length;
   if(!confirm(`${getTaskCategoryLabel(k)} loeschen? ${count} Task${count!==1?'s':''} wandern zu Sonstiges.`)) return;
@@ -1369,7 +1388,8 @@ function renderTasks() {
         <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
         <span class="kat-actions">
           <button class="kat-edit-link" onclick="event.stopPropagation();renameTaskCategory('${k}')" title="Kategorie umbenennen">Bearbeiten</button>
-          <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Loeschen">�</button>
+          <button class="kat-edit-link" onclick="event.stopPropagation();moveKatToSub('${k}')" title="Als Subkategorie verschieben">↳ Sub</button>
+          <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Loeschen">×</button>
         </span>
       </div>`;
     if(!collapsed){
