@@ -1624,7 +1624,12 @@ function renderThoughts(){
   const ftabs = document.getElementById('thought-ftabs');
   if(ftabs){
     ftabs.innerHTML = ['Alle',...topics].map(tp=>
-      `<button class="ftab ${thoughtTopicFilter===tp?'active':''}" onclick="setThoughtTopic('${esc(tp)}',this)">${esc(tp)}</button>`
+      tp==='Alle'
+        ? `<button class="ftab ${thoughtTopicFilter==='Alle'?'active':''}" onclick="setThoughtTopic('Alle',this)">Alle</button>`
+        : `<span style="display:inline-flex;align-items:center;gap:2px;margin:0 2px 6px">
+            <button class="ftab ${thoughtTopicFilter===tp?'active':''}" style="margin:0" onclick="setThoughtTopic('${esc(tp)}',this)">${esc(tp)}</button>
+            <button class="icon-btn" style="font-size:11px;padding:2px 5px" onclick="renameTopic('${esc(tp)}')" title="Umbenennen">✏</button>
+           </span>`
     ).join('');
   }
 
@@ -1647,7 +1652,7 @@ function renderThoughts(){
 
   let html='';
   Object.entries(grouped).forEach(([topic,items])=>{
-    if(thoughtTopicFilter==='Alle') html+=`<div style="margin-bottom:6px;margin-top:16px"><span class="topic-badge" onclick="setThoughtTopicStr('${esc(topic)}')">${esc(topic)}</span><span style="font-size:11px;color:var(--sub);margin-left:8px">${items.length} Eintr${items.length===1?'ag':'äge'}</span></div>`;
+    if(thoughtTopicFilter==='Alle') html+=`<div style="margin-bottom:6px;margin-top:16px;display:flex;align-items:center;gap:8px"><span class="topic-badge" onclick="setThoughtTopicStr('${esc(topic)}')">${esc(topic)}</span><span style="font-size:11px;color:var(--sub)">${items.length} Eintr${items.length===1?'ag':'äge'}</span><button class="icon-btn" style="font-size:11px;padding:2px 5px" onclick="renameTopic('${esc(topic)}')" title="Umbenennen">✏</button></div>`;
     html+=items.map(t=>`<div class="thought-card">
       <div class="thought-text">${esc(t.content)}</div>
       <div class="card-actions" style="flex-shrink:0">
@@ -1670,6 +1675,17 @@ function setThoughtTopic(tp, el){
 function setThoughtTopicStr(tp){
   thoughtTopicFilter=tp;
   renderThoughts();
+}
+
+async function renameTopic(oldName) {
+  const newName = prompt(`Kategorie umbenennen:\n"${oldName}" → neuer Name:`, oldName);
+  if(!newName || newName.trim()==='' || newName.trim()===oldName) return;
+  const trimmed = newName.trim();
+  const affected = D.thoughts.filter(t=>(t.topic||'Allgemein')===oldName);
+  if(!affected.length) return;
+  await Promise.all(affected.map(t=>{ t.topic=trimmed; return fsUpdate('thoughts',t); }));
+  if(thoughtTopicFilter===oldName) thoughtTopicFilter=trimmed;
+  toast(`"${oldName}" → "${trimmed}" (${affected.length} Thoughts)`);
 }
 
 async function delThought(id){ await fsDel('thoughts',id); toast('Thought gelöscht'); }
