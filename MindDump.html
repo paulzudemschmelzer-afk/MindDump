@@ -440,29 +440,6 @@ select option { background:#1c1c1c; }
     <div id="snippets-list"></div>
   </div>
 
-  <!-- TAURUS -->
-  <div class="tab-panel" id="tab-taurus">
-    <div class="taurus-wrap">
-      <div class="page-header header-row" style="margin-bottom:14px">
-        <div><h1>Taurus</h1><p>Dein AI-Agent auf dem VPS.</p></div>
-        <div class="taurus-status offline" id="taurus-status"><div class="dot"></div><span id="taurus-status-label">Offline</span></div>
-      </div>
-      <div class="taurus-tabs">
-        <button class="ftab active" id="tt-chat" onclick="setTaurusView('chat',this)">Chat</button>
-        <button class="ftab" id="tt-log" onclick="setTaurusView('log',this)">Activity Log<span class="badge" id="b-taurus-log" style="margin-left:6px;background:#10b981">0</span></button>
-        <button class="log-clear" onclick="clearTaurusLog()" style="margin-left:auto" title="Log leeren">Log leeren</button>
-      </div>
-      <div class="chat-area" id="taurus-chat">
-        <div class="empty" id="taurus-empty"><div class="empty-icon">🤖</div><h3>Taurus bereit</h3><p>Schreib eine Nachricht um loszulegen.</p></div>
-      </div>
-      <div class="log-area" id="taurus-log" style="display:none"></div>
-      <div class="chat-input-row">
-        <textarea class="chat-input" id="taurus-input" placeholder="Nachricht an Taurus..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();taurusSend()}"></textarea>
-        <button class="chat-send" id="taurus-send-btn" onclick="taurusSend()">→</button>
-      </div>
-    </div>
-  </div>
-
   <!-- SETTINGS -->
   <div class="tab-panel" id="tab-settings">
     <div class="page-header"><h1>Settings</h1></div>
