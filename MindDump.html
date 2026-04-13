@@ -113,6 +113,7 @@ textarea::placeholder { color:#444; }
 .kat-familie { background:rgba(236,72,153,.12); color:#f472b6; }
 .kat-sonstiges { background:rgba(107,114,128,.12); color:#9ca3af; }
 .kat-group { margin-bottom:12px; }
+.kat-empty { padding:12px 14px; color:var(--sub); font-size:13px; border:1px dashed var(--border); border-radius:10px; background:rgba(255,255,255,.02); }
 .kat-header { display:flex; align-items:center; gap:8px; padding:10px 14px; background:rgba(124,58,237,.06); border:1px solid var(--border); border-radius:10px; cursor:pointer; margin-bottom:6px; transition:background .15s; }
 .kat-header:hover { background:rgba(124,58,237,.12); }
 .kat-arrow { font-size:10px; color:var(--sub); min-width:14px; }
@@ -977,9 +978,28 @@ function setTaskKatFilter(k,el){ taskKatFilter=k; document.querySelectorAll('#ka
 
 const KAT_LABELS = {geld:'Geld',haushalt:'Haushalt',einkaufen:'Einkaufen',business:'Business',schule:'Schule',tech:'Tech',familie:'Familie',sonstiges:'Sonstiges'};
 const KAT_ICONS = {geld:'💰',haushalt:'🏠',einkaufen:'🛒',business:'💼',schule:'📚',tech:'💻',familie:'👨‍👩‍👦',sonstiges:'📋'};
+const DEFAULT_KAT_ORDER = ['geld','haushalt','einkaufen','business','schule','tech','familie','sonstiges'];
 let katCollapsed = {};
 
 function toggleKatCollapse(k){ katCollapsed[k]=!katCollapsed[k]; renderTasks(); }
+
+function getKnownTaskCategories() {
+  const known = [...DEFAULT_KAT_ORDER];
+  D.tasks.forEach(t => {
+    const kat = t.kategorie || 'sonstiges';
+    if (!known.includes(kat)) known.push(kat);
+  });
+  return known;
+}
+
+function renderTaskCategoryTabs(katCounts = {}) {
+  const katFtabs = document.getElementById('kat-ftabs');
+  if (!katFtabs) return;
+  const katOrder = getKnownTaskCategories();
+  katFtabs.innerHTML =
+    `<button class="ftab ${taskKatFilter==='alle'?'active':''}" onclick="setTaskKatFilter('alle',this)">Alle</button>` +
+    katOrder.map(k => `<button class="ftab ${taskKatFilter===k?'active':''}" onclick="setTaskKatFilter('${k}',this)">${KAT_ICONS[k]||''} ${KAT_LABELS[k]||k} (${katCounts[k]||0})</button>`).join('');
+}
 
 function editKat(k){
   const neu=prompt('Kategorie umbenennen:',KAT_LABELS[k]||k);
@@ -1007,24 +1027,25 @@ function renderTasks() {
   if(taskKatFilter!=='alle') list=list.filter(t=>(t.kategorie||'sonstiges')===taskKatFilter);
 
   // Kategorie-Filter rendern
+  const katOrder = getKnownTaskCategories();
+  const countSource = D.tasks.filter(t => {
+    if (taskFilter === 'open') return !t.done;
+    if (taskFilter === 'done') return t.done;
+    return true;
+  });
   const katCounts={};
-  D.tasks.filter(t=>!t.done).forEach(t=>{ const k=t.kategorie||'sonstiges'; katCounts[k]=(katCounts[k]||0)+1; });
-  const katOrder=['geld','haushalt','einkaufen','business','schule','tech','familie','sonstiges'];
-  const katFtabs=document.getElementById('kat-ftabs');
-  if(katFtabs){
-    katFtabs.innerHTML=`<button class=\"ftab ${taskKatFilter==='alle'?'active':''}\" onclick=\"setTaskKatFilter('alle',this)\">Alle</button>`+
-      katOrder.filter(k=>katCounts[k]).map(k=>`<button class=\"ftab ${taskKatFilter===k?'active':''}\" onclick=\"setTaskKatFilter('${k}',this)\">${KAT_ICONS[k]||''} ${KAT_LABELS[k]||k} (${katCounts[k]})</button>`).join('');
-  }
+  countSource.forEach(t=>{ const k=t.kategorie||'sonstiges'; katCounts[k]=(katCounts[k]||0)+1; });
+  renderTaskCategoryTabs(katCounts);
   const el=document.getElementById('tasks-list');
-  if(!list.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">✓</div><h3>${taskFilter==='done'?'Noch nichts erledigt':'Keine offenen Tasks'}</h3><p>Brain Dump nutzen oder manuell hinzufügen.</p></div>`; return; }
 
   // Gruppieren nach Kategorie
   const grouped={};
   list.forEach(t=>{ const k=t.kategorie||'sonstiges'; if(!grouped[k]) grouped[k]=[]; grouped[k].push(t); });
+  const visibleCategories = taskKatFilter==='alle' ? katOrder : [taskKatFilter];
 
   let html='';
-  katOrder.filter(k=>grouped[k]).forEach(k=>{
-    const items=grouped[k];
+  visibleCategories.forEach(k=>{
+    const items=grouped[k]||[];
     const collapsed=katCollapsed[k];
     html+=`<div class="kat-group">
       <div class="kat-header">
@@ -1038,7 +1059,7 @@ function renderTasks() {
         </span>
       </div>`;
     if(!collapsed){
-      html+=items.map(t=>{
+      html+=items.length ? items.map(t=>{
         const pc='prio-'+(t.priority||'mittel').toLowerCase();
         const kat=t.kategorie||'sonstiges';
         return `<div class="task-card ${t.done?'done':''}" draggable="true" ondragstart="dragTask(event,'${t.id}')">
@@ -1061,7 +1082,7 @@ function renderTasks() {
             <button class="icon-btn del" onclick="delTask('${t.id}')" title="Löschen">×</button>
           </div>
         </div>`;
-      }).join('');
+      }).join('') : `<div class="kat-empty">Keine Tasks in dieser Kategorie.</div>`;
     }
     html+='</div>';
   });
