@@ -642,7 +642,7 @@ async function fsDel(colName, id) {
 }
 
 function rerender(colName) {
-  if(colName==='tasks') { renderTasks(); if(currentTab==='week') renderWeek(); }
+  if(colName==='tasks') { renderTasks(); if(currentTab==='week') renderWeek(); if(currentTab==='heute') renderHeute(); }
   if(colName==='thoughts') renderThoughts();
   if(colName==='snippets') renderSnips();
 }
@@ -1164,6 +1164,7 @@ async function heuteDrop(e, targetId) {
   list.splice(ti, 0, dragged);
   await Promise.all(list.map((t,i)=>{ t.heuteOrder=i*10; return fsUpdate('tasks',t); }));
   heuteDragId = null;
+  renderHeute();
 }
 
 function renderHeute() {
@@ -1186,7 +1187,7 @@ function renderHeute() {
       draggable="true"
       ondragstart="heuteDragStart(event,'${t.id}')"
       ondragover="event.preventDefault();event.stopPropagation();this.classList.add('heute-drag-over')"
-      ondragleave="this.classList.remove('heute-drag-over')"
+      ondragleave="if(!this.contains(event.relatedTarget))this.classList.remove('heute-drag-over')"
       ondrop="this.classList.remove('heute-drag-over');heuteDrop(event,'${t.id}')">
       <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
       <div class="task-body" style="flex:1">
