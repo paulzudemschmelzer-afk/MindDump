@@ -1202,6 +1202,7 @@ function renderHeute() {
           ${t.recurrence?.type?`<span class="recur-badge">🔁 ${RECUR_LABELS[t.recurrence.type]}</span>`:''}
         </div>
       </div>
+      <button class="icon-btn" onclick="openEditTask('${t.id}')" title="Bearbeiten">✏</button>
       <button class="icon-btn del" onclick="removeFromHeute('${t.id}')" title="Von Heute entfernen" style="font-size:13px">☀</button>
     </div>`;
   }).join('');
