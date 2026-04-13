@@ -102,6 +102,8 @@ textarea::placeholder { color:#444; }
 .heute-drag-handle { width:28px; height:28px; min-width:28px; border-radius:7px; border:1px solid transparent; color:#3a3a3a; cursor:grab; padding:0; font-size:17px; display:flex; align-items:center; justify-content:center; flex-shrink:0; touch-action:none; user-select:none; line-height:1; margin-top:-1px; background:transparent; }
 .heute-drag-handle:hover { color:#666; background:rgba(255,255,255,.03); border-color:#2f2f2f; }
 .heute-drag-handle:active { cursor:grabbing; color:var(--accent2); border-color:rgba(124,58,237,.28); background:rgba(124,58,237,.08); }
+.heute-task-main { flex:1; min-width:0; cursor:pointer; }
+.heute-task-main:hover .task-title { color:var(--accent2); }
 .heute-task.done { opacity:.4; }
 .heute-task.done .task-title { text-decoration:line-through; }
 .heute-task.heute-drag-over { border-color:var(--accent2); background:rgba(124,58,237,.08); transform:translateY(2px); }
@@ -1198,11 +1200,10 @@ function renderTasks() {
     html+=`<div class="kat-group">
       <div class="kat-header">
         <span class="kat-arrow" onclick="toggleKatCollapse('${k}')">${collapsed?'▶':'▼'}</span>
-        <span class="kat-icon">${getTaskCategoryIcon(k)}</span>
-        <span class="kat-name" onclick="toggleKatCollapse('${k}')">${esc(getTaskCategoryLabel(k))}</span>
+        <span class="kat-icon" onclick="toggleKatCollapse('${k}')" ondblclick="event.stopPropagation();editKat('${k}')" title="Doppelklick zum Umbenennen">${getTaskCategoryIcon(k)}</span>
+        <span class="kat-name" onclick="toggleKatCollapse('${k}')" ondblclick="event.stopPropagation();editKat('${k}')" title="Doppelklick zum Umbenennen">${esc(getTaskCategoryLabel(k))}</span>
         <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
         <span class="kat-actions">
-          <button class="icon-btn edit-btn" onclick="event.stopPropagation();editKat('${k}')" title="Umbenennen">✏</button>
           <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Löschen">×</button>
         </span>
       </div>`;
@@ -1416,7 +1417,7 @@ function renderHeute() {
         ontouchmove="heuteTouchMove(event,'${t.id}')"
         ontouchend="heuteTouchEnd(event)">⇅</div>
       <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
-      <div class="task-body" style="flex:1">
+      <div class="task-body heute-task-main" onclick="openEditTask('${t.id}')" title="Task bearbeiten" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openEditTask('${t.id}')}">
         <div class="task-title">${esc(t.title)}</div>
         ${t.context?`<div class="task-ctx">${esc(t.context)}</div>`:''}
         <div class="task-meta">
@@ -1425,7 +1426,6 @@ function renderHeute() {
           ${t.recurrence?.type?`<span class="recur-badge">🔁 ${RECUR_LABELS[t.recurrence.type]}</span>`:''}
         </div>
       </div>
-      <button class="icon-btn" onclick="openEditTask('${t.id}')" title="Bearbeiten">✏</button>
       <button class="icon-btn del" onclick="removeFromHeute('${t.id}')" title="Von Heute entfernen" style="font-size:13px">☀</button>
     </div>`;
   }).join('');
