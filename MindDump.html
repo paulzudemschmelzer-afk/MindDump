@@ -126,6 +126,7 @@ textarea::placeholder { color:#444; }
 .kat-actions { margin-left:auto; display:flex; gap:2px; }
 .kat-edit-link { background:none; border:none; color:var(--sub); cursor:pointer; font:inherit; font-size:12px; padding:3px 6px; border-radius:6px; }
 .kat-edit-link:hover { color:var(--text); background:rgba(255,255,255,.05); }
+.kat-edit-link:disabled { opacity:.35; cursor:default; pointer-events:none; }
 .subkat-group { margin:0 0 4px 18px; }
 .subkat-header { display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(124,58,237,.03); border:1px solid rgba(124,58,237,.08); border-radius:8px; cursor:pointer; margin-bottom:4px; font-size:13px; }
 .subkat-header:hover { background:rgba(124,58,237,.08); }
@@ -1343,6 +1344,25 @@ function reorderTaskCategories(dragKey,targetKey,placement='before'){
   renderTasks();
 }
 
+function moveCategoryStep(key, direction){
+  const order = [...getKnownTaskCategories()];
+  const idx = order.indexOf(key);
+  if(idx < 0) return;
+  const nextIdx = idx + direction;
+  if(nextIdx < 0 || nextIdx >= order.length) return;
+  [order[idx], order[nextIdx]] = [order[nextIdx], order[idx]];
+  S.taskCategoryOrder = order;
+  saveSettings();
+  saveTaskCategoriesToFirebase();
+  renderTasks();
+}
+
+function canMoveCategory(key, direction){
+  const order = getKnownTaskCategories();
+  const idx = order.indexOf(key);
+  return direction < 0 ? idx > 0 : idx >= 0 && idx < order.length - 1;
+}
+
 
 // ── KATEGORIE DRAG & DROP (HANDLE + TOUCH) ───────────────────
 let dragKatKey=null, dragSubkat=null, dragSubkatParent=null;
@@ -1807,7 +1827,9 @@ function renderTasks() {
         <span class="kat-name" onclick="renameTaskCategory('${k}')" title="Klicken zum Umbenennen">${esc(getTaskCategoryLabel(k))}</span>
         <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
         <span class="kat-actions">
-          <button class="kat-edit-link" onclick="event.stopPropagation();toggleCollapsedSubcategories('${k}')" title="Subkategorien auch im eingeklappten Zustand anzeigen">${showCollapsedSubcategories(k)?'Subs an':'Subs aus'}</button>
+          <button class="kat-edit-link" onclick="event.stopPropagation();toggleCollapsedSubcategories('${k}')" title="Subkategorien im eingeklappten Zustand ein- oder ausblenden">Sub ${showCollapsedSubcategories(k)?'▲':'▼'}</button>
+          <button class="kat-edit-link" onclick="event.stopPropagation();moveCategoryStep('${k}',-1)" ${canMoveCategory(k,-1)?'':'disabled'} title="Kategorie nach oben verschieben">↑</button>
+          <button class="kat-edit-link" onclick="event.stopPropagation();moveCategoryStep('${k}',1)" ${canMoveCategory(k,1)?'':'disabled'} title="Kategorie nach unten verschieben">↓</button>
           <button class="kat-edit-link" onclick="event.stopPropagation();renameTaskCategory('${k}')" title="Kategorie umbenennen">Bearbeiten</button>
           <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Loeschen">×</button>
         </span>
