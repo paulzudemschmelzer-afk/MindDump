@@ -2404,7 +2404,7 @@ function renderThoughts(){
       <div class="thought-text">${esc(t.content)}</div>
       <div class="card-actions" style="flex-shrink:0">
         <span class="date-label" style="margin-right:4px">${fmtDate(t.createdAt)}</span>
-        <button class="icon-btn" onclick="thoughtToTask('${t.id}')" title="Als Task speichern" style="font-size:13px">✓</button>
+        <button class="icon-btn" onclick="openThoughtToTask('${t.id}')" title="Als Task speichern" style="font-size:13px">✓</button>
         <button class="icon-btn" onclick="openEditThought('${t.id}')" title="Bearbeiten">✏</button>
         <button class="icon-btn del" onclick="delThought('${t.id}')" title="Löschen">×</button>
       </div>
@@ -2437,11 +2437,28 @@ async function renameTopic(oldName) {
 
 async function delThought(id){ await fsDel('thoughts',id); toast('Thought gelöscht'); }
 
-async function thoughtToTask(id) {
+function openThoughtToTask(id){
   const t = D.thoughts.find(x=>x.id===id); if(!t) return;
   const title=t.content.slice(0,80);
   const context=t.content.length>80?t.content:'';
-  const kategorie=autoKategorie(title, context);
+  const suggestedCategory=autoKategorie(title, context);
+  modalMode={type:'thought-to-task',id};
+  document.getElementById('modal-title').textContent='Thought zu Task';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><input type="text" value="${esc(title)}" disabled /></div>
+    <div class="form-row">
+      <select id="m-tt-kat">${renderTaskCategoryOptions(suggestedCategory,false)}</select>
+    </div>
+  `;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-tt-kat')?.focus(),50);
+}
+
+async function thoughtToTask(id, forcedCategory=null) {
+  const t = D.thoughts.find(x=>x.id===id); if(!t) return;
+  const title=t.content.slice(0,80);
+  const context=t.content.length>80?t.content:'';
+  const kategorie=forcedCategory||autoKategorie(title, context);
   await fsAdd('tasks', {id:uid(), title, context, priority:'mittel', kategorie, subkategorie:null, dueDate:null, estimatedTime:null, done:false, createdAt:Date.now()});
   await fsDel('thoughts', id);
   taskFilter='all';
@@ -2548,6 +2565,11 @@ async function saveModal(){
     if(!c){toast('Inhalt darf nicht leer sein','err');return;}
     t.content=c; t.topic=document.getElementById('m-topic')?.value.trim()||t.topic||'Allgemein';
     await fsUpdate('thoughts',t); closeModal(); toast('Thought aktualisiert!');
+  } else if(modalMode.type==='thought-to-task'){
+    const kat=document.getElementById('m-tt-kat')?.value||'sonstiges';
+    const thoughtId=modalMode.id;
+    closeModal();
+    await thoughtToTask(thoughtId, kat);
   } else if(modalMode.type==='snippet'){
     const s=D.snippets.find(x=>x.id===modalMode.id); if(!s) return;
     const title=document.getElementById('m-sn-title').value.trim(), content=document.getElementById('m-sn-content').value.trim();
