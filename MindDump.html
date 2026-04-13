@@ -353,7 +353,7 @@ select option { background:#1c1c1c; }
   <div class="tab-panel" id="tab-tasks">
     <div class="page-header header-row">
       <div><h1>Tasks</h1><p>Aufgaben mit vollem Kontext.</p></div>
-      <button class="btn btn-ghost" onclick="toggleForm('add-task-form')">+ Hinzufügen</button>
+      <button class="btn btn-ghost" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">+ Hinzufügen</button>
     </div>
     <div class="add-form" id="add-task-form" style="display:none">
       <div class="form-row">
@@ -391,7 +391,7 @@ select option { background:#1c1c1c; }
       </div>
       <div class="form-row">
         <button class="btn btn-primary btn-sm" onclick="addTaskManual()">Speichern</button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleForm('add-task-form')">Abbrechen</button>
+        <button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">Abbrechen</button>
       </div>
     </div>
     <div class="ftabs">
@@ -878,6 +878,8 @@ function syncTagWrap(wrapId) {
   // update datalist suggestions
   const dl = wrap.querySelector('datalist');
   if(dl) dl.innerHTML = getExistingTaskTags().filter(t=>!editingTags.includes(t)).map(t=>`<option value="${esc(t)}">`).join('');
+  // restore focus
+  setTimeout(()=>wrap.querySelector('input')?.focus(), 0);
 }
 
 function handleTagKeydown(e, wrapId) {
@@ -1291,7 +1293,7 @@ function renderTasks() {
         <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
         <span class="kat-actions">
           <button class="kat-edit-link" onclick="event.stopPropagation();renameTaskCategory('${k}')" title="Kategorie umbenennen">Bearbeiten</button>
-          <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Loeschen">�</button>
+          <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Loeschen">�</button>
         </span>
       </div>`;
     if(!collapsed){
