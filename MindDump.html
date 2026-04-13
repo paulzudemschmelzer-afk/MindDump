@@ -224,6 +224,17 @@ select option { background:#1c1c1c; }
 .step-num { background:rgba(124,58,237,.2); color:var(--accent2); border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; margin-top:1px; }
 .fb-status-row { display:flex; align-items:center; gap:10px; margin-top:8px; font-size:13px; }
 
+/* TAGS */
+.tag-chip { display:inline-flex; align-items:center; gap:3px; background:rgba(124,58,237,.15); color:var(--accent2); border:1px solid rgba(124,58,237,.25); border-radius:4px; font-size:11px; padding:2px 7px; font-weight:500; cursor:pointer; white-space:nowrap; }
+.tag-chip:hover { background:rgba(124,58,237,.25); }
+.tag-chip .tag-x { opacity:.6; font-size:13px; line-height:1; cursor:pointer; }
+.tag-chip .tag-x:hover { opacity:1; }
+.tag-chip.active { background:rgba(124,58,237,.35); border-color:var(--accent2); }
+.tag-input-wrap { display:flex; flex-wrap:wrap; gap:5px; align-items:center; flex:1; background:#141414; border:1px solid var(--border); border-radius:8px; padding:6px 10px; min-height:38px; cursor:text; }
+.tag-input-wrap:focus-within { border-color:var(--accent); }
+.tag-input-wrap input { background:none; border:none; outline:none; color:var(--text); font-size:13px; font-family:inherit; min-width:100px; flex:1; padding:0; }
+.task-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:7px; }
+
 /* DUMP SELECTION */
 .dump-item { position:relative; }
 .dump-check { display:flex; align-items:flex-start; gap:10px; }
@@ -372,6 +383,13 @@ select option { background:#1c1c1c; }
         <textarea class="form-ta" id="t-ctx" placeholder="Kontext / Details — Warum, Wie, Was genau?"></textarea>
       </div>
       <div class="form-row">
+        <div class="tag-input-wrap" id="form-tag-wrap" onclick="this.querySelector('input').focus()">
+          <input type="text" placeholder="Tags + Enter (z.B. minddump, recherche)" list="tag-sugg-form"
+            onkeydown="handleTagKeydown(event,'form-tag-wrap')" />
+          <datalist id="tag-sugg-form"></datalist>
+        </div>
+      </div>
+      <div class="form-row">
         <button class="btn btn-primary btn-sm" onclick="addTaskManual()">Speichern</button>
         <button class="btn btn-ghost btn-sm" onclick="toggleForm('add-task-form')">Abbrechen</button>
       </div>
@@ -383,6 +401,7 @@ select option { background:#1c1c1c; }
     </div>
     <div class="ftabs" id="task-sort-tabs"></div>
     <div class="ftabs" id="kat-ftabs"></div>
+    <div id="tag-filter-row" style="display:none;flex-wrap:wrap;gap:5px;margin-bottom:12px;align-items:center"></div>
     <div id="tasks-list"></div>
   </div>
 
@@ -590,6 +609,8 @@ let D = { tasks:[], thoughts:[], snippets:[] };
 let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{} };
 let pendingResult = null;
 let taskFilter = 'all';
+let taskTagFilter = null;
+let editingTags = [];
 let snipFilter = 'Alle';
 let weekOffset = 0;
 let modalMode = null;
@@ -835,6 +856,58 @@ function badges() {
   document.getElementById('b-snippets').textContent=D.snippets.length;
   const todayStr=new Date().toISOString().slice(0,10);
   document.getElementById('b-heute').textContent=D.tasks.filter(t=>!t.done&&(t.forToday||t.dueDate===todayStr)).length;
+}
+
+// ── TAGS ──────────────────────────────────────────────────────
+function getExistingTaskTags() {
+  const all = new Set();
+  D.tasks.forEach(t=>(t.tags||[]).forEach(tag=>all.add(tag)));
+  return [...all].sort();
+}
+
+function syncTagWrap(wrapId) {
+  const wrap = document.getElementById(wrapId);
+  if(!wrap) return;
+  const input = wrap.querySelector('input');
+  const datalist = wrap.querySelector('datalist');
+  wrap.innerHTML = editingTags.map((tag,i)=>
+    `<span class="tag-chip">#${esc(tag)}<span class="tag-x" onclick="removeEditingTag(${i},'${wrapId}');event.stopPropagation()">×</span></span>`
+  ).join('');
+  if(input) wrap.appendChild(input);
+  if(datalist) wrap.appendChild(datalist);
+  // update datalist suggestions
+  const dl = wrap.querySelector('datalist');
+  if(dl) dl.innerHTML = getExistingTaskTags().filter(t=>!editingTags.includes(t)).map(t=>`<option value="${esc(t)}">`).join('');
+}
+
+function handleTagKeydown(e, wrapId) {
+  if(e.key==='Enter' || e.key===',') {
+    e.preventDefault();
+    const val = e.target.value.trim().replace(/^#/,'').replace(/,/g,'').toLowerCase().replace(/\s+/g,'-');
+    if(val && !editingTags.includes(val)) { editingTags.push(val); syncTagWrap(wrapId); }
+    e.target.value='';
+  }
+}
+
+function removeEditingTag(i, wrapId) {
+  editingTags.splice(i,1);
+  syncTagWrap(wrapId);
+}
+
+function setTaskTagFilter(tag) {
+  taskTagFilter = taskTagFilter===tag ? null : tag;
+  renderTasks();
+}
+
+function renderTagFilterRow() {
+  const tags = getExistingTaskTags();
+  const row = document.getElementById('tag-filter-row');
+  if(!row) return;
+  if(!tags.length) { row.style.display='none'; return; }
+  row.style.display='flex';
+  row.innerHTML = `<span style="font-size:11px;color:var(--sub);margin-right:4px">Tags:</span>` +
+    tags.map(tag=>`<span class="tag-chip ${taskTagFilter===tag?'active':''}" onclick="setTaskTagFilter('${esc(tag)}')">#${esc(tag)}</span>`).join('') +
+    (taskTagFilter ? `<span style="font-size:11px;color:var(--sub);cursor:pointer;margin-left:4px" onclick="setTaskTagFilter(null)">× Filter löschen</span>` : '');
 }
 
 function updateApiIndicator() {
@@ -1185,7 +1258,9 @@ function renderTasks() {
   if(taskFilter==='open') list=list.filter(t=>!t.done);
   if(taskFilter==='done') list=list.filter(t=>t.done);
   if(taskKatFilter!=='alle') list=list.filter(t=>(t.kategorie||'sonstiges')===taskKatFilter);
+  if(taskTagFilter) list=list.filter(t=>(t.tags||[]).includes(taskTagFilter));
 
+  renderTagFilterRow();
   // Kategorie-Filter rendern
   const katOrder = getKnownTaskCategories();
   const countSource = D.tasks.filter(t => {
@@ -1236,6 +1311,7 @@ function renderTasks() {
               ${t.recurrence?.type?`<span class="recur-badge">🔁 ${RECUR_LABELS[t.recurrence.type]||t.recurrence.type}</span>`:''}
               <span class="date-label">${fmtDate(t.createdAt)}</span>
             </div>
+            ${t.tags?.length?`<div class="task-tags">${t.tags.map(tag=>`<span class="tag-chip" onclick="setTaskTagFilter('${esc(tag)}');event.stopPropagation()">#${esc(tag)}</span>`).join('')}</div>`:''}
           </div>
           <div class="card-actions">
             <button class="icon-btn" onclick="toggleForToday('${t.id}')" title="${t.forToday?'Von Heute entfernen':'Für heute markieren'}" style="color:${t.forToday?'#f59e0b':'#555'}">☀</button>
@@ -1285,13 +1361,15 @@ async function addTaskManual(){
   const recurVal=document.getElementById('t-recur').value;
   const katVal=document.getElementById('t-kat').value;
   const recurrence=recurVal?{type:recurVal}:null;
-  await fsAdd('tasks',{id:uid(),title,context:ctx,priority:document.getElementById('t-prio').value,kategorie:katVal==='auto'?autoKategorie(title,ctx):katVal,dueDate:document.getElementById('t-date').value||null,estimatedTime:document.getElementById('t-est').value.trim()||null,recurrence,done:false,createdAt:Date.now()});
+  await fsAdd('tasks',{id:uid(),title,context:ctx,priority:document.getElementById('t-prio').value,kategorie:katVal==='auto'?autoKategorie(title,ctx):katVal,dueDate:document.getElementById('t-date').value||null,estimatedTime:document.getElementById('t-est').value.trim()||null,recurrence,tags:[...editingTags],done:false,createdAt:Date.now()});
   document.getElementById('t-title').value=''; document.getElementById('t-ctx').value=''; document.getElementById('t-date').value=''; document.getElementById('t-est').value=''; document.getElementById('t-recur').value=''; document.getElementById('t-kat').value='auto';
+  editingTags=[]; syncTagWrap('form-tag-wrap');
   toggleForm('add-task-form'); toast('Task gespeichert!');
 }
 
 function openEditTask(id){
   const t=D.tasks.find(x=>x.id===id); if(!t) return;
+  editingTags=[...(t.tags||[])];
   modalMode={type:'task',id};
   document.getElementById('modal-title').textContent='Task bearbeiten';
   document.getElementById('modal-body').innerHTML=`
@@ -1320,7 +1398,14 @@ function openEditTask(id){
         <option value="yearly" ${t.recurrence?.type==='yearly'?'selected':''}>Jährlich wiederholen</option>
       </select>
     </div>
-    <div class="form-row"><textarea class="form-ta" id="m-ctx">${esc(t.context)}</textarea></div>`;
+    <div class="form-row"><textarea class="form-ta" id="m-ctx">${esc(t.context)}</textarea></div>
+    <div class="form-row">
+      <div class="tag-input-wrap" id="modal-tag-wrap" onclick="this.querySelector('input').focus()">
+        ${editingTags.map((tag,i)=>`<span class="tag-chip">#${esc(tag)}<span class="tag-x" onclick="removeEditingTag(${i},'modal-tag-wrap');event.stopPropagation()">×</span></span>`).join('')}
+        <input type="text" placeholder="Tags + Enter" list="tag-sugg-modal" onkeydown="handleTagKeydown(event,'modal-tag-wrap')" />
+        <datalist id="tag-sugg-modal">${getExistingTaskTags().filter(tg=>!editingTags.includes(tg)).map(tg=>`<option value="${esc(tg)}">`).join('')}</datalist>
+      </div>
+    </div>`;
   document.getElementById('modal').style.display='flex';
   setTimeout(()=>document.getElementById('m-title').focus(),50);
 }
@@ -1798,6 +1883,7 @@ async function saveModal(){
     t.estimatedTime=document.getElementById('m-est').value.trim()||null;
     const recurV=document.getElementById('m-recur').value;
     t.recurrence=recurV?{type:recurV}:null;
+    t.tags=[...editingTags];
     await fsUpdate('tasks',t); closeModal(); toast('Task aktualisiert!');
   } else if(modalMode.type==='thought'){
     const t=D.thoughts.find(x=>x.id===modalMode.id); if(!t) return;
