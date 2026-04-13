@@ -1110,7 +1110,7 @@ let katCollapsed = {};
 let subkatCollapsed = {};
 
 function toggleKatCollapse(k){ katCollapsed[k]=katCollapsed[k]===false?true:false; renderTasks(); }
-function toggleSubkatCollapse(k,sk){ const key=k+'::'+sk; subkatCollapsed[key]=subkatCollapsed[key]!==false; renderTasks(); }
+function toggleSubkatCollapse(k,sk){ const key=k+'::'+sk; subkatCollapsed[key]=subkatCollapsed[key]===false?true:false; renderTasks(); }
 
 function getExistingSubcategories(kat) {
   const subs=new Set();
@@ -1381,6 +1381,11 @@ function makeKatSubOf(srcK, targetK){
   if(!tasks.length){toast('Keine Tasks zum Verschieben','err');return;}
   tasks.forEach(t=>{ t.kategorie=targetK; t.subkategorie=srcLabel; });
   removeStoredTaskCategory(srcK);
+  katCollapsed[targetK]=true;
+  subkatCollapsed[targetK+'::'+srcLabel]=true;
+  S.taskCategoryShowSubsCollapsed[targetK]=true;
+  saveSettings();
+  saveTaskCategoriesToFirebase();
   if(taskKatFilter===srcK) taskKatFilter='alle';
   Promise.all(tasks.map(t=>fsUpdate('tasks',t))).then(()=>{
     toast(`"${srcLabel}" → Sub von "${getTaskCategoryLabel(targetK)}" (${tasks.length} Tasks)`);
@@ -1426,6 +1431,11 @@ function katDrop(e,targetK){
     const subName=dragSubkat;
     dragSubkat=null; dragSubkatParent=null;
     hideSubkatRestoreZone();
+    katCollapsed[targetK]=true;
+    subkatCollapsed[targetK+'::'+subName]=true;
+    S.taskCategoryShowSubsCollapsed[targetK]=true;
+    saveSettings();
+    saveTaskCategoriesToFirebase();
     Promise.all(tasks.map(t=>{ t.kategorie=targetK; return fsUpdate('tasks',t); })).then(()=>{
       toast(`"${subName}" → Sub von "${getTaskCategoryLabel(targetK)}"`);
       renderTasks();
@@ -1528,6 +1538,11 @@ function katTouchEnd(e){
         const targetK=targetHeader.dataset.kat;
         if(targetK!==katTouchParentK){
           const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===katTouchParentK && t.subkategorie===katTouchSubName);
+          katCollapsed[targetK]=true;
+          subkatCollapsed[targetK+'::'+katTouchSubName]=true;
+          S.taskCategoryShowSubsCollapsed[targetK]=true;
+          saveSettings();
+          saveTaskCategoriesToFirebase();
           Promise.all(tasks.map(t=>{ t.kategorie=targetK; return fsUpdate('tasks',t); })).then(()=>{
             toast(`"${katTouchSubName}" → Sub von "${getTaskCategoryLabel(targetK)}"`);
             renderTasks();
