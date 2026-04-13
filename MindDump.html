@@ -1429,6 +1429,7 @@ function renderThoughts(){
       <div class="thought-text">${esc(t.content)}</div>
       <div class="card-actions" style="flex-shrink:0">
         <span class="date-label" style="margin-right:4px">${fmtDate(t.createdAt)}</span>
+        <button class="icon-btn" onclick="thoughtToTask('${t.id}')" title="Als Task speichern" style="font-size:13px">✓</button>
         <button class="icon-btn" onclick="openEditThought('${t.id}')" title="Bearbeiten">✏</button>
         <button class="icon-btn del" onclick="delThought('${t.id}')" title="Löschen">×</button>
       </div>
@@ -1449,6 +1450,13 @@ function setThoughtTopicStr(tp){
 }
 
 async function delThought(id){ await fsDel('thoughts',id); toast('Thought gelöscht'); }
+
+async function thoughtToTask(id) {
+  const t = D.thoughts.find(x=>x.id===id); if(!t) return;
+  await fsAdd('tasks', {id:uid(), title:t.content.slice(0,80), context:t.content.length>80?t.content:'', priority:'mittel', dueDate:null, estimatedTime:null, done:false, createdAt:Date.now()});
+  await fsDel('thoughts', id);
+  toast('Thought → Task umgewandelt!');
+}
 
 async function addThoughtManual(){
   const content=document.getElementById('th-text').value.trim();
