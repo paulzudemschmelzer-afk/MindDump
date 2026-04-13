@@ -121,9 +121,11 @@ textarea::placeholder { color:#444; }
 .kat-header:hover { background:rgba(124,58,237,.12); }
 .kat-arrow { font-size:10px; color:var(--sub); min-width:14px; }
 .kat-icon { font-size:15px; }
-.kat-name { font-size:14px; font-weight:600; }
+.kat-name { font-size:14px; font-weight:600; cursor:pointer; }
 .kat-count { background:var(--accent); color:#fff; font-size:11px; padding:1px 7px; border-radius:10px; font-weight:600; }
 .kat-actions { margin-left:auto; display:flex; gap:2px; }
+.kat-edit-link { background:none; border:none; color:var(--sub); cursor:pointer; font:inherit; font-size:12px; padding:3px 6px; border-radius:6px; }
+.kat-edit-link:hover { color:var(--text); background:rgba(255,255,255,.05); }
 .card-actions { display:flex; gap:4px; flex-shrink:0; }
 
 /* THOUGHT CARD */
@@ -1213,7 +1215,8 @@ function renderTasks() {
         <span class="kat-name" onclick="renameTaskCategory('${k}')" title="Klicken zum Umbenennen">${esc(getTaskCategoryLabel(k))}</span>
         <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
         <span class="kat-actions">
-          <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Löschen">×</button>
+          <button class="kat-edit-link" onclick="event.stopPropagation();renameTaskCategory('${k}')" title="Kategorie umbenennen">Bearbeiten</button>
+          <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Loeschen">�</button>
         </span>
       </div>`;
     if(!collapsed){
@@ -2147,3 +2150,4 @@ init();
 </script>
 </body>
 </html>
+
