@@ -1369,7 +1369,7 @@ function getKatDropIntent(targetEl, clientX, clientY){
   const rect=targetEl.getBoundingClientRect();
   const offsetX=clientX-rect.left;
   const offsetY=clientY-rect.top;
-  const subThreshold=Math.min(Math.max(120, rect.width*0.42), rect.width-56);
+  const subThreshold=Math.min(Math.max(84, rect.width*0.28), rect.width-64);
   if(offsetX>=subThreshold) return 'sub';
   return offsetY < rect.height/2 ? 'before' : 'after';
 }
