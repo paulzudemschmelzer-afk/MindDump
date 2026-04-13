@@ -1143,6 +1143,7 @@ function openEditTask(id){
 
 // ── HEUTE ─────────────────────────────────────────────────────
 let heuteDragId = null;
+let touchDragId = null, touchClone = null, touchDragEl = null, touchDragMoved = false;
 
 function heuteDragStart(e, id) {
   heuteDragId = id;
@@ -1150,24 +1151,71 @@ function heuteDragStart(e, id) {
   e.stopPropagation();
 }
 
+async function reorderHeuteTasks(dragId, targetId) {
+  const todayStr = new Date().toISOString().slice(0,10);
+  const sorted = D.tasks.filter(t=>t.forToday||t.dueDate===todayStr)
+    .sort((a,b)=>(a.heuteOrder??9999)-(b.heuteOrder??9999));
+  const origIdx = sorted.findIndex(t=>t.id===dragId);
+  const targetIdx = sorted.findIndex(t=>t.id===targetId);
+  const movingDown = origIdx < targetIdx;
+  const dragged = sorted[origIdx];
+  const list = sorted.filter(t=>t.id!==dragId);
+  const ti = list.findIndex(t=>t.id===targetId);
+  list.splice(movingDown ? ti+1 : ti, 0, dragged);
+  await Promise.all(list.map((t,i)=>{ t.heuteOrder=i*10; return fsUpdate('tasks',t); }));
+  renderHeute();
+}
+
 async function heuteDrop(e, targetId) {
   e.preventDefault(); e.stopPropagation();
   document.querySelectorAll('.heute-task').forEach(el=>el.classList.remove('heute-drag-over'));
   if(!heuteDragId || heuteDragId===targetId) { heuteDragId=null; return; }
-  const dragged = D.tasks.find(x=>x.id===heuteDragId);
-  if(!dragged) { heuteDragId=null; return; }
-  const todayStr = new Date().toISOString().slice(0,10);
-  const sorted = D.tasks.filter(t=>t.forToday||t.dueDate===todayStr)
-    .sort((a,b)=>(a.heuteOrder??9999)-(b.heuteOrder??9999));
-  const origIdx = sorted.findIndex(t=>t.id===heuteDragId);
-  const targetOrigIdx = sorted.findIndex(t=>t.id===targetId);
-  const movingDown = origIdx < targetOrigIdx;
-  const list = sorted.filter(t=>t.id!==heuteDragId);
-  const ti = list.findIndex(t=>t.id===targetId);
-  list.splice(movingDown ? ti+1 : ti, 0, dragged);
-  await Promise.all(list.map((t,i)=>{ t.heuteOrder=i*10; return fsUpdate('tasks',t); }));
+  await reorderHeuteTasks(heuteDragId, targetId);
   heuteDragId = null;
-  renderHeute();
+}
+
+function heuteTouchStart(e, id) {
+  if(e.target.closest('.checkbox,.icon-btn')) return;
+  touchDragId = id;
+  touchDragEl = e.currentTarget;
+  touchDragMoved = false;
+}
+
+function heuteTouchMove(e, id) {
+  if(!touchDragId) return;
+  touchDragMoved = true;
+  e.preventDefault();
+  const touch = e.touches[0];
+  if(!touchClone) {
+    const rect = touchDragEl.getBoundingClientRect();
+    touchClone = touchDragEl.cloneNode(true);
+    Object.assign(touchClone.style, {position:'fixed',left:rect.left+'px',top:rect.top+'px',width:rect.width+'px',opacity:'0.85',pointerEvents:'none',zIndex:'9999',boxShadow:'0 8px 24px rgba(0,0,0,.5)',borderColor:'var(--accent2)',borderStyle:'solid',borderWidth:'1px',borderRadius:'10px',transform:'scale(1.02)'});
+    document.body.appendChild(touchClone);
+    touchDragEl.style.opacity = '0.3';
+  }
+  const h = touchDragEl.getBoundingClientRect().height;
+  touchClone.style.top = (touch.clientY - h/2) + 'px';
+  touchClone.style.visibility = 'hidden';
+  const under = document.elementFromPoint(touch.clientX, touch.clientY);
+  touchClone.style.visibility = '';
+  document.querySelectorAll('.heute-task').forEach(el=>el.classList.remove('heute-drag-over'));
+  const target = under?.closest('[data-task-id]');
+  if(target && target.dataset.taskId !== touchDragId) target.classList.add('heute-drag-over');
+}
+
+async function heuteTouchEnd(e) {
+  if(!touchDragId) return;
+  const touch = e.changedTouches[0];
+  if(touchClone) { touchClone.remove(); touchClone = null; }
+  if(touchDragEl) { touchDragEl.style.opacity = ''; touchDragEl = null; }
+  document.querySelectorAll('.heute-task').forEach(el=>el.classList.remove('heute-drag-over'));
+  if(touchDragMoved) {
+    const under = document.elementFromPoint(touch.clientX, touch.clientY);
+    const target = under?.closest('[data-task-id]');
+    const targetId = target?.dataset.taskId;
+    if(targetId && targetId !== touchDragId) await reorderHeuteTasks(touchDragId, targetId);
+  }
+  touchDragId = null;
 }
 
 function renderHeute() {
@@ -1187,11 +1235,15 @@ function renderHeute() {
   el.innerHTML = list.map(t => {
     const pc = 'prio-'+(t.priority||'mittel').toLowerCase();
     return `<div class="heute-task ${t.done?'done':''}"
+      data-task-id="${t.id}"
       draggable="true"
       ondragstart="heuteDragStart(event,'${t.id}')"
       ondragover="event.preventDefault();event.stopPropagation();this.classList.add('heute-drag-over')"
       ondragleave="if(!this.contains(event.relatedTarget))this.classList.remove('heute-drag-over')"
-      ondrop="this.classList.remove('heute-drag-over');heuteDrop(event,'${t.id}')">
+      ondrop="this.classList.remove('heute-drag-over');heuteDrop(event,'${t.id}')"
+      ontouchstart="heuteTouchStart(event,'${t.id}')"
+      ontouchmove="heuteTouchMove(event,'${t.id}')"
+      ontouchend="heuteTouchEnd(event)">
       <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
       <div class="task-body" style="flex:1">
         <div class="task-title">${esc(t.title)}</div>
