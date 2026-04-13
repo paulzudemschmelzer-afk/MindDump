@@ -1206,6 +1206,7 @@ function deleteSubcategoryFromEl(el){
 
 function getExistingSubcategories(kat) {
   const subs=new Set();
+  getChildCategoryKeys(kat).forEach(k=>subs.add(getTaskCategoryLabel(k)));
   D.tasks.forEach(t=>{ if((t.kategorie||'sonstiges')===kat && t.subkategorie) subs.add(t.subkategorie); });
   return [...subs].sort();
 }
@@ -2497,21 +2498,36 @@ function openThoughtToTask(id){
     <div class="form-row">
       <select id="m-tt-kat">${renderTaskCategoryOptions(suggestedCategory,false)}</select>
     </div>
+    <div class="form-row">
+      <input type="text" id="m-tt-subkat" placeholder="Subkategorie (optional)" list="m-tt-subkat-list" style="max-width:260px" />
+      <datalist id="m-tt-subkat-list"></datalist>
+    </div>
   `;
   document.getElementById('modal').style.display='flex';
+  const katSelect=document.getElementById('m-tt-kat');
+  if(katSelect){
+    katSelect.onchange=()=>updateSubkatSuggestions('m-tt-kat','m-tt-subkat-list');
+    updateSubkatSuggestions('m-tt-kat','m-tt-subkat-list');
+  }
   setTimeout(()=>document.getElementById('m-tt-kat')?.focus(),50);
 }
 
-async function thoughtToTask(id, forcedCategory=null) {
+async function thoughtToTask(id, forcedCategory=null, forcedSubcategory=null) {
   const t = D.thoughts.find(x=>x.id===id); if(!t) return;
   const title=t.content.slice(0,80);
   const context=t.content.length>80?t.content:'';
   const kategorie=forcedCategory||autoKategorie(title, context);
-  await fsAdd('tasks', {id:uid(), title, context, priority:'mittel', kategorie, subkategorie:null, dueDate:null, estimatedTime:null, done:false, createdAt:Date.now()});
+  const subkategorie=(forcedSubcategory||'').trim()||null;
+  if(subkategorie) ensureTaskSubcategory(kategorie, subkategorie);
+  await fsAdd('tasks', {id:uid(), title, context, priority:'mittel', kategorie, subkategorie, dueDate:null, estimatedTime:null, done:false, createdAt:Date.now()});
   await fsDel('thoughts', id);
   taskFilter='all';
   taskKatFilter=kategorie;
   katCollapsed[kategorie]=false;
+  if(subkategorie){
+    S.taskCategoryShowSubsCollapsed[kategorie]=true;
+    saveSettings();
+  }
   go('tasks');
   toast('Thought → Task umgewandelt!');
 }
@@ -2615,9 +2631,10 @@ async function saveModal(){
     await fsUpdate('thoughts',t); closeModal(); toast('Thought aktualisiert!');
   } else if(modalMode.type==='thought-to-task'){
     const kat=document.getElementById('m-tt-kat')?.value||'sonstiges';
+    const subkat=document.getElementById('m-tt-subkat')?.value.trim()||'';
     const thoughtId=modalMode.id;
     closeModal();
-    await thoughtToTask(thoughtId, kat);
+    await thoughtToTask(thoughtId, kat, subkat);
   } else if(modalMode.type==='snippet'){
     const s=D.snippets.find(x=>x.id===modalMode.id); if(!s) return;
     const title=document.getElementById('m-sn-title').value.trim(), content=document.getElementById('m-sn-content').value.trim();
