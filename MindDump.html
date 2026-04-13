@@ -97,8 +97,10 @@ textarea::placeholder { color:#444; }
 /* HEUTE */
 .heute-drop { min-height:80px; border:2px dashed var(--border); border-radius:10px; padding:14px; margin-bottom:16px; transition:border-color .15s, background .15s; }
 .heute-drop.drag-over { border-color:var(--accent); background:rgba(124,58,237,.06); }
-.heute-task { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:13px 15px; margin-bottom:7px; display:flex; gap:11px; align-items:flex-start; cursor:grab; user-select:none; }
-.heute-task:active { cursor:grabbing; }
+.heute-task { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:13px 15px; margin-bottom:7px; display:flex; gap:11px; align-items:flex-start; }
+.heute-drag-handle { color:#3a3a3a; cursor:grab; padding:2px 4px; font-size:15px; display:flex; align-items:center; flex-shrink:0; touch-action:none; user-select:none; line-height:1; margin-top:2px; }
+.heute-drag-handle:hover { color:#666; }
+.heute-drag-handle:active { cursor:grabbing; color:var(--accent2); }
 .heute-task.done { opacity:.4; }
 .heute-task.done .task-title { text-decoration:line-through; }
 .heute-task.heute-drag-over { border-color:var(--accent2); background:rgba(124,58,237,.08); transform:translateY(2px); }
@@ -1175,7 +1177,6 @@ async function heuteDrop(e, targetId) {
 }
 
 function heuteTouchStart(e, id) {
-  if(e.target.closest('.checkbox,.icon-btn')) return;
   touchDragId = id;
   touchDragEl = e.currentTarget;
   touchDragMoved = false;
@@ -1236,14 +1237,15 @@ function renderHeute() {
     const pc = 'prio-'+(t.priority||'mittel').toLowerCase();
     return `<div class="heute-task ${t.done?'done':''}"
       data-task-id="${t.id}"
-      draggable="true"
-      ondragstart="heuteDragStart(event,'${t.id}')"
       ondragover="event.preventDefault();event.stopPropagation();this.classList.add('heute-drag-over')"
       ondragleave="if(!this.contains(event.relatedTarget))this.classList.remove('heute-drag-over')"
-      ondrop="this.classList.remove('heute-drag-over');heuteDrop(event,'${t.id}')"
-      ontouchstart="heuteTouchStart(event,'${t.id}')"
-      ontouchmove="heuteTouchMove(event,'${t.id}')"
-      ontouchend="heuteTouchEnd(event)">
+      ondrop="this.classList.remove('heute-drag-over');heuteDrop(event,'${t.id}')">
+      <div class="heute-drag-handle"
+        draggable="true"
+        ondragstart="heuteDragStart(event,'${t.id}')"
+        ontouchstart="heuteTouchStart(event,'${t.id}')"
+        ontouchmove="heuteTouchMove(event,'${t.id}')"
+        ontouchend="heuteTouchEnd(event)">⠿</div>
       <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
       <div class="task-body" style="flex:1">
         <div class="task-title">${esc(t.title)}</div>
