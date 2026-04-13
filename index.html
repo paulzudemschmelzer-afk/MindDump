@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mind Dump</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=DM+Serif+Display:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">mental overflow, but make it usable</p>
+          <h1>Mind Dump</h1>
+          <p class="hero-text">
+            Schreib alles ungefiltert raus, markiere Wichtiges und finde deine
+            Gedanken wieder, bevor sie im Kopf kreisen.
+          </p>
+        </div>
+        <div class="hero-stats" aria-label="Uebersicht">
+          <article>
+            <span id="totalCount">0</span>
+            <p>Eintraege</p>
+          </article>
+          <article>
+            <span id="starredCount">0</span>
+            <p>Merken</p>
+          </article>
+          <article>
+            <span id="archivedCount">0</span>
+            <p>Archiv</p>
+          </article>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="composer panel">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Capture</p>
+              <h2>Raus aus dem Kopf</h2>
+            </div>
+            <button id="clearDraftButton" class="ghost-button" type="button">
+              Entwurf loeschen
+            </button>
+          </div>
+
+          <form id="entryForm" class="entry-form">
+            <label class="field">
+              <span>Titel</span>
+              <input
+                id="titleInput"
+                name="title"
+                type="text"
+                maxlength="80"
+                placeholder="Worum geht's grob?"
+              />
+            </label>
+
+            <label class="field">
+              <span>Gedanken-Dump</span>
+              <textarea
+                id="contentInput"
+                name="content"
+                rows="8"
+                maxlength="1200"
+                placeholder="Schreib roh, unsortiert und ohne Druck. Du kannst spaeter ordnen."
+                required
+              ></textarea>
+            </label>
+
+            <div class="form-row">
+              <label class="field">
+                <span>Tags</span>
+                <input
+                  id="tagsInput"
+                  name="tags"
+                  type="text"
+                  placeholder="z. B. arbeit, privat, idee"
+                />
+              </label>
+
+              <label class="toggle">
+                <input id="starInput" name="starred" type="checkbox" />
+                <span>Sofort merken</span>
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <p id="draftState" class="draft-state" aria-live="polite">
+                Entwurf wird lokal gespeichert.
+              </p>
+              <button class="primary-button" type="submit">
+                Eintrag speichern
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="board panel">
+          <div class="section-head board-head">
+            <div>
+              <p class="section-kicker">Review</p>
+              <h2>Gedanken sortieren</h2>
+            </div>
+            <div class="actions-inline">
+              <button id="exportButton" class="ghost-button" type="button">
+                Export JSON
+              </button>
+              <label class="import-button">
+                Import JSON
+                <input id="importInput" type="file" accept="application/json" />
+              </label>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <label class="search-field">
+              <span class="sr-only">Suche</span>
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Suche nach Inhalt oder Tags"
+              />
+            </label>
+
+            <div class="filters" role="tablist" aria-label="Filter">
+              <button class="filter-chip active" type="button" data-filter="all">
+                Alle
+              </button>
+              <button class="filter-chip" type="button" data-filter="starred">
+                Gemerkt
+              </button>
+              <button class="filter-chip" type="button" data-filter="active">
+                Aktiv
+              </button>
+              <button class="filter-chip" type="button" data-filter="archived">
+                Archiv
+              </button>
+            </div>
+          </div>
+
+          <div id="entriesGrid" class="entries-grid" aria-live="polite"></div>
+          <template id="entryTemplate">
+            <article class="entry-card">
+              <div class="entry-top">
+                <div>
+                  <p class="entry-date"></p>
+                  <h3 class="entry-title"></h3>
+                </div>
+                <button class="star-button" type="button" aria-label="Merken">
+                  [ ]
+                </button>
+              </div>
+              <p class="entry-content"></p>
+              <div class="tag-list"></div>
+              <div class="entry-actions">
+                <button class="ghost-button archive-button" type="button">
+                  Archivieren
+                </button>
+                <button class="ghost-button delete-button danger" type="button">
+                  Loeschen
+                </button>
+              </div>
+            </article>
+          </template>
+
+          <div id="emptyState" class="empty-state">
+            <p>Noch nichts hier. Der erste ungeordnete Gedanke darf ruhig chaotisch sein.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
