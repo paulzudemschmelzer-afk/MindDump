@@ -349,6 +349,8 @@ select option { background:#1c1c1c; }
           <option value="hoch">Hoch</option>
           <option value="niedrig">Niedrig</option>
         </select>
+        <select id="t-kat" style="max-width:220px" title="Kategorie"></select>
+        <button class="btn btn-ghost btn-sm" onclick="openNewTaskCategoryPrompt('t-kat')">+ Kategorie</button>
       </div>
       <div class="form-row">
         <input type="date" id="t-date" style="max-width:175px" title="Fälligkeitsdatum (optional)" />
@@ -581,7 +583,7 @@ select option { background:#1c1c1c; }
 <script>
 // ── STATE ─────────────────────────────────────────────────────
 let D = { tasks:[], thoughts:[], snippets:[] };
-let S = { groqKey:'', fbConfig:'' };
+let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{} };
 let pendingResult = null;
 let taskFilter = 'all';
 let snipFilter = 'Alle';
@@ -617,6 +619,7 @@ function autoKategorie(title, context) {
 function loadLocal() {
   try { const d=localStorage.getItem('md_data'); if(d) D=JSON.parse(d); } catch(e){}
   try { const s=localStorage.getItem('md_settings'); if(s) S=JSON.parse(s); } catch(e){}
+  ensureTaskCategorySettings();
 }
 function saveLocal() { localStorage.setItem('md_data',JSON.stringify(D)); badges(); }
 function saveSettings() { localStorage.setItem('md_settings',JSON.stringify(S)); }
@@ -702,6 +705,12 @@ function subscribeFS() {
       const inp = document.getElementById('api-key-in');
       if(inp) inp.value = S.groqKey;
     }
+    if(doc.exists && Array.isArray(doc.data().taskCategories)) S.taskCategories = doc.data().taskCategories;
+    if(doc.exists && doc.data().taskCategoryLabels && typeof doc.data().taskCategoryLabels === 'object') S.taskCategoryLabels = doc.data().taskCategoryLabels;
+    ensureTaskCategorySettings();
+    saveSettings();
+    renderTaskCategoryInputs();
+    renderTasks();
   });
 }
 
@@ -763,6 +772,22 @@ function updateFBStatus(ok) {
 // ── UTILS ─────────────────────────────────────────────────────
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2); }
 function esc(s) { if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function normalizeCategoryKey(name) {
+  return (name||'')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/ß/g,'ss')
+    .replace(/[^a-z0-9]+/g,'-')
+    .replace(/^-+|-+$/g,'');
+}
+function formatCategoryLabel(key) {
+  return (key||'')
+    .split('-')
+    .filter(Boolean)
+    .map(part=>part.charAt(0).toUpperCase()+part.slice(1))
+    .join(' ');
+}
 function fmtDate(ts) { if(!ts) return ''; return new Date(ts).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}); }
 function fmtDue(ds) {
   if(!ds) return '';
@@ -985,13 +1010,102 @@ let katCollapsed = {};
 
 function toggleKatCollapse(k){ katCollapsed[k]=!katCollapsed[k]; renderTasks(); }
 
+function ensureTaskCategorySettings() {
+  if(!Array.isArray(S.taskCategories)) S.taskCategories = [];
+  if(!S.taskCategoryLabels || typeof S.taskCategoryLabels !== 'object') S.taskCategoryLabels = {};
+}
+
+function getTaskCategoryLabel(k) {
+  ensureTaskCategorySettings();
+  return S.taskCategoryLabels[k] || KAT_LABELS[k] || formatCategoryLabel(k) || k;
+}
+
+function getTaskCategoryIcon(k) {
+  return KAT_ICONS[k] || '#';
+}
+
 function getKnownTaskCategories() {
   const known = [...DEFAULT_KAT_ORDER];
+  ensureTaskCategorySettings();
+  S.taskCategories.forEach(k => {
+    if (k && !known.includes(k)) known.push(k);
+  });
   D.tasks.forEach(t => {
     const kat = t.kategorie || 'sonstiges';
     if (!known.includes(kat)) known.push(kat);
   });
   return known;
+}
+
+function renderTaskCategoryOptions(selected='sonstiges', includeAuto=false) {
+  const options = [];
+  if(includeAuto) options.push(`<option value="auto" ${selected==='auto'?'selected':''}>Automatisch</option>`);
+  getKnownTaskCategories().forEach(k => {
+    options.push(`<option value="${k}" ${selected===k?'selected':''}>${esc(getTaskCategoryLabel(k))}</option>`);
+  });
+  return options.join('');
+}
+
+function renderTaskCategoryInputs() {
+  const taskSelect = document.getElementById('t-kat');
+  if(taskSelect) {
+    const current = taskSelect.value || 'auto';
+    taskSelect.innerHTML = renderTaskCategoryOptions(current, true);
+    taskSelect.value = [...taskSelect.options].some(o=>o.value===current) ? current : 'auto';
+  }
+  const modalSelect = document.getElementById('m-kat');
+  if(modalSelect) {
+    const current = modalSelect.value || 'sonstiges';
+    modalSelect.innerHTML = renderTaskCategoryOptions(current, false);
+    modalSelect.value = [...modalSelect.options].some(o=>o.value===current) ? current : 'sonstiges';
+  }
+}
+
+function saveTaskCategoriesToFirebase() {
+  if(!db || !currentUser) return;
+  ensureTaskCategorySettings();
+  db.collection('settings').doc(currentUser.uid).set({
+    taskCategories: S.taskCategories,
+    taskCategoryLabels: S.taskCategoryLabels
+  }, { merge: true });
+}
+
+function registerTaskCategory(name, preferredKey=null) {
+  ensureTaskCategorySettings();
+  const label = (name||'').trim().replace(/\s+/g,' ');
+  const key = preferredKey || normalizeCategoryKey(label);
+  if(!label || !key) return null;
+  if(!DEFAULT_KAT_ORDER.includes(key) && !S.taskCategories.includes(key)) S.taskCategories.push(key);
+  if((KAT_LABELS[key]||'').toLowerCase() !== label.toLowerCase()) S.taskCategoryLabels[key] = label;
+  else delete S.taskCategoryLabels[key];
+  saveSettings();
+  saveTaskCategoriesToFirebase();
+  renderTaskCategoryInputs();
+  return key;
+}
+
+function removeStoredTaskCategory(key) {
+  ensureTaskCategorySettings();
+  S.taskCategories = S.taskCategories.filter(k => k !== key);
+  delete S.taskCategoryLabels[key];
+  saveSettings();
+  saveTaskCategoriesToFirebase();
+  renderTaskCategoryInputs();
+}
+
+function openNewTaskCategoryPrompt(selectId='') {
+  const name = prompt('Neue Kategorie hinzufuegen:', '');
+  if(!name) return;
+  const key = registerTaskCategory(name);
+  if(!key) { toast('Kategorie konnte nicht angelegt werden','err'); return; }
+  if(selectId) {
+    const sel = document.getElementById(selectId);
+    if(sel) sel.value = key;
+  } else {
+    taskKatFilter = key;
+  }
+  renderTasks();
+  toast(`Kategorie hinzugefuegt: ${getTaskCategoryLabel(key)}`);
 }
 
 function renderTaskCategoryTabs(katCounts = {}) {
@@ -1000,25 +1114,31 @@ function renderTaskCategoryTabs(katCounts = {}) {
   const katOrder = getKnownTaskCategories();
   katFtabs.innerHTML =
     `<button class="ftab ${taskKatFilter==='alle'?'active':''}" onclick="setTaskKatFilter('alle',this)">Alle</button>` +
-    katOrder.map(k => `<button class="ftab ${taskKatFilter===k?'active':''}" onclick="setTaskKatFilter('${k}',this)">${KAT_ICONS[k]||''} ${KAT_LABELS[k]||k} (${katCounts[k]||0})</button>`).join('');
+    katOrder.map(k => `<button class="ftab ${taskKatFilter===k?'active':''}" onclick="setTaskKatFilter('${k}',this)">${getTaskCategoryIcon(k)} ${esc(getTaskCategoryLabel(k))} (${katCounts[k]||0})</button>`).join('') +
+    `<button class="ftab" onclick="openNewTaskCategoryPrompt()">+ Kategorie</button>`;
 }
 
 function editKat(k){
-  const neu=prompt('Kategorie umbenennen:',KAT_LABELS[k]||k);
+  const neu=prompt('Kategorie umbenennen:',getTaskCategoryLabel(k));
   if(!neu||neu===k) return;
-  const slug=neu.toLowerCase().replace(/[^a-zäöüß]/g,'');
+  const slug=normalizeCategoryKey(neu);
+  if(!slug) { toast('Ungueltiger Kategoriename','err'); return; }
   D.tasks.filter(t=>(t.kategorie||'sonstiges')===k).forEach(t=>{ t.kategorie=slug; });
+  registerTaskCategory(neu, slug);
+  if(slug!==k) removeStoredTaskCategory(k);
   if(currentUser&&db) D.tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
-  toast(`Kategorie umbenannt: ${KAT_LABELS[k]||k} → ${neu}`);
+  toast(`Kategorie umbenannt: ${getTaskCategoryLabel(k)} -> ${neu}`);
   renderTasks();
 }
 
 function deleteKat(k){
   const count=D.tasks.filter(t=>(t.kategorie||'sonstiges')===k&&!t.done).length;
-  if(!confirm(`${KAT_LABELS[k]||k} löschen? ${count} Task${count!==1?'s':''} wandern zu Sonstiges.`)) return;
+  if(!confirm(`${getTaskCategoryLabel(k)} loeschen? ${count} Task${count!==1?'s':''} wandern zu Sonstiges.`)) return;
   D.tasks.filter(t=>(t.kategorie||'sonstiges')===k).forEach(t=>{ t.kategorie='sonstiges'; });
+  removeStoredTaskCategory(k);
+  if(taskKatFilter===k) taskKatFilter='alle';
   if(currentUser&&db) D.tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
-  toast(`${KAT_LABELS[k]||k} gelöscht — Tasks zu Sonstiges verschoben`);
+  toast(`${getTaskCategoryLabel(k)} geloescht - Tasks zu Sonstiges verschoben`);
   renderTasks();
 }
 
@@ -1052,8 +1172,8 @@ function renderTasks() {
     html+=`<div class="kat-group">
       <div class="kat-header">
         <span class="kat-arrow" onclick="toggleKatCollapse('${k}')">${collapsed?'▶':'▼'}</span>
-        <span class="kat-icon">${KAT_ICONS[k]||''}</span>
-        <span class="kat-name" onclick="toggleKatCollapse('${k}')">${KAT_LABELS[k]||k}</span>
+        <span class="kat-icon">${getTaskCategoryIcon(k)}</span>
+        <span class="kat-name" onclick="toggleKatCollapse('${k}')">${esc(getTaskCategoryLabel(k))}</span>
         <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
         <span class="kat-actions">
           <button class="icon-btn edit-btn" onclick="event.stopPropagation();editKat('${k}')" title="Umbenennen">✏</button>
@@ -1070,7 +1190,7 @@ function renderTasks() {
             <div class="task-title">${esc(t.title)}</div>
             ${t.context?`<div class="task-ctx">${esc(t.context)}</div>`:''}
             <div class="task-meta">
-              <span class="kat-badge kat-${kat}">${KAT_LABELS[kat]||kat}</span>
+              <span class="kat-badge kat-${kat}">${esc(getTaskCategoryLabel(kat))}</span>
               <span class="prio ${pc}">${t.priority||'mittel'}</span>
               ${t.estimatedTime?`<span class="date-chip">⏱ ${esc(t.estimatedTime)}</span>`:''}
               ${t.dueDate?`<span class="date-chip">📅 ${fmtDue(t.dueDate)}</span>`:''}
@@ -1124,9 +1244,10 @@ async function addTaskManual(){
   if(!title){toast('Bitte Titel eingeben','err');return;}
   const ctx=document.getElementById('t-ctx').value.trim();
   const recurVal=document.getElementById('t-recur').value;
+  const katVal=document.getElementById('t-kat').value;
   const recurrence=recurVal?{type:recurVal}:null;
-  await fsAdd('tasks',{id:uid(),title,context:ctx,priority:document.getElementById('t-prio').value,kategorie:autoKategorie(title,ctx),dueDate:document.getElementById('t-date').value||null,estimatedTime:document.getElementById('t-est').value.trim()||null,recurrence,done:false,createdAt:Date.now()});
-  document.getElementById('t-title').value=''; document.getElementById('t-ctx').value=''; document.getElementById('t-date').value=''; document.getElementById('t-est').value=''; document.getElementById('t-recur').value='';
+  await fsAdd('tasks',{id:uid(),title,context:ctx,priority:document.getElementById('t-prio').value,kategorie:katVal==='auto'?autoKategorie(title,ctx):katVal,dueDate:document.getElementById('t-date').value||null,estimatedTime:document.getElementById('t-est').value.trim()||null,recurrence,done:false,createdAt:Date.now()});
+  document.getElementById('t-title').value=''; document.getElementById('t-ctx').value=''; document.getElementById('t-date').value=''; document.getElementById('t-est').value=''; document.getElementById('t-recur').value=''; document.getElementById('t-kat').value='auto';
   toggleForm('add-task-form'); toast('Task gespeichert!');
 }
 
@@ -1143,8 +1264,9 @@ function openEditTask(id){
         <option value="niedrig" ${t.priority==='niedrig'?'selected':''}>Niedrig</option>
       </select>
       <select id="m-kat">
-        ${['geld','haushalt','einkaufen','business','schule','tech','familie','sonstiges'].map(k=>`<option value="${k}" ${(t.kategorie||'sonstiges')===k?'selected':''}>${k}</option>`).join('')}
+        ${renderTaskCategoryOptions(t.kategorie||'sonstiges')}
       </select>
+      <button class="btn btn-ghost btn-sm" onclick="openNewTaskCategoryPrompt('m-kat')">+ Kategorie</button>
     </div>
     <div class="form-row">
       <input type="date" id="m-date" value="${t.dueDate||''}" style="max-width:180px" />
@@ -1644,7 +1766,7 @@ function saveKey(){
   saveSettings(); updateApiIndicator(); saveApiKeyToFirebase(); toast('API Key gespeichert!');
 }
 function exportData(){
-  const blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({...D,meta:{taskCategories:S.taskCategories||[],taskCategoryLabels:S.taskCategoryLabels||{}}},null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download='minddump-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url);
 }
@@ -1664,9 +1786,23 @@ function importData(e){
             await col(name).doc(id).set(data);
           }
         }
+        if(Array.isArray(imp.meta?.taskCategories)) S.taskCategories = imp.meta.taskCategories;
+        if(imp.meta?.taskCategoryLabels && typeof imp.meta.taskCategoryLabels === 'object') S.taskCategoryLabels = imp.meta.taskCategoryLabels;
+        ensureTaskCategorySettings();
+        saveSettings();
+        saveTaskCategoriesToFirebase();
+        renderTaskCategoryInputs();
+        renderTasks();
         toast(`Zu Firebase hochgeladen: ${imp.tasks.length} Tasks, ${imp.thoughts.length} Thoughts, ${imp.snippets.length} Snippets`);
       } else {
-        D=imp; saveLocal(); toast(`Importiert: ${D.tasks.length} Tasks, ${D.thoughts.length} Thoughts, ${D.snippets.length} Snippets`);
+        D={tasks:imp.tasks,thoughts:imp.thoughts,snippets:imp.snippets}; saveLocal();
+        if(Array.isArray(imp.meta?.taskCategories)) S.taskCategories = imp.meta.taskCategories;
+        if(imp.meta?.taskCategoryLabels && typeof imp.meta.taskCategoryLabels === 'object') S.taskCategoryLabels = imp.meta.taskCategoryLabels;
+        ensureTaskCategorySettings();
+        saveSettings();
+        renderTaskCategoryInputs();
+        renderTasks();
+        toast(`Importiert: ${D.tasks.length} Tasks, ${D.thoughts.length} Thoughts, ${D.snippets.length} Snippets`);
       }
     } catch(err){ toast('Import fehlgeschlagen: '+err.message,'err'); }
   };
@@ -1867,6 +2003,7 @@ async function taurusSend() {
 // ── INIT ─────────────────────────────────────────────────────
 function init() {
   loadLocal();
+  renderTaskCategoryInputs();
   if(S.groqKey) document.getElementById('api-key-in').value=S.groqKey;
   updateApiIndicator();
   badges();
