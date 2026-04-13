@@ -97,9 +97,11 @@ textarea::placeholder { color:#444; }
 /* HEUTE */
 .heute-drop { min-height:80px; border:2px dashed var(--border); border-radius:10px; padding:14px; margin-bottom:16px; transition:border-color .15s, background .15s; }
 .heute-drop.drag-over { border-color:var(--accent); background:rgba(124,58,237,.06); }
-.heute-task { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:13px 15px; margin-bottom:7px; display:flex; gap:11px; align-items:flex-start; }
+.heute-task { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:13px 15px; margin-bottom:7px; display:flex; gap:11px; align-items:flex-start; cursor:grab; user-select:none; }
+.heute-task:active { cursor:grabbing; }
 .heute-task.done { opacity:.4; }
 .heute-task.done .task-title { text-decoration:line-through; }
+.heute-task.heute-drag-over { border-color:var(--accent2); background:rgba(124,58,237,.08); transform:translateY(2px); }
 .heute-empty-drop { text-align:center; padding:18px; color:#444; font-size:13px; pointer-events:none; }
 .kat-badge { font-size:11px; padding:2px 8px; border-radius:4px; font-weight:500; cursor:pointer; }
 .kat-geld { background:rgba(245,158,11,.12); color:#fbbf24; }
@@ -1140,10 +1142,39 @@ function openEditTask(id){
 }
 
 // ── HEUTE ─────────────────────────────────────────────────────
+let heuteDragId = null;
+
+function heuteDragStart(e, id) {
+  heuteDragId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.stopPropagation();
+}
+
+async function heuteDrop(e, targetId) {
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll('.heute-task').forEach(el=>el.classList.remove('heute-drag-over'));
+  if(!heuteDragId || heuteDragId===targetId) { heuteDragId=null; return; }
+  const dragged = D.tasks.find(x=>x.id===heuteDragId);
+  if(!dragged) { heuteDragId=null; return; }
+  const todayStr = new Date().toISOString().slice(0,10);
+  let list = D.tasks.filter(t=>t.forToday||t.dueDate===todayStr)
+    .sort((a,b)=>(a.heuteOrder??9999)-(b.heuteOrder??9999));
+  list = list.filter(t=>t.id!==heuteDragId);
+  const ti = list.findIndex(t=>t.id===targetId);
+  list.splice(ti, 0, dragged);
+  await Promise.all(list.map((t,i)=>{ t.heuteOrder=i*10; return fsUpdate('tasks',t); }));
+  heuteDragId = null;
+}
+
 function renderHeute() {
   const todayStr = new Date().toISOString().slice(0,10);
   const list = D.tasks.filter(t => t.forToday || t.dueDate === todayStr)
-    .sort((a,b) => { if(a.done!==b.done) return a.done?1:-1; const o={hoch:0,mittel:1,niedrig:2}; return (o[a.priority]??1)-(o[b.priority]??1); });
+    .sort((a,b) => {
+      if(a.done!==b.done) return a.done?1:-1;
+      const aHasOrder=a.heuteOrder!==undefined, bHasOrder=b.heuteOrder!==undefined;
+      if(aHasOrder||bHasOrder) return (a.heuteOrder??9999)-(b.heuteOrder??9999);
+      const o={hoch:0,mittel:1,niedrig:2}; return (o[a.priority]??1)-(o[b.priority]??1);
+    });
   const el = document.getElementById('heute-list');
   if(!list.length) {
     el.innerHTML='<div class="heute-empty-drop">Tasks hierher ziehen oder per ☀ in der Task-Liste markieren</div>';
@@ -1151,7 +1182,12 @@ function renderHeute() {
   }
   el.innerHTML = list.map(t => {
     const pc = 'prio-'+(t.priority||'mittel').toLowerCase();
-    return `<div class="heute-task ${t.done?'done':''}">
+    return `<div class="heute-task ${t.done?'done':''}"
+      draggable="true"
+      ondragstart="heuteDragStart(event,'${t.id}')"
+      ondragover="event.preventDefault();event.stopPropagation();this.classList.add('heute-drag-over')"
+      ondragleave="this.classList.remove('heute-drag-over')"
+      ondrop="this.classList.remove('heute-drag-over');heuteDrop(event,'${t.id}')">
       <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
       <div class="task-body" style="flex:1">
         <div class="task-title">${esc(t.title)}</div>
