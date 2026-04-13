@@ -158,6 +158,7 @@ textarea::placeholder { color:#444; }
 .ap-event:hover { opacity:.85; transform:scale(1.01); }
 .ap-event:active { cursor:grabbing; }
 .ap-event.done { opacity:.3; }
+.ap-event.reorder-target { outline:2px solid var(--accent2); outline-offset:1px; }
 .ap-event.prio-hoch,.ap-event.prio-high { background:rgba(239,68,68,.28); border-left-color:#f87171; }
 .ap-event.prio-mittel,.ap-event.prio-medium { background:rgba(124,58,237,.3); border-left-color:var(--accent2); }
 .ap-event.prio-niedrig,.ap-event.prio-low { background:rgba(16,185,129,.22); border-left-color:#34d399; }
@@ -1218,16 +1219,34 @@ function parseEstMins(est) {
   return total||60;
 }
 
-let draggedTaskId=null;
-function dragTask(e,id){ draggedTaskId=id; e.dataTransfer.effectAllowed='move'; }
+let draggedTaskId=null, dragSourceDay=null;
+function dragTask(e,id){ draggedTaskId=id; dragSourceDay=D.tasks.find(x=>x.id===id)?.dueDate||null; e.dataTransfer.effectAllowed='move'; }
 async function dropTask(e,ds){
   e.preventDefault();
   if(!draggedTaskId) return;
   const t=D.tasks.find(x=>x.id===draggedTaskId);
   if(!t) return;
-  t.dueDate=ds;
-  if(currentUser&&db) await fsUpdate('tasks',t); else { saveLocal(); renderWeek(); }
-  draggedTaskId=null;
+  if(t.dueDate!==ds){
+    // Anderen Tag → ans Ende der Tagesliste hängen
+    const dayTasks=D.tasks.filter(x=>x.dueDate===ds).sort((a,b)=>(a.dayOrder??a.createdAt??0)-(b.dayOrder??b.createdAt??0));
+    t.dayOrder=dayTasks.length>0?(dayTasks[dayTasks.length-1].dayOrder??dayTasks.length*10)+10:0;
+    t.dueDate=ds;
+    if(currentUser&&db) await fsUpdate('tasks',t); else {saveLocal();renderWeek();}
+  }
+  draggedTaskId=null; dragSourceDay=null;
+}
+async function reorderTask(e,targetId,ds){
+  e.preventDefault(); e.stopPropagation();
+  if(!draggedTaskId||draggedTaskId===targetId) return;
+  const dragged=D.tasks.find(x=>x.id===draggedTaskId);
+  if(!dragged) return;
+  if(dragged.dueDate!==ds) dragged.dueDate=ds;
+  let dayTasks=D.tasks.filter(t=>t.dueDate===ds).sort((a,b)=>(a.dayOrder??a.createdAt??0)-(b.dayOrder??b.createdAt??0));
+  dayTasks=dayTasks.filter(t=>t.id!==draggedTaskId);
+  const ti=dayTasks.findIndex(t=>t.id===targetId);
+  dayTasks.splice(ti,0,dragged);
+  await Promise.all(dayTasks.map((t,i)=>{t.dayOrder=i*10;return fsUpdate('tasks',t);}));
+  draggedTaskId=null; dragSourceDay=null;
 }
 
 function renderWeek() {
@@ -1268,7 +1287,7 @@ function renderWeek() {
   days.forEach(day=>{
     const ds=dateStr(day);
     const isToday=ds===todayStr;
-    const allTasks=D.tasks.filter(t=>t.dueDate===ds);
+    const allTasks=D.tasks.filter(t=>t.dueDate===ds).sort((a,b)=>(a.dayOrder??a.createdAt??0)-(b.dayOrder??b.createdAt??0));
 
     html+=`<div class="ap-day-col ${isToday?'today-col':''}" style="height:${gridH}px"
       ondragover="event.preventDefault();this.classList.add('drag-over')"
@@ -1289,6 +1308,9 @@ function renderWeek() {
         style="top:${curTop}px;height:${h}px;left:3px;right:3px"
         draggable="true"
         ondragstart="dragTask(event,'${t.id}')"
+        ondragover="event.preventDefault();event.stopPropagation();this.classList.add('reorder-target')"
+        ondragleave="this.classList.remove('reorder-target')"
+        ondrop="this.classList.remove('reorder-target');reorderTask(event,'${t.id}','${ds}')"
         onclick="toggleTask('${t.id}')"
         title="${esc(t.title)}">
         <div class="ap-event-title">${esc(t.title.length>26?t.title.slice(0,26)+'…':t.title)}</div>
