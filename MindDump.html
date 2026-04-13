@@ -1382,6 +1382,41 @@ function paintKatDropIntent(targetEl, intent){
   if(intent==='after') targetEl.classList.add('kat-drop-after');
 }
 
+function katBodyDragOver(e, host, targetK){
+  if((dragKatKey && dragKatKey!==targetK) || (dragSubkat && dragSubkatParent!==targetK)){
+    e.preventDefault();
+    const group = host?.closest('.kat-group');
+    const header = group?.querySelector('.kat-header[data-kat]');
+    paintKatDropIntent(header, 'sub');
+  }
+}
+
+function katBodyDrop(e, host, targetK){
+  e.preventDefault();
+  clearKatDropStates();
+  if(dragKatKey && dragKatKey!==targetK){
+    const src=dragKatKey;
+    dragKatKey=null;
+    makeKatSubOf(src,targetK);
+    return;
+  }
+  if(dragSubkat && dragSubkatParent && dragSubkatParent!==targetK){
+    const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===dragSubkatParent && t.subkategorie===dragSubkat);
+    const subName=dragSubkat;
+    dragSubkat=null; dragSubkatParent=null;
+    hideSubkatRestoreZone();
+    katCollapsed[targetK]=true;
+    subkatCollapsed[targetK+'::'+subName]=true;
+    S.taskCategoryShowSubsCollapsed[targetK]=true;
+    saveSettings();
+    saveTaskCategoriesToFirebase();
+    Promise.all(tasks.map(t=>{ t.kategorie=targetK; return fsUpdate('tasks',t); })).then(()=>{
+      toast(`"${subName}" → Sub von "${getTaskCategoryLabel(targetK)}"`);
+      renderTasks();
+    });
+  }
+}
+
 function makeKatSubOf(srcK, targetK){
   const srcLabel=getTaskCategoryLabel(srcK);
   const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===srcK);
@@ -1516,8 +1551,13 @@ function katTouchMove(e){
   katTouchClone.style.visibility='';
   clearKatDropStates();
   const targetHeader=under?.closest('.kat-header[data-kat]');
+  const targetSubGroup=under?.closest('.subkat-group[data-parent]');
   const restoreZone=under?.closest('.kat-restore-zone');
   if(targetHeader) paintKatDropIntent(targetHeader, katTouchType==='kat' ? getKatDropIntent(targetHeader, touch.clientX, touch.clientY) : 'sub');
+  else if(targetSubGroup){
+    const parentHeader = targetSubGroup.closest('.kat-group')?.querySelector('.kat-header[data-kat]');
+    paintKatDropIntent(parentHeader, 'sub');
+  }
   if(restoreZone && katTouchType==='subkat') restoreZone.classList.add('kat-drag-over');
 }
 
@@ -1531,6 +1571,7 @@ function katTouchEnd(e){
   if(katTouchMoved){
     const under=document.elementFromPoint(touch.clientX,touch.clientY);
     const targetHeader=under?.closest('.kat-header[data-kat]');
+    const targetSubGroup=under?.closest('.subkat-group[data-parent]');
     const restoreZone=under?.closest('.kat-restore-zone');
     if(katTouchType==='kat' && targetHeader){
       const targetK=targetHeader.dataset.kat;
@@ -1539,10 +1580,27 @@ function katTouchEnd(e){
         if(intent==='sub') makeKatSubOf(katTouchId,targetK);
         else reorderTaskCategories(katTouchId,targetK,intent);
       }
+    } else if(katTouchType==='kat' && targetSubGroup){
+      const targetK=targetSubGroup.dataset.parent;
+      if(targetK!==katTouchId) makeKatSubOf(katTouchId,targetK);
     } else if(katTouchType==='subkat'){
       if(restoreZone) restoreSubToKat(katTouchParentK,katTouchSubName);
       else if(targetHeader){
         const targetK=targetHeader.dataset.kat;
+        if(targetK!==katTouchParentK){
+          const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===katTouchParentK && t.subkategorie===katTouchSubName);
+          katCollapsed[targetK]=true;
+          subkatCollapsed[targetK+'::'+katTouchSubName]=true;
+          S.taskCategoryShowSubsCollapsed[targetK]=true;
+          saveSettings();
+          saveTaskCategoriesToFirebase();
+          Promise.all(tasks.map(t=>{ t.kategorie=targetK; return fsUpdate('tasks',t); })).then(()=>{
+            toast(`"${katTouchSubName}" → Sub von "${getTaskCategoryLabel(targetK)}"`);
+            renderTasks();
+          });
+        }
+      } else if(targetSubGroup){
+        const targetK=targetSubGroup.dataset.parent;
         if(targetK!==katTouchParentK){
           const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===katTouchParentK && t.subkategorie===katTouchSubName);
           katCollapsed[targetK]=true;
@@ -1724,7 +1782,10 @@ function renderSubcategoryGroup(k, sk, subItems) {
   const skKey=k+'::'+sk;
   const skCollapsed=subkatCollapsed[skKey]!==false;
   const subKey=encodeURIComponent(sk);
-  let html=`<div class="subkat-group" data-subkat="${esc(sk)}" data-parent="${k}">
+  let html=`<div class="subkat-group" data-subkat="${esc(sk)}" data-parent="${k}"
+    ondragover="katBodyDragOver(event,this,'${k}')"
+    ondragleave="if(!this.contains(event.relatedTarget))clearKatDropStates()"
+    ondrop="katBodyDrop(event,this,'${k}')">
     <div class="subkat-header" data-parent-key="${k}" data-subkey="${subKey}" onclick="toggleSubkatCollapseFromEl(this)">
       <div class="heute-drag-handle"
         draggable="true"
