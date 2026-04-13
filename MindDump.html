@@ -2439,8 +2439,15 @@ async function delThought(id){ await fsDel('thoughts',id); toast('Thought gelös
 
 async function thoughtToTask(id) {
   const t = D.thoughts.find(x=>x.id===id); if(!t) return;
-  await fsAdd('tasks', {id:uid(), title:t.content.slice(0,80), context:t.content.length>80?t.content:'', priority:'mittel', dueDate:null, estimatedTime:null, done:false, createdAt:Date.now()});
+  const title=t.content.slice(0,80);
+  const context=t.content.length>80?t.content:'';
+  const kategorie=autoKategorie(title, context);
+  await fsAdd('tasks', {id:uid(), title, context, priority:'mittel', kategorie, subkategorie:null, dueDate:null, estimatedTime:null, done:false, createdAt:Date.now()});
   await fsDel('thoughts', id);
+  taskFilter='all';
+  taskKatFilter=kategorie;
+  katCollapsed[kategorie]=false;
+  go('tasks');
   toast('Thought → Task umgewandelt!');
 }
 
