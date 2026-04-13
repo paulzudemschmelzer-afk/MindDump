@@ -1111,6 +1111,13 @@ let subkatCollapsed = {};
 
 function toggleKatCollapse(k){ katCollapsed[k]=katCollapsed[k]===false?true:false; renderTasks(); }
 function toggleSubkatCollapse(k,sk){ const key=k+'::'+sk; subkatCollapsed[key]=subkatCollapsed[key]===false?true:false; renderTasks(); }
+function decodeDataValue(v){ try { return decodeURIComponent(v||''); } catch(e){ return v||''; } }
+function toggleSubkatCollapseFromEl(el){ if(!el) return; toggleSubkatCollapse(el.dataset.parentKey, decodeDataValue(el.dataset.subkey)); }
+function subkatDragStartFromEl(e,el){ if(!el) return; subkatDragStart(e, el.dataset.parentKey, decodeDataValue(el.dataset.subkey)); }
+function subkatTouchStartFromEl(e,el){ if(!el) return; katTouchStart(e, 'subkat', el.dataset.parentKey, decodeDataValue(el.dataset.subkey)); }
+function renameSubcategoryFromEl(el){ if(!el) return; renameSubcategory(el.dataset.parentKey, decodeDataValue(el.dataset.subkey)); }
+function restoreSubToKatFromEl(el){ if(!el) return; restoreSubToKat(el.dataset.parentKey, decodeDataValue(el.dataset.subkey)); }
+function deleteSubcategoryFromEl(el){ if(!el) return; deleteSubcategory(el.dataset.parentKey, decodeDataValue(el.dataset.subkey)); }
 
 function getExistingSubcategories(kat) {
   const subs=new Set();
@@ -1716,12 +1723,13 @@ function renderTaskCard(t) {
 function renderSubcategoryGroup(k, sk, subItems) {
   const skKey=k+'::'+sk;
   const skCollapsed=subkatCollapsed[skKey]!==false;
+  const subKey=encodeURIComponent(sk);
   let html=`<div class="subkat-group" data-subkat="${esc(sk)}" data-parent="${k}">
-    <div class="subkat-header" onclick="toggleSubkatCollapse('${k}','${esc(sk)}')">
+    <div class="subkat-header" data-parent-key="${k}" data-subkey="${subKey}" onclick="toggleSubkatCollapseFromEl(this)">
       <div class="heute-drag-handle"
         draggable="true"
-        ondragstart="subkatDragStart(event,'${k}','${esc(sk)}')"
-        ontouchstart="katTouchStart(event,'subkat','${k}','${esc(sk)}')"
+        ondragstart="subkatDragStartFromEl(event,this.parentElement)"
+        ontouchstart="subkatTouchStartFromEl(event,this.parentElement)"
         ontouchmove="katTouchMove(event)"
         ontouchend="katTouchEnd(event)"
         onclick="event.stopPropagation()">⇅</div>
@@ -1729,9 +1737,9 @@ function renderSubcategoryGroup(k, sk, subItems) {
       <span class="subkat-name">${esc(sk)}</span>
       <span class="subkat-count">${subItems.length}</span>
       <span class="subkat-actions">
-        <button class="kat-edit-link" onclick="event.stopPropagation();renameSubcategory('${k}','${esc(sk)}')" title="Umbenennen">Bearbeiten</button>
-        <button class="kat-edit-link" onclick="event.stopPropagation();restoreSubToKat('${k}','${esc(sk)}')" title="Als eigene Kategorie wiederherstellen">↑ Raus</button>
-        <button class="icon-btn del" onclick="event.stopPropagation();deleteSubcategory('${k}','${esc(sk)}')" title="Aufloesen">×</button>
+        <button class="kat-edit-link" onclick="event.stopPropagation();renameSubcategoryFromEl(this.parentElement.parentElement)" title="Umbenennen">Bearbeiten</button>
+        <button class="kat-edit-link" onclick="event.stopPropagation();restoreSubToKatFromEl(this.parentElement.parentElement)" title="Als eigene Kategorie wiederherstellen">↑ Raus</button>
+        <button class="icon-btn del" onclick="event.stopPropagation();deleteSubcategoryFromEl(this.parentElement.parentElement)" title="Aufloesen">×</button>
       </span>
     </div>`;
   if(!skCollapsed) html+=subItems.map(t=>renderTaskCard(t)).join('');
