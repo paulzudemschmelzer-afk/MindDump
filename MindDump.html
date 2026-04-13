@@ -1120,8 +1120,22 @@ function renderTaskCategoryTabs(katCounts = {}) {
   const katOrder = getKnownTaskCategories();
   katFtabs.innerHTML =
     `<button class="ftab ${taskKatFilter==='alle'?'active':''}" onclick="setTaskKatFilter('alle',this)">Alle</button>` +
-    katOrder.map(k => `<button class="ftab ${taskKatFilter===k?'active':''}" onclick="setTaskKatFilter('${k}',this)">${getTaskCategoryIcon(k)} ${esc(getTaskCategoryLabel(k))} (${katCounts[k]||0})</button>`).join('') +
+    katOrder.map(k =>
+      `<span style="display:inline-flex;align-items:center;gap:2px;margin:0 2px 6px">
+        <button class="ftab ${taskKatFilter===k?'active':''}" style="margin:0" onclick="setTaskKatFilter('${k}',this)">${getTaskCategoryIcon(k)} ${esc(getTaskCategoryLabel(k))} (${katCounts[k]||0})</button>
+        <button class="icon-btn" style="font-size:11px;padding:2px 5px" onclick="renameTaskCategory('${k}')" title="Umbenennen">✏</button>
+      </span>`
+    ).join('') +
     `<button class="ftab" onclick="openNewTaskCategoryPrompt()">+ Kategorie</button>`;
+}
+
+function renameTaskCategory(key) {
+  const current = getTaskCategoryLabel(key);
+  const newName = prompt(`Kategorie umbenennen:\n"${current}" → neuer Name:`, current);
+  if(!newName || newName.trim()==='' || newName.trim()===current) return;
+  registerTaskCategory(newName.trim(), key);
+  renderTasks();
+  toast(`"${current}" → "${newName.trim()}"`);
 }
 
 function renderTaskSortTabs() {
