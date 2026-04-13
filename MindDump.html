@@ -1089,7 +1089,7 @@ const KAT_ICONS = {geld:'💰',haushalt:'🏠',einkaufen:'🛒',business:'💼',
 const DEFAULT_KAT_ORDER = ['geld','haushalt','einkaufen','business','schule','tech','familie','sonstiges'];
 let katCollapsed = {};
 
-function toggleKatCollapse(k){ katCollapsed[k]=!katCollapsed[k]; renderTasks(); }
+function toggleKatCollapse(k){ katCollapsed[k]=katCollapsed[k]===false?true:false; renderTasks(); }
 
 function ensureTaskCategorySettings() {
   if(!Array.isArray(S.taskCategories)) S.taskCategories = [];
@@ -1284,7 +1284,7 @@ function renderTasks() {
   let html='';
   visibleCategories.forEach(k=>{
     const items=grouped[k]||[];
-    const collapsed=katCollapsed[k];
+    const collapsed=katCollapsed[k]!==false;
     html+=`<div class="kat-group">
       <div class="kat-header">
         <span class="kat-arrow" onclick="toggleKatCollapse('${k}')">${collapsed?'▶':'▼'}</span>
