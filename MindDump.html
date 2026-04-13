@@ -133,6 +133,12 @@ textarea::placeholder { color:#444; }
 .subkat-name { font-weight:500; color:var(--text); }
 .subkat-count { background:rgba(124,58,237,.2); color:var(--accent2); font-size:10px; padding:1px 6px; border-radius:8px; font-weight:600; }
 .subkat-actions { margin-left:auto; display:flex; gap:2px; }
+.kat-drag-over { outline:2px dashed var(--accent2) !important; background:rgba(124,58,237,.15) !important; }
+.kat-header[draggable] { cursor:grab; }
+.kat-header[draggable]:active { cursor:grabbing; }
+.kat-restore-zone { display:none; padding:14px; text-align:center; color:var(--sub); font-size:13px; border:2px dashed var(--border); border-radius:10px; margin-top:8px; transition:background .15s, border-color .15s; }
+.kat-restore-zone.visible { display:block; }
+.kat-restore-zone.kat-drag-over { border-color:var(--accent2); background:rgba(124,58,237,.1); color:var(--accent2); }
 .card-actions { display:flex; gap:4px; flex-shrink:0; }
 
 /* THOUGHT CARD */
@@ -1285,24 +1291,76 @@ function editKat(k){
   renderTasks();
 }
 
-function moveKatToSub(k){
-  const label=getTaskCategoryLabel(k);
-  const others=getKnownTaskCategories().filter(x=>x!==k);
-  if(!others.length){toast('Keine andere Kategorie vorhanden','err');return;}
-  const choices=others.map(x=>getTaskCategoryLabel(x)).join(', ');
-  const target=prompt(`"${label}" als Subkategorie verschieben unter:\n\nVerfügbar: ${choices}\n\nZiel-Kategorie eingeben:`);
-  if(!target||!target.trim()) return;
-  const targetKey=others.find(x=>getTaskCategoryLabel(x).toLowerCase()===target.trim().toLowerCase());
-  if(!targetKey){toast('Kategorie nicht gefunden','err');return;}
-  const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===k);
-  if(!tasks.length){toast('Keine Tasks in dieser Kategorie','err');return;}
-  tasks.forEach(t=>{ t.kategorie=targetKey; t.subkategorie=label; });
-  removeStoredTaskCategory(k);
-  if(taskKatFilter===k) taskKatFilter='alle';
+
+// ── KATEGORIE DRAG & DROP ────────────────────────────────────
+let dragKatKey=null, dragSubkat=null, dragSubkatParent=null;
+
+function katDragStart(e,k){
+  dragKatKey=k; dragSubkat=null; dragSubkatParent=null;
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain','kat:'+k);
+  e.stopPropagation();
+}
+
+function subkatDragStart(e,parentK,sk){
+  dragSubkat=sk; dragSubkatParent=parentK; dragKatKey=null;
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain','subkat:'+parentK+'::'+sk);
+  e.stopPropagation();
+  // Restore-Zone sichtbar machen
+  setTimeout(()=>{const z=document.getElementById('kat-restore-zone');if(z)z.classList.add('visible');},0);
+}
+
+function katDragOver(e,targetK){
+  if(dragKatKey && dragKatKey!==targetK){
+    e.preventDefault();
+    e.currentTarget.classList.add('kat-drag-over');
+  }
+}
+
+function katDrop(e,targetK){
+  e.preventDefault();
+  e.currentTarget.classList.remove('kat-drag-over');
+  if(!dragKatKey || dragKatKey===targetK) return;
+  const srcLabel=getTaskCategoryLabel(dragKatKey);
+  const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===dragKatKey);
+  if(!tasks.length){toast('Keine Tasks zum Verschieben','err');dragKatKey=null;return;}
+  tasks.forEach(t=>{ t.kategorie=targetK; t.subkategorie=srcLabel; });
+  removeStoredTaskCategory(dragKatKey);
+  if(taskKatFilter===dragKatKey) taskKatFilter='alle';
   if(currentUser&&db) tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
-  toast(`"${label}" → Subkategorie von "${getTaskCategoryLabel(targetKey)}" (${tasks.length} Tasks)`);
+  toast(`"${srcLabel}" → Sub von "${getTaskCategoryLabel(targetK)}" (${tasks.length} Tasks)`);
+  dragKatKey=null;
   renderTasks();
 }
+
+function subkatRestoreDrop(e){
+  e.preventDefault();
+  e.currentTarget.classList.remove('kat-drag-over');
+  const z=document.getElementById('kat-restore-zone');if(z)z.classList.remove('visible');
+  if(!dragSubkat||!dragSubkatParent) return;
+  restoreSubToKat(dragSubkatParent,dragSubkat);
+  dragSubkat=null; dragSubkatParent=null;
+}
+
+function restoreSubToKat(parentK,subName){
+  const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===parentK && t.subkategorie===subName);
+  if(!tasks.length) return;
+  const newKey=normalizeCategoryKey(subName);
+  if(!newKey){toast('Ungültiger Name','err');return;}
+  tasks.forEach(t=>{ t.kategorie=newKey; t.subkategorie=null; });
+  registerTaskCategory(subName,newKey);
+  if(currentUser&&db) tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
+  toast(`"${subName}" → eigene Kategorie (${tasks.length} Tasks)`);
+  renderTasks();
+}
+
+// Drag-Ende: Restore-Zone verstecken
+document.addEventListener('dragend',()=>{
+  dragKatKey=null; dragSubkat=null; dragSubkatParent=null;
+  const z=document.getElementById('kat-restore-zone');if(z)z.classList.remove('visible');
+  document.querySelectorAll('.kat-drag-over').forEach(el=>el.classList.remove('kat-drag-over'));
+});
 
 function deleteKat(k){
   const count=D.tasks.filter(t=>(t.kategorie||'sonstiges')===k&&!t.done).length;
@@ -1380,15 +1438,18 @@ function renderTasks() {
   visibleCategories.forEach(k=>{
     const items=grouped[k]||[];
     const collapsed=katCollapsed[k]!==false;
-    html+=`<div class="kat-group">
-      <div class="kat-header">
+    html+=`<div class="kat-group" data-kat="${k}">
+      <div class="kat-header" draggable="true"
+        ondragstart="katDragStart(event,'${k}')"
+        ondragover="katDragOver(event,'${k}')"
+        ondragleave="if(!this.contains(event.relatedTarget))this.classList.remove('kat-drag-over')"
+        ondrop="katDrop(event,'${k}')">
         <span class="kat-arrow" onclick="toggleKatCollapse('${k}')">${collapsed?'▶':'▼'}</span>
         <span class="kat-icon" onclick="renameTaskCategory('${k}')" title="Klicken zum Umbenennen">${getTaskCategoryIcon(k)}</span>
         <span class="kat-name" onclick="renameTaskCategory('${k}')" title="Klicken zum Umbenennen">${esc(getTaskCategoryLabel(k))}</span>
         <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
         <span class="kat-actions">
           <button class="kat-edit-link" onclick="event.stopPropagation();renameTaskCategory('${k}')" title="Kategorie umbenennen">Bearbeiten</button>
-          <button class="kat-edit-link" onclick="event.stopPropagation();moveKatToSub('${k}')" title="Als Subkategorie verschieben">↳ Sub</button>
           <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Loeschen">×</button>
         </span>
       </div>`;
@@ -1402,13 +1463,17 @@ function renderTasks() {
         Object.keys(subGroups).sort().forEach(sk=>{
           const skKey=k+'::'+sk;
           const skCollapsed=subkatCollapsed[skKey]!==false;
-          html+=`<div class="subkat-group">
+          html+=`<div class="subkat-group" draggable="true"
+            ondragstart="subkatDragStart(event,'${k}','${esc(sk)}')"
+            ondragover="event.preventDefault()"
+            data-subkat="${esc(sk)}" data-parent="${k}">
             <div class="subkat-header" onclick="toggleSubkatCollapse('${k}','${esc(sk)}')">
               <span class="subkat-arrow">${skCollapsed?'▶':'▼'}</span>
               <span class="subkat-name">${esc(sk)}</span>
               <span class="subkat-count">${subGroups[sk].length}</span>
               <span class="subkat-actions">
                 <button class="kat-edit-link" onclick="event.stopPropagation();renameSubcategory('${k}','${esc(sk)}')" title="Umbenennen">Bearbeiten</button>
+                <button class="kat-edit-link" onclick="event.stopPropagation();restoreSubToKat('${k}','${esc(sk)}')" title="Als eigene Kategorie wiederherstellen">↑ Raus</button>
                 <button class="icon-btn del" onclick="event.stopPropagation();deleteSubcategory('${k}','${esc(sk)}')" title="Auflösen">×</button>
               </span>
             </div>`;
@@ -1419,6 +1484,11 @@ function renderTasks() {
     }
     html+='</div>';
   });
+  // Drop-Zone zum Wiederherstellen von Subkategorien als eigene Kategorien
+  html+=`<div class="kat-restore-zone" id="kat-restore-zone"
+    ondragover="event.preventDefault();this.classList.add('kat-drag-over')"
+    ondragleave="this.classList.remove('kat-drag-over')"
+    ondrop="subkatRestoreDrop(event)">↑ Hierher ziehen = eigene Kategorie</div>`;
   el.innerHTML=html;
 }
 
