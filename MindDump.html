@@ -134,8 +134,6 @@ textarea::placeholder { color:#444; }
 .subkat-count { background:rgba(124,58,237,.2); color:var(--accent2); font-size:10px; padding:1px 6px; border-radius:8px; font-weight:600; }
 .subkat-actions { margin-left:auto; display:flex; gap:2px; }
 .kat-drag-over { outline:2px dashed var(--accent2) !important; background:rgba(124,58,237,.15) !important; }
-.kat-header[draggable] { cursor:grab; }
-.kat-header[draggable]:active { cursor:grabbing; }
 .kat-restore-zone { display:none; padding:14px; text-align:center; color:var(--sub); font-size:13px; border:2px dashed var(--border); border-radius:10px; margin-top:8px; transition:background .15s, border-color .15s; }
 .kat-restore-zone.visible { display:block; }
 .kat-restore-zone.kat-drag-over { border-color:var(--accent2); background:rgba(124,58,237,.1); color:var(--accent2); }
@@ -1292,8 +1290,34 @@ function editKat(k){
 }
 
 
-// ── KATEGORIE DRAG & DROP ────────────────────────────────────
+// ── KATEGORIE DRAG & DROP (HANDLE + TOUCH) ───────────────────
 let dragKatKey=null, dragSubkat=null, dragSubkatParent=null;
+let katTouchId=null, katTouchClone=null, katTouchEl=null, katTouchMoved=false;
+let katTouchType=null, katTouchSubName=null, katTouchParentK=null;
+let taskDragId=null, taskTouchDragId=null, taskTouchClone=null, taskTouchEl=null, taskTouchMoved=false;
+
+function showSubkatRestoreZone(){
+  const z=document.getElementById('kat-restore-zone');
+  if(z) z.classList.add('visible');
+}
+
+function hideSubkatRestoreZone(){
+  const z=document.getElementById('kat-restore-zone');
+  if(z) z.classList.remove('visible');
+}
+
+function makeKatSubOf(srcK, targetK){
+  const srcLabel=getTaskCategoryLabel(srcK);
+  const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===srcK);
+  if(!tasks.length){toast('Keine Tasks zum Verschieben','err');return;}
+  tasks.forEach(t=>{ t.kategorie=targetK; t.subkategorie=srcLabel; });
+  removeStoredTaskCategory(srcK);
+  if(taskKatFilter===srcK) taskKatFilter='alle';
+  Promise.all(tasks.map(t=>fsUpdate('tasks',t))).then(()=>{
+    toast(`"${srcLabel}" → Sub von "${getTaskCategoryLabel(targetK)}" (${tasks.length} Tasks)`);
+    renderTasks();
+  });
+}
 
 function katDragStart(e,k){
   dragKatKey=k; dragSubkat=null; dragSubkatParent=null;
@@ -1307,12 +1331,11 @@ function subkatDragStart(e,parentK,sk){
   e.dataTransfer.effectAllowed='move';
   e.dataTransfer.setData('text/plain','subkat:'+parentK+'::'+sk);
   e.stopPropagation();
-  // Restore-Zone sichtbar machen
-  setTimeout(()=>{const z=document.getElementById('kat-restore-zone');if(z)z.classList.add('visible');},0);
+  setTimeout(showSubkatRestoreZone,0);
 }
 
 function katDragOver(e,targetK){
-  if(dragKatKey && dragKatKey!==targetK){
+  if((dragKatKey && dragKatKey!==targetK) || (dragSubkat && dragSubkatParent!==targetK)){
     e.preventDefault();
     e.currentTarget.classList.add('kat-drag-over');
   }
@@ -1321,26 +1344,33 @@ function katDragOver(e,targetK){
 function katDrop(e,targetK){
   e.preventDefault();
   e.currentTarget.classList.remove('kat-drag-over');
-  if(!dragKatKey || dragKatKey===targetK) return;
-  const srcLabel=getTaskCategoryLabel(dragKatKey);
-  const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===dragKatKey);
-  if(!tasks.length){toast('Keine Tasks zum Verschieben','err');dragKatKey=null;return;}
-  tasks.forEach(t=>{ t.kategorie=targetK; t.subkategorie=srcLabel; });
-  removeStoredTaskCategory(dragKatKey);
-  if(taskKatFilter===dragKatKey) taskKatFilter='alle';
-  if(currentUser&&db) tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
-  toast(`"${srcLabel}" → Sub von "${getTaskCategoryLabel(targetK)}" (${tasks.length} Tasks)`);
-  dragKatKey=null;
-  renderTasks();
+  if(dragKatKey && dragKatKey!==targetK){
+    const src=dragKatKey;
+    dragKatKey=null;
+    makeKatSubOf(src,targetK);
+    return;
+  }
+  if(dragSubkat && dragSubkatParent && dragSubkatParent!==targetK){
+    const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===dragSubkatParent && t.subkategorie===dragSubkat);
+    const subName=dragSubkat;
+    dragSubkat=null; dragSubkatParent=null;
+    hideSubkatRestoreZone();
+    Promise.all(tasks.map(t=>{ t.kategorie=targetK; return fsUpdate('tasks',t); })).then(()=>{
+      toast(`"${subName}" → Sub von "${getTaskCategoryLabel(targetK)}"`);
+      renderTasks();
+    });
+  }
 }
 
 function subkatRestoreDrop(e){
   e.preventDefault();
   e.currentTarget.classList.remove('kat-drag-over');
-  const z=document.getElementById('kat-restore-zone');if(z)z.classList.remove('visible');
+  hideSubkatRestoreZone();
   if(!dragSubkat||!dragSubkatParent) return;
-  restoreSubToKat(dragSubkatParent,dragSubkat);
+  const parent=dragSubkatParent;
+  const subName=dragSubkat;
   dragSubkat=null; dragSubkatParent=null;
+  restoreSubToKat(parent,subName);
 }
 
 function restoreSubToKat(parentK,subName){
@@ -1350,17 +1380,199 @@ function restoreSubToKat(parentK,subName){
   if(!newKey){toast('Ungültiger Name','err');return;}
   tasks.forEach(t=>{ t.kategorie=newKey; t.subkategorie=null; });
   registerTaskCategory(subName,newKey);
-  if(currentUser&&db) tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
-  toast(`"${subName}" → eigene Kategorie (${tasks.length} Tasks)`);
+  Promise.all(tasks.map(t=>fsUpdate('tasks',t))).then(()=>{
+    toast(`"${subName}" → eigene Kategorie (${tasks.length} Tasks)`);
+    renderTasks();
+  });
+}
+
+document.addEventListener('dragend',()=>{
+  dragKatKey=null; dragSubkat=null; dragSubkatParent=null; taskDragId=null;
+  hideSubkatRestoreZone();
+  document.querySelectorAll('.kat-drag-over,.heute-drag-over').forEach(el=>el.classList.remove('kat-drag-over','heute-drag-over'));
+});
+
+function katTouchStart(e,type,k,sk){
+  katTouchType=type;
+  katTouchId=type==='kat'?k:null;
+  katTouchSubName=type==='subkat'?sk:null;
+  katTouchParentK=type==='subkat'?k:null;
+  katTouchEl=e.currentTarget.closest(type==='kat'?'.kat-header':'.subkat-header');
+  katTouchMoved=false;
+  katTouchClone=null;
+}
+
+function katTouchMove(e){
+  if(!katTouchType || !katTouchEl) return;
+  katTouchMoved=true;
+  e.preventDefault();
+  const touch=e.touches[0];
+  if(!katTouchClone){
+    const rect=katTouchEl.getBoundingClientRect();
+    katTouchClone=katTouchEl.cloneNode(true);
+    Object.assign(katTouchClone.style,{
+      position:'fixed', left:rect.left+'px', top:rect.top+'px', width:rect.width+'px',
+      opacity:'0.85', pointerEvents:'none', zIndex:'9999', boxShadow:'0 8px 24px rgba(0,0,0,.5)',
+      borderColor:'var(--accent2)', borderStyle:'solid', borderWidth:'2px', borderRadius:'10px'
+    });
+    document.body.appendChild(katTouchClone);
+    katTouchEl.style.opacity='0.3';
+    if(katTouchType==='subkat') showSubkatRestoreZone();
+  }
+  const h=katTouchEl.getBoundingClientRect().height;
+  katTouchClone.style.top=(touch.clientY-h/2)+'px';
+  katTouchClone.style.left=(touch.clientX-(katTouchClone.getBoundingClientRect().width/2))+'px';
+  katTouchClone.style.visibility='hidden';
+  const under=document.elementFromPoint(touch.clientX,touch.clientY);
+  katTouchClone.style.visibility='';
+  document.querySelectorAll('.kat-drag-over').forEach(el=>el.classList.remove('kat-drag-over'));
+  const targetHeader=under?.closest('.kat-header[data-kat]');
+  const restoreZone=under?.closest('.kat-restore-zone');
+  if(targetHeader) targetHeader.classList.add('kat-drag-over');
+  if(restoreZone && katTouchType==='subkat') restoreZone.classList.add('kat-drag-over');
+}
+
+function katTouchEnd(e){
+  if(!katTouchType) return;
+  const touch=e.changedTouches[0];
+  if(katTouchClone){ katTouchClone.remove(); katTouchClone=null; }
+  if(katTouchEl){ katTouchEl.style.opacity=''; katTouchEl=null; }
+  document.querySelectorAll('.kat-drag-over').forEach(el=>el.classList.remove('kat-drag-over'));
+  hideSubkatRestoreZone();
+  if(katTouchMoved){
+    const under=document.elementFromPoint(touch.clientX,touch.clientY);
+    const targetHeader=under?.closest('.kat-header[data-kat]');
+    const restoreZone=under?.closest('.kat-restore-zone');
+    if(katTouchType==='kat' && targetHeader){
+      const targetK=targetHeader.dataset.kat;
+      if(targetK!==katTouchId) makeKatSubOf(katTouchId,targetK);
+    } else if(katTouchType==='subkat'){
+      if(restoreZone) restoreSubToKat(katTouchParentK,katTouchSubName);
+      else if(targetHeader){
+        const targetK=targetHeader.dataset.kat;
+        if(targetK!==katTouchParentK){
+          const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===katTouchParentK && t.subkategorie===katTouchSubName);
+          Promise.all(tasks.map(t=>{ t.kategorie=targetK; return fsUpdate('tasks',t); })).then(()=>{
+            toast(`"${katTouchSubName}" → Sub von "${getTaskCategoryLabel(targetK)}"`);
+            renderTasks();
+          });
+        }
+      }
+    }
+  }
+  katTouchType=null; katTouchId=null; katTouchSubName=null; katTouchParentK=null;
+}
+
+function sameTaskReorderGroup(a,b){
+  return !!a && !!b &&
+    (a.kategorie||'sonstiges')===(b.kategorie||'sonstiges') &&
+    (a.subkategorie||null)===(b.subkategorie||null);
+}
+
+function taskDragStartInKat(e,id){
+  taskDragId=id;
+  e.dataTransfer.effectAllowed='move';
+  e.stopPropagation();
+}
+
+function taskDragOverInKat(e,targetId){
+  const dragged=D.tasks.find(t=>t.id===taskDragId);
+  const target=D.tasks.find(t=>t.id===targetId);
+  if(!sameTaskReorderGroup(dragged,target)) return;
+  e.preventDefault();
+  e.stopPropagation();
+  e.currentTarget.classList.add('heute-drag-over');
+}
+
+async function reorderTasksInKat(dragId,targetId){
+  const drag=D.tasks.find(t=>t.id===dragId);
+  const target=D.tasks.find(t=>t.id===targetId);
+  if(!sameTaskReorderGroup(drag,target)) return;
+  const kat=drag.kategorie||'sonstiges';
+  const sub=drag.subkategorie||null;
+  const group=D.tasks
+    .filter(t=>(t.kategorie||'sonstiges')===kat && (t.subkategorie||null)===sub)
+    .sort((a,b)=>{
+      const aHas=a.taskOrder!==undefined, bHas=b.taskOrder!==undefined;
+      if(aHas||bHas) return (a.taskOrder??9999)-(b.taskOrder??9999);
+      const order={hoch:0,mittel:1,niedrig:2};
+      const prio=(order[a.priority]??1)-(order[b.priority]??1);
+      if(prio!==0) return prio;
+      return (b.createdAt??0)-(a.createdAt??0);
+    });
+  const origIdx=group.findIndex(t=>t.id===dragId);
+  const targetIdx=group.findIndex(t=>t.id===targetId);
+  if(origIdx<0||targetIdx<0) return;
+  const movingDown=origIdx<targetIdx;
+  const reordered=group.filter(t=>t.id!==dragId);
+  const insertIdx=reordered.findIndex(t=>t.id===targetId);
+  reordered.splice(movingDown?insertIdx+1:insertIdx,0,drag);
+  await Promise.all(reordered.map((t,i)=>{ t.taskOrder=i*10; return fsUpdate('tasks',t); }));
   renderTasks();
 }
 
-// Drag-Ende: Restore-Zone verstecken
-document.addEventListener('dragend',()=>{
-  dragKatKey=null; dragSubkat=null; dragSubkatParent=null;
-  const z=document.getElementById('kat-restore-zone');if(z)z.classList.remove('visible');
-  document.querySelectorAll('.kat-drag-over').forEach(el=>el.classList.remove('kat-drag-over'));
-});
+async function taskDropInKat(e,targetId){
+  e.preventDefault();
+  e.stopPropagation();
+  e.currentTarget.classList.remove('heute-drag-over');
+  if(!taskDragId || taskDragId===targetId){ taskDragId=null; return; }
+  const dragId=taskDragId;
+  taskDragId=null;
+  await reorderTasksInKat(dragId,targetId);
+}
+
+function taskTouchStartInKat(e,id){
+  taskTouchDragId=id;
+  taskTouchEl=e.currentTarget.closest('.task-card');
+  taskTouchMoved=false;
+  taskTouchClone=null;
+}
+
+function taskTouchMoveInKat(e){
+  if(!taskTouchDragId || !taskTouchEl) return;
+  taskTouchMoved=true;
+  e.preventDefault();
+  const touch=e.touches[0];
+  if(!taskTouchClone){
+    const rect=taskTouchEl.getBoundingClientRect();
+    taskTouchClone=taskTouchEl.cloneNode(true);
+    Object.assign(taskTouchClone.style,{
+      position:'fixed', left:rect.left+'px', top:rect.top+'px', width:rect.width+'px',
+      opacity:'0.85', pointerEvents:'none', zIndex:'9999', boxShadow:'0 8px 24px rgba(0,0,0,.5)',
+      borderColor:'var(--accent2)', borderStyle:'solid', borderWidth:'1px', borderRadius:'10px', transform:'scale(1.02)'
+    });
+    document.body.appendChild(taskTouchClone);
+    taskTouchEl.style.opacity='0.3';
+  }
+  const h=taskTouchEl.getBoundingClientRect().height;
+  taskTouchClone.style.top=(touch.clientY-h/2)+'px';
+  taskTouchClone.style.left=(touch.clientX-(taskTouchClone.getBoundingClientRect().width/2))+'px';
+  taskTouchClone.style.visibility='hidden';
+  const under=document.elementFromPoint(touch.clientX,touch.clientY);
+  taskTouchClone.style.visibility='';
+  document.querySelectorAll('.heute-drag-over').forEach(el=>el.classList.remove('heute-drag-over'));
+  const targetEl=under?.closest('.task-card[data-task-id]');
+  const dragged=D.tasks.find(t=>t.id===taskTouchDragId);
+  const target=targetEl ? D.tasks.find(t=>t.id===targetEl.dataset.taskId) : null;
+  if(targetEl && targetEl.dataset.taskId!==taskTouchDragId && sameTaskReorderGroup(dragged,target)) {
+    targetEl.classList.add('heute-drag-over');
+  }
+}
+
+async function taskTouchEndInKat(e){
+  if(!taskTouchDragId) return;
+  const touch=e.changedTouches[0];
+  const dragId=taskTouchDragId;
+  if(taskTouchClone){ taskTouchClone.remove(); taskTouchClone=null; }
+  if(taskTouchEl){ taskTouchEl.style.opacity=''; taskTouchEl=null; }
+  document.querySelectorAll('.heute-drag-over').forEach(el=>el.classList.remove('heute-drag-over'));
+  if(taskTouchMoved){
+    const under=document.elementFromPoint(touch.clientX,touch.clientY);
+    const target=under?.closest('.task-card[data-task-id]');
+    if(target && target.dataset.taskId!==dragId) await reorderTasksInKat(dragId,target.dataset.taskId);
+  }
+  taskTouchDragId=null;
+}
 
 function deleteKat(k){
   const count=D.tasks.filter(t=>(t.kategorie||'sonstiges')===k&&!t.done).length;
@@ -1376,7 +1588,17 @@ function deleteKat(k){
 function renderTaskCard(t) {
   const pc='prio-'+(t.priority||'mittel').toLowerCase();
   const kat=t.kategorie||'sonstiges';
-  return `<div class="task-card ${t.done?'done':''}" draggable="true" ondragstart="dragTask(event,'${t.id}')">
+  return `<div class="task-card ${t.done?'done':''}" data-task-id="${t.id}"
+    ondragover="taskDragOverInKat(event,'${t.id}')"
+    ondragleave="if(!this.contains(event.relatedTarget))this.classList.remove('heute-drag-over')"
+    ondrop="taskDropInKat(event,'${t.id}')">
+    <div class="heute-drag-handle"
+      draggable="true"
+      ondragstart="taskDragStartInKat(event,'${t.id}')"
+      ontouchstart="taskTouchStartInKat(event,'${t.id}')"
+      ontouchmove="taskTouchMoveInKat(event)"
+      ontouchend="taskTouchEndInKat(event)"
+      onclick="event.stopPropagation()">⇅</div>
     <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
     <div class="task-body">
       <div class="task-title">${esc(t.title)}</div>
@@ -1403,6 +1625,10 @@ function renderTaskCard(t) {
 function renderTasks() {
   let list=[...D.tasks].sort((a,b)=>{
     if(a.done!==b.done) return a.done?1:-1;
+    if(taskSortMode==='priority'){
+      const aHas=a.taskOrder!==undefined, bHas=b.taskOrder!==undefined;
+      if(aHas||bHas) return (a.taskOrder??9999)-(b.taskOrder??9999);
+    }
     if(taskSortMode==='newest') return (b.createdAt??0)-(a.createdAt??0);
     if(taskSortMode==='oldest') return (a.createdAt??0)-(b.createdAt??0);
     const o={hoch:0,mittel:1,niedrig:2};
@@ -1439,11 +1665,17 @@ function renderTasks() {
     const items=grouped[k]||[];
     const collapsed=katCollapsed[k]!==false;
     html+=`<div class="kat-group" data-kat="${k}">
-      <div class="kat-header" draggable="true"
-        ondragstart="katDragStart(event,'${k}')"
+      <div class="kat-header" data-kat="${k}"
         ondragover="katDragOver(event,'${k}')"
         ondragleave="if(!this.contains(event.relatedTarget))this.classList.remove('kat-drag-over')"
         ondrop="katDrop(event,'${k}')">
+        <div class="heute-drag-handle"
+          draggable="true"
+          ondragstart="katDragStart(event,'${k}')"
+          ontouchstart="katTouchStart(event,'kat','${k}',null)"
+          ontouchmove="katTouchMove(event)"
+          ontouchend="katTouchEnd(event)"
+          onclick="event.stopPropagation()">⇅</div>
         <span class="kat-arrow" onclick="toggleKatCollapse('${k}')">${collapsed?'▶':'▼'}</span>
         <span class="kat-icon" onclick="renameTaskCategory('${k}')" title="Klicken zum Umbenennen">${getTaskCategoryIcon(k)}</span>
         <span class="kat-name" onclick="renameTaskCategory('${k}')" title="Klicken zum Umbenennen">${esc(getTaskCategoryLabel(k))}</span>
@@ -1463,11 +1695,15 @@ function renderTasks() {
         Object.keys(subGroups).sort().forEach(sk=>{
           const skKey=k+'::'+sk;
           const skCollapsed=subkatCollapsed[skKey]!==false;
-          html+=`<div class="subkat-group" draggable="true"
-            ondragstart="subkatDragStart(event,'${k}','${esc(sk)}')"
-            ondragover="event.preventDefault()"
-            data-subkat="${esc(sk)}" data-parent="${k}">
+          html+=`<div class="subkat-group" data-subkat="${esc(sk)}" data-parent="${k}">
             <div class="subkat-header" onclick="toggleSubkatCollapse('${k}','${esc(sk)}')">
+              <div class="heute-drag-handle"
+                draggable="true"
+                ondragstart="subkatDragStart(event,'${k}','${esc(sk)}')"
+                ontouchstart="katTouchStart(event,'subkat','${k}','${esc(sk)}')"
+                ontouchmove="katTouchMove(event)"
+                ontouchend="katTouchEnd(event)"
+                onclick="event.stopPropagation()">⇅</div>
               <span class="subkat-arrow">${skCollapsed?'▶':'▼'}</span>
               <span class="subkat-name">${esc(sk)}</span>
               <span class="subkat-count">${subGroups[sk].length}</span>
