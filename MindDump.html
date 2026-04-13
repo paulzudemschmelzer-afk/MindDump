@@ -1038,7 +1038,7 @@ function renderTasks() {
       html+=items.map(t=>{
         const pc='prio-'+(t.priority||'mittel').toLowerCase();
         const kat=t.kategorie||'sonstiges';
-        return `<div class="task-card ${t.done?'done':''}">
+        return `<div class="task-card ${t.done?'done':''}" draggable="true" ondragstart="dragTask(event,'${t.id}')">
           <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
           <div class="task-body">
             <div class="task-title">${esc(t.title)}</div>
