@@ -1344,26 +1344,6 @@ function reorderTaskCategories(dragKey,targetKey,placement='before'){
   renderTasks();
 }
 
-function moveCategoryStep(key, direction){
-  const order = [...getKnownTaskCategories()];
-  const idx = order.indexOf(key);
-  if(idx < 0) return;
-  const nextIdx = idx + direction;
-  if(nextIdx < 0 || nextIdx >= order.length) return;
-  [order[idx], order[nextIdx]] = [order[nextIdx], order[idx]];
-  S.taskCategoryOrder = order;
-  saveSettings();
-  saveTaskCategoriesToFirebase();
-  renderTasks();
-}
-
-function canMoveCategory(key, direction){
-  const order = getKnownTaskCategories();
-  const idx = order.indexOf(key);
-  return direction < 0 ? idx > 0 : idx >= 0 && idx < order.length - 1;
-}
-
-
 // ── KATEGORIE DRAG & DROP (HANDLE + TOUCH) ───────────────────
 let dragKatKey=null, dragSubkat=null, dragSubkatParent=null;
 let katTouchId=null, katTouchClone=null, katTouchEl=null, katTouchMoved=false;
@@ -1384,14 +1364,14 @@ function hideSubkatRestoreZone(){
   if(z) z.classList.remove('visible');
 }
 
-function getKatDropIntent(targetEl, clientY){
-  if(!targetEl) return 'sub';
+function getKatDropIntent(targetEl, clientX, clientY){
+  if(!targetEl) return 'before';
   const rect=targetEl.getBoundingClientRect();
-  const offset=clientY-rect.top;
-  const edge=Math.max(16, rect.height*0.28);
-  if(offset<edge) return 'before';
-  if(offset>rect.height-edge) return 'after';
-  return 'sub';
+  const offsetX=clientX-rect.left;
+  const offsetY=clientY-rect.top;
+  const subThreshold=Math.min(Math.max(120, rect.width*0.42), rect.width-56);
+  if(offsetX>=subThreshold) return 'sub';
+  return offsetY < rect.height/2 ? 'before' : 'after';
 }
 
 function paintKatDropIntent(targetEl, intent){
@@ -1438,13 +1418,13 @@ function subkatDragStart(e,parentK,sk){
 function katDragOver(e,targetK){
   if((dragKatKey && dragKatKey!==targetK) || (dragSubkat && dragSubkatParent!==targetK)){
     e.preventDefault();
-    paintKatDropIntent(e.currentTarget, dragKatKey ? getKatDropIntent(e.currentTarget, e.clientY) : 'sub');
+    paintKatDropIntent(e.currentTarget, dragKatKey ? getKatDropIntent(e.currentTarget, e.clientX, e.clientY) : 'sub');
   }
 }
 
 function katDrop(e,targetK){
   e.preventDefault();
-  const intent = dragKatKey ? getKatDropIntent(e.currentTarget, e.clientY) : 'sub';
+  const intent = dragKatKey ? getKatDropIntent(e.currentTarget, e.clientX, e.clientY) : 'sub';
   clearKatDropStates();
   if(dragKatKey && dragKatKey!==targetK){
     const src=dragKatKey;
@@ -1537,7 +1517,7 @@ function katTouchMove(e){
   clearKatDropStates();
   const targetHeader=under?.closest('.kat-header[data-kat]');
   const restoreZone=under?.closest('.kat-restore-zone');
-  if(targetHeader) paintKatDropIntent(targetHeader, katTouchType==='kat' ? getKatDropIntent(targetHeader, touch.clientY) : 'sub');
+  if(targetHeader) paintKatDropIntent(targetHeader, katTouchType==='kat' ? getKatDropIntent(targetHeader, touch.clientX, touch.clientY) : 'sub');
   if(restoreZone && katTouchType==='subkat') restoreZone.classList.add('kat-drag-over');
 }
 
@@ -1554,7 +1534,7 @@ function katTouchEnd(e){
     const restoreZone=under?.closest('.kat-restore-zone');
     if(katTouchType==='kat' && targetHeader){
       const targetK=targetHeader.dataset.kat;
-      const intent=getKatDropIntent(targetHeader, touch.clientY);
+      const intent=getKatDropIntent(targetHeader, touch.clientX, touch.clientY);
       if(targetK!==katTouchId){
         if(intent==='sub') makeKatSubOf(katTouchId,targetK);
         else reorderTaskCategories(katTouchId,targetK,intent);
@@ -1828,8 +1808,6 @@ function renderTasks() {
         <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
         <span class="kat-actions">
           <button class="kat-edit-link" onclick="event.stopPropagation();toggleCollapsedSubcategories('${k}')" title="Subkategorien im eingeklappten Zustand ein- oder ausblenden">Sub ${showCollapsedSubcategories(k)?'▲':'▼'}</button>
-          <button class="kat-edit-link" onclick="event.stopPropagation();moveCategoryStep('${k}',-1)" ${canMoveCategory(k,-1)?'':'disabled'} title="Kategorie nach oben verschieben">↑</button>
-          <button class="kat-edit-link" onclick="event.stopPropagation();moveCategoryStep('${k}',1)" ${canMoveCategory(k,1)?'':'disabled'} title="Kategorie nach unten verschieben">↓</button>
           <button class="kat-edit-link" onclick="event.stopPropagation();renameTaskCategory('${k}')" title="Kategorie umbenennen">Bearbeiten</button>
           <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Loeschen">×</button>
         </span>
