@@ -325,21 +325,11 @@ select option { background:#1c1c1c; }
 }
 
 @media (max-width: 600px) {
-  /* Sidebar als fixed Overlay — nimmt keinen Platz im Layout */
-  .sidebar {
-    position: fixed !important;
-    left: 0; top: 0; bottom: 0;
-    z-index: 200;
-    width: 210px !important;
-    min-width: 210px !important;
-    transform: translateX(-210px);
-    transition: transform .25s ease;
-  }
-  .sidebar:not(.collapsed) { transform: translateX(0); }
-  .toggle-btn { right:14px !important; left:auto !important; z-index:300 !important; }
-  #sidebar-close-btn { display:block !important; }
+  /* Fix: desktop rule "body:has(.sidebar.collapsed) .main { padding-left:52px }" fires on
+     mobile because sidebar always gets .collapsed — override it here with equal specificity */
+  body:has(.sidebar.collapsed) .main { padding-left: 0; }
 
-  /* Sidebar komplett aus dem Layout — kein Platz mehr reserviert */
+  /* Sidebar as fixed overlay — takes no layout space */
   .sidebar { display:none !important; }
   .sidebar:not(.collapsed) {
     display:flex !important;
@@ -350,37 +340,43 @@ select option { background:#1c1c1c; }
     min-width:210px !important;
     flex-direction:column;
   }
-  /* Main nimmt volle Breite */
+
+  /* ☰ button top-right, above overlay */
+  .toggle-btn { right:14px !important; left:auto !important; z-index:300 !important; }
+  #sidebar-close-btn { display:block !important; }
+
+  /* Main fills full viewport width */
   .main { width:100%; padding:0; padding-top:46px; box-sizing:border-box; }
-  .tab-panel { max-width:100%; }
+  .tab-panel { max-width:100%; padding:0 4px; }
   .page-header h1 { font-size:18px; }
   .page-header p { font-size:12px; }
 
-  /* Filter-Tabs horizontal scrollbar statt umbrechen */
+  /* Filter-Tabs: horizontal scroll */
   .ftabs { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   .ftabs::-webkit-scrollbar { display:none; }
   .ftab { white-space:nowrap; flex-shrink:0; padding:5px 11px; font-size:12px; }
 
-  /* Inhalte leichter Innenabstand */
-  .tab-panel { padding:0 4px; }
-
-  /* Task Cards: Buttons oben rechts absolut, Text volle Breite */
+  /* Task Cards */
   .task-card { position:relative; padding:10px 76px 10px 10px; gap:8px; align-items:flex-start; }
   .task-card .card-actions { position:absolute; top:8px; right:6px; flex-direction:row; gap:1px; }
   .task-title { font-size:13px; }
   .task-ctx { font-size:12px; }
   .task-meta { gap:4px; margin-top:6px; }
 
-  /* Thought Cards: gleiche Behandlung wie Task Cards */
+  /* Thought Cards */
   .thought-card { position:relative; padding:12px 68px 12px 12px; display:block; }
   .thought-card .card-actions { position:absolute; top:8px; right:6px; flex-direction:column; gap:2px; }
   .thought-text { font-size:13px; }
+
+  /* Snippet Cards */
+  .snippet-card { position:relative; padding:10px 68px 10px 10px; }
+  .snippet-card .card-actions { position:absolute; top:8px; right:6px; flex-direction:column; gap:2px; }
 
   /* Heute Tasks */
   .heute-task { position:relative; padding:10px 44px 10px 10px; gap:8px; }
   .heute-task > .icon-btn:last-child { position:absolute; top:8px; right:6px; }
 
-  /* Kategorie-Header: "Bearbeiten" Text ausblenden, nur Icon bleibt */
+  /* Kategorie-Header */
   .kat-header { padding:8px 10px; gap:5px; }
   .kat-name { font-size:13px; }
   .kat-actions .kat-edit-link { display:none; }
@@ -388,14 +384,12 @@ select option { background:#1c1c1c; }
   .icon-btn { padding:4px 6px; font-size:14px; }
   .card-actions { gap:2px; }
 
-  /* Formular-Zeilen stacken */
+  /* Form rows */
   .form-row { flex-wrap:wrap; }
   .form-row input[type=date], .form-row input[style*="max-width"] { max-width:100% !important; }
 
-  /* Modal */
+  /* Modal + Add-Form */
   .modal { padding:16px; }
-
-  /* Add-Form */
   .add-form { padding:14px; }
 }
 </style>
