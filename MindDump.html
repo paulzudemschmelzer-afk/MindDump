@@ -336,8 +336,8 @@ select option { background:#1c1c1c; }
     transition: transform .25s ease;
   }
   .sidebar:not(.collapsed) { transform: translateX(0); }
-  body:has(.sidebar:not(.collapsed)) .toggle-btn { left:222px !important; }
-  .toggle-btn { left:14px !important; z-index:300 !important; }
+  .toggle-btn { right:14px !important; left:auto !important; z-index:300 !important; }
+  #sidebar-close-btn { display:block !important; }
 
   /* Main nimmt jetzt volle Breite */
   .main { padding:10px 8px; padding-top:50px; width:100%; }
@@ -383,7 +383,10 @@ select option { background:#1c1c1c; }
 <button class="toggle-btn" onclick="toggleSidebar()" title="Menü ein/ausblenden">☰</button>
 <div id="sidebar-backdrop" onclick="toggleSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199;"></div>
 <aside class="sidebar">
-  <div class="logo">Mind<span>Dump</span></div>
+  <div class="logo" style="display:flex;align-items:center;justify-content:space-between">
+    <span>Mind<span style="color:var(--accent2)">Dump</span></span>
+    <button id="sidebar-close-btn" onclick="toggleSidebar()" style="display:none;background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
+  </div>
   <nav>
     <button class="nav-btn active" onclick="go('braindump')"><span class="nav-icon">⚡</span>Brain Dump</button>
     <button class="nav-btn" onclick="go('tasks')"><span class="nav-icon">✓</span>Tasks<span class="badge" id="b-tasks">0</span></button>
