@@ -341,20 +341,22 @@ select option { background:#1c1c1c; }
   .ftabs::-webkit-scrollbar { display:none; }
   .ftab { white-space:nowrap; flex-shrink:0; padding:5px 11px; font-size:12px; }
 
-  /* Task Cards kompakter */
-  .task-card { padding:10px 10px; gap:8px; }
+  /* Task Cards: Buttons oben rechts absolut, Text volle Breite */
+  .task-card { position:relative; padding:10px 80px 10px 10px; gap:8px; align-items:flex-start; }
+  .task-card .card-actions { position:absolute; top:8px; right:6px; flex-direction:row; gap:1px; }
   .task-title { font-size:13px; }
   .task-ctx { font-size:12px; }
   .task-meta { gap:4px; margin-top:6px; }
 
-  /* Kategorie-Header: nur Icons + Name + Count, Actions rechts */
+  /* Heute Tasks gleich */
+  .heute-task { position:relative; padding:10px 44px 10px 10px; gap:8px; }
+  .heute-task > .icon-btn:last-child { position:absolute; top:8px; right:6px; }
+
+  /* Kategorie-Header kompakter */
   .kat-header { padding:8px 10px; gap:6px; }
   .kat-name { font-size:13px; }
   .icon-btn { padding:4px 6px; font-size:14px; }
   .card-actions { gap:2px; }
-
-  /* Heute */
-  .heute-task { padding:10px 10px; gap:8px; }
 
   /* Formular-Zeilen stacken */
   .form-row { flex-wrap:wrap; }
