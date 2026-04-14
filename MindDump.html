@@ -351,7 +351,7 @@ select option { background:#1c1c1c; }
     flex-direction:column;
   }
   /* Main nimmt volle Breite */
-  .main { width:100%; padding:8px 6px; padding-top:48px; box-sizing:border-box; }
+  .main { width:100%; padding:0; padding-top:46px; box-sizing:border-box; }
   .tab-panel { max-width:100%; }
   .page-header h1 { font-size:18px; }
   .page-header p { font-size:12px; }
@@ -360,6 +360,9 @@ select option { background:#1c1c1c; }
   .ftabs { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   .ftabs::-webkit-scrollbar { display:none; }
   .ftab { white-space:nowrap; flex-shrink:0; padding:5px 11px; font-size:12px; }
+
+  /* Inhalte leichter Innenabstand */
+  .tab-panel { padding:0 4px; }
 
   /* Task Cards: Buttons oben rechts absolut, Text volle Breite */
   .task-card { position:relative; padding:10px 76px 10px 10px; gap:8px; align-items:flex-start; }
