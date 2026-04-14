@@ -325,14 +325,22 @@ select option { background:#1c1c1c; }
 }
 
 @media (max-width: 600px) {
-  /* Sidebar startet eingeklappt */
-  .sidebar { transform:translateX(-210px); width:0; min-width:0; overflow:hidden; border:none; }
-  .sidebar:not(.collapsed) { transform:translateX(0); width:210px; min-width:210px; overflow:visible; border-right:1px solid var(--border); }
+  /* Sidebar als fixed Overlay — nimmt keinen Platz im Layout */
+  .sidebar {
+    position: fixed !important;
+    left: 0; top: 0; bottom: 0;
+    z-index: 200;
+    width: 210px !important;
+    min-width: 210px !important;
+    transform: translateX(-210px);
+    transition: transform .25s ease;
+  }
+  .sidebar:not(.collapsed) { transform: translateX(0); }
   body:has(.sidebar:not(.collapsed)) .toggle-btn { left:222px; }
   .toggle-btn { left:14px !important; }
 
-  /* Hauptbereich */
-  .main { padding:12px 10px; padding-top:50px; }
+  /* Main nimmt jetzt volle Breite */
+  .main { padding:10px 8px; padding-top:50px; width:100%; }
   .page-header h1 { font-size:18px; }
   .page-header p { font-size:12px; }
 
