@@ -561,8 +561,10 @@ select option { background:#1c1c1c; }
         <textarea class="form-ta" id="th-text" placeholder="Dein Gedanke, Idee oder Notiz..."></textarea>
       </div>
       <div class="form-row">
-        <input type="text" id="th-topic" placeholder="Thema (z.B. Ideen, Arbeit, Privat...)" list="topic-suggestions" />
-        <datalist id="topic-suggestions"></datalist>
+        <select id="th-topic" style="max-width:220px" title="Kategorie"></select>
+        <button class="btn btn-ghost btn-sm" onclick="openNewThoughtCategoryPrompt('th-topic')">+ Kategorie</button>
+        <input type="text" id="th-subtopic" placeholder="Unterkategorie (optional)" list="th-subtopic-sugg" style="max-width:220px" />
+        <datalist id="th-subtopic-sugg"></datalist>
       </div>
       <div class="form-row">
         <button class="btn btn-primary btn-sm" onclick="addThoughtManual()">Speichern</button>
@@ -724,7 +726,7 @@ select option { background:#1c1c1c; }
 <script>
 // ── STATE ─────────────────────────────────────────────────────
 let D = { tasks:[], thoughts:[], snippets:[] };
-let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{} };
+let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{} };
 let pendingResult = null;
 let taskFilter = 'all';
 let taskTagFilter = null;
@@ -853,7 +855,10 @@ function subscribeFS() {
     if(doc.exists && Array.isArray(doc.data().taskCategoryOrder)) S.taskCategoryOrder = doc.data().taskCategoryOrder;
     if(doc.exists && doc.data().taskCategoryShowSubsCollapsed && typeof doc.data().taskCategoryShowSubsCollapsed === 'object') S.taskCategoryShowSubsCollapsed = doc.data().taskCategoryShowSubsCollapsed;
     if(doc.exists && doc.data().taskCategoryParents && typeof doc.data().taskCategoryParents === 'object') S.taskCategoryParents = doc.data().taskCategoryParents;
+    if(doc.exists && Array.isArray(doc.data().thoughtCategories)) S.thoughtCategories = doc.data().thoughtCategories;
+    if(doc.exists && doc.data().thoughtCategoryLabels && typeof doc.data().thoughtCategoryLabels === 'object') S.thoughtCategoryLabels = doc.data().thoughtCategoryLabels;
     ensureTaskCategorySettings();
+    ensureThoughtCategorySettings();
     saveSettings();
     renderTaskCategoryInputs();
     renderTasks();
@@ -1186,8 +1191,6 @@ function getExistingTopics() {
 
 function renderDumpResult(p) {
   const tasks=p.tasks||[], thoughts=p.thoughts||[];
-  const existingTopics = getExistingTopics();
-  const topicOpts = ['Allgemein',...existingTopics.filter(t=>t!=='Allgemein')].map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
 
   let html='<div class="result-block">';
 
@@ -1226,7 +1229,7 @@ function renderDumpResult(p) {
   }
 
   if(thoughts.length){
-    html+=`<div class="section-label" style="margin-top:20px">💡 ${thoughts.length} Thought${thoughts.length>1?'s':''} — bearbeiten & Thema zuweisen</div>`;
+    html+=`<div class="section-label" style="margin-top:20px">💡 ${thoughts.length} Thought${thoughts.length>1?'s':''} — bearbeiten & Kategorie zuweisen</div>`;
     thoughts.forEach((t,i)=>{
       html+=`<div class="dump-check">
         <input type="checkbox" id="dth-${i}" checked onchange="updateSelCount()">
@@ -1234,14 +1237,16 @@ function renderDumpResult(p) {
           <div class="form-row" style="margin-bottom:6px">
             <textarea class="form-ta" id="dth-text-${i}" style="min-height:50px;font-size:13px">${esc(t.content)}</textarea>
           </div>
-          <div class="topic-select-inline">
-            <label>Thema:</label>
-            <input class="topic-inp-sm" id="dth-topic-${i}" list="dump-topic-list" placeholder="Thema eingeben..." value="Allgemein" />
+          <div class="dump-task-routing">
+            <label>Kategorie:</label>
+            <select class="topic-inp-sm" id="dth-topic-${i}" onchange="updateDumpThoughtSubtopic(${i})" style="min-width:150px">${renderThoughtCategoryOptions('Allgemein')}</select>
+            <label>Sub:</label>
+            <input class="topic-inp-sm" id="dth-subtopic-${i}" list="dth-subtopic-list-${i}" placeholder="optional" style="min-width:130px" />
+            <datalist id="dth-subtopic-list-${i}"></datalist>
           </div>
         </div>
       </div><div style="margin-bottom:10px"></div>`;
     });
-    html+=`<datalist id="dump-topic-list">${topicOpts}</datalist>`;
   }
 
   const total=tasks.length+thoughts.length;
@@ -1280,6 +1285,12 @@ function updateDumpTaskSubkatSuggestions(i) {
   dl.innerHTML=[...new Set(existing)].sort().map(name=>`<option value="${esc(name)}">`).join('');
 }
 
+function updateDumpThoughtSubtopic(i) {
+  const sel=document.getElementById('dth-topic-'+i);
+  const dl=document.getElementById('dth-subtopic-list-'+i);
+  if(sel&&dl) dl.innerHTML=getExistingThoughtSubtopics(sel.value).map(s=>`<option value="${esc(s)}">`).join('');
+}
+
 async function saveSelected() {
   if(!pendingResult) return;
   const ps=[];
@@ -1301,8 +1312,9 @@ async function saveSelected() {
   (pendingResult.thoughts||[]).forEach((t,i)=>{
     if(document.getElementById('dth-'+i)?.checked){
       const content=document.getElementById('dth-text-'+i)?.value.trim()||t.content;
-      const topic=document.getElementById('dth-topic-'+i)?.value.trim()||'Allgemein';
-      ps.push(fsAdd('thoughts',{id:uid(),content,topic,createdAt:Date.now()}));
+      const topic=document.getElementById('dth-topic-'+i)?.value||'Allgemein';
+      const subtopic=document.getElementById('dth-subtopic-'+i)?.value.trim()||null;
+      ps.push(fsAdd('thoughts',{id:uid(),content,topic,subtopic,createdAt:Date.now()}));
       nth++;
     }
   });
@@ -2596,24 +2608,110 @@ function addCalTask(ds) {
 // ── THOUGHTS ─────────────────────────────────────────────────
 let thoughtTopicFilter = 'Alle';
 
+// ── THOUGHT CATEGORIES ───────────────────────────────────────
+function ensureThoughtCategorySettings() {
+  if(!Array.isArray(S.thoughtCategories)) S.thoughtCategories = [];
+  if(!S.thoughtCategoryLabels || typeof S.thoughtCategoryLabels !== 'object') S.thoughtCategoryLabels = {};
+}
+
+function getKnownThoughtCategories() {
+  ensureThoughtCategorySettings();
+  const known = new Set(S.thoughtCategories);
+  D.thoughts.forEach(t=>{ if(t.topic) known.add(t.topic); });
+  return ['Allgemein', ...([...known].filter(k=>k!=='Allgemein').sort())];
+}
+
+function getThoughtCategoryLabel(k) {
+  ensureThoughtCategorySettings();
+  return S.thoughtCategoryLabels[k] || k;
+}
+
+function registerThoughtCategory(name) {
+  ensureThoughtCategorySettings();
+  const label = (name||'').trim();
+  if(!label) return null;
+  if(!S.thoughtCategories.includes(label)) S.thoughtCategories.push(label);
+  saveSettings();
+  saveThoughtCategoriesToFirebase();
+  return label;
+}
+
+function removeThoughtCategory(name) {
+  ensureThoughtCategorySettings();
+  S.thoughtCategories = S.thoughtCategories.filter(k=>k!==name);
+  delete S.thoughtCategoryLabels[name];
+  saveSettings();
+  saveThoughtCategoriesToFirebase();
+}
+
+function saveThoughtCategoriesToFirebase() {
+  if(!db || !currentUser) return;
+  ensureThoughtCategorySettings();
+  db.collection('settings').doc(currentUser.uid).set({
+    thoughtCategories: S.thoughtCategories,
+    thoughtCategoryLabels: S.thoughtCategoryLabels
+  }, { merge: true });
+}
+
+function renderThoughtCategoryOptions(selected='Allgemein') {
+  const cats = getKnownThoughtCategories();
+  return cats.map(c=>`<option value="${esc(c)}" ${c===selected?'selected':''}>${esc(c)}</option>`).join('');
+}
+
+function openNewThoughtCategoryPrompt(selectId='') {
+  const name = prompt('Neue Thought-Kategorie:', '');
+  if(!name||!name.trim()) return;
+  registerThoughtCategory(name.trim());
+  if(selectId) {
+    const sel=document.getElementById(selectId);
+    if(sel) { sel.innerHTML=renderThoughtCategoryOptions(name.trim()); sel.value=name.trim(); }
+  }
+  renderThoughts();
+  toast(`Kategorie "${name.trim()}" hinzugefügt`);
+}
+
+function getExistingThoughtSubtopics(topic) {
+  const subs=new Set();
+  D.thoughts.forEach(t=>{ if((t.topic||'Allgemein')===topic && t.subtopic) subs.add(t.subtopic); });
+  return [...subs].sort();
+}
+
+function updateThoughtSubtopicSugg(selectId, datalistId) {
+  const sel=document.getElementById(selectId);
+  const dl=document.getElementById(datalistId);
+  if(!sel||!dl) return;
+  dl.innerHTML=getExistingThoughtSubtopics(sel.value).map(s=>`<option value="${esc(s)}">`).join('');
+}
+
+function initThoughtCategoryInputs() {
+  const sel=document.getElementById('th-topic');
+  if(sel) {
+    const current=sel.value||'Allgemein';
+    sel.innerHTML=renderThoughtCategoryOptions(current);
+    sel.onchange=()=>updateThoughtSubtopicSugg('th-topic','th-subtopic-sugg');
+    updateThoughtSubtopicSugg('th-topic','th-subtopic-sugg');
+  }
+}
+
 function renderThoughts(){
-  // Update topic filter tabs
-  const topics = getExistingTopics();
+  initThoughtCategoryInputs();
+  const cats = getKnownThoughtCategories();
   const ftabs = document.getElementById('thought-ftabs');
   if(ftabs){
-    ftabs.innerHTML = ['Alle',...topics].map(tp=>
-      tp==='Alle'
-        ? `<button class="ftab ${thoughtTopicFilter==='Alle'?'active':''}" onclick="setThoughtTopic('Alle',this)">Alle</button>`
-        : `<span style="display:inline-flex;align-items:center;gap:2px;margin:0 2px 6px">
-            <button class="ftab ${thoughtTopicFilter===tp?'active':''}" style="margin:0" onclick="setThoughtTopic('${esc(tp)}',this)">${esc(tp)}</button>
-            <button class="icon-btn" style="font-size:11px;padding:2px 5px" onclick="renameTopic('${esc(tp)}')" title="Umbenennen">✏</button>
-           </span>`
-    ).join('');
+    // Count per category
+    const catCounts={};
+    D.thoughts.forEach(t=>{ const tp=t.topic||'Allgemein'; catCounts[tp]=(catCounts[tp]||0)+1; });
+    ftabs.innerHTML =
+      `<button class="ftab ${thoughtTopicFilter==='Alle'?'active':''}" onclick="setThoughtTopic('Alle',this)">Alle (${D.thoughts.length})</button>` +
+      cats.map(tp=>
+        `<span style="display:inline-flex;align-items:center;gap:2px;margin:0 2px 6px">
+          <button class="ftab ${thoughtTopicFilter===tp?'active':''}" style="margin:0" onclick="setThoughtTopic('${esc(tp)}',this)">${esc(tp)} (${catCounts[tp]||0})</button>
+          <button class="icon-btn" style="font-size:11px;padding:2px 5px" onclick="renameTopic('${esc(tp)}')" title="Umbenennen">✏</button>
+          ${tp!=='Allgemein'?`<button class="icon-btn del" style="font-size:11px;padding:2px 5px" onclick="deleteThoughtCategory('${esc(tp)}')" title="Löschen">×</button>`:''}
+        </span>`
+      ).join('') +
+      `<button class="ftab" onclick="openNewThoughtCategoryPrompt()">+ Kategorie</button>`;
   }
-
-  // Update datalist suggestions
-  const dl = document.getElementById('topic-suggestions');
-  if(dl) dl.innerHTML = topics.map(t=>`<option value="${esc(t)}">`).join('');
 
   let list=[...D.thoughts].sort((a,b)=>b.createdAt-a.createdAt);
   if(thoughtTopicFilter!=='Alle') list=list.filter(t=>(t.topic||'Allgemein')===thoughtTopicFilter);
@@ -2624,24 +2722,75 @@ function renderThoughts(){
     return;
   }
 
-  // Group by topic
+  // Group by topic, then by subtopic
   const grouped={};
   list.forEach(t=>{ const tp=t.topic||'Allgemein'; if(!grouped[tp]) grouped[tp]=[]; grouped[tp].push(t); });
 
   let html='';
   Object.entries(grouped).forEach(([topic,items])=>{
     if(thoughtTopicFilter==='Alle') html+=`<div style="margin-bottom:6px;margin-top:16px;display:flex;align-items:center;gap:8px"><span class="topic-badge" onclick="setThoughtTopicStr('${esc(topic)}')">${esc(topic)}</span><span style="font-size:11px;color:var(--sub)">${items.length} Eintr${items.length===1?'ag':'äge'}</span><button class="icon-btn" style="font-size:11px;padding:2px 5px" onclick="renameTopic('${esc(topic)}')" title="Umbenennen">✏</button></div>`;
-    html+=items.map(t=>`<div class="thought-card">
-      <div class="thought-text">${esc(t.content)}</div>
-      <div class="card-actions" style="flex-shrink:0">
-        <span class="date-label" style="margin-right:4px">${fmtDate(t.createdAt)}</span>
-        <button class="icon-btn" onclick="openThoughtToTask('${t.id}')" title="Als Task speichern" style="font-size:13px">✓</button>
-        <button class="icon-btn" onclick="openEditThought('${t.id}')" title="Bearbeiten">✏</button>
-        <button class="icon-btn del" onclick="delThought('${t.id}')" title="Löschen">×</button>
-      </div>
-    </div>`).join('');
+
+    // Split into items without subtopic and groups by subtopic
+    const noSub=items.filter(t=>!t.subtopic);
+    const subGroups={};
+    items.filter(t=>t.subtopic).forEach(t=>{ if(!subGroups[t.subtopic]) subGroups[t.subtopic]=[]; subGroups[t.subtopic].push(t); });
+
+    // Render subtopic groups first
+    Object.keys(subGroups).sort().forEach(sub=>{
+      html+=`<div style="margin:8px 0 4px 12px;display:flex;align-items:center;gap:6px">
+        <span style="font-size:12px;color:var(--accent2);font-weight:500">↳ ${esc(sub)}</span>
+        <span style="font-size:10px;color:var(--sub)">${subGroups[sub].length}</span>
+        <button class="icon-btn" style="font-size:10px;padding:1px 4px" onclick="renameThoughtSubtopic('${esc(topic)}','${esc(sub)}')" title="Umbenennen">✏</button>
+        <button class="icon-btn del" style="font-size:10px;padding:1px 4px" onclick="deleteThoughtSubtopic('${esc(topic)}','${esc(sub)}')" title="Auflösen">×</button>
+      </div>`;
+      html+=subGroups[sub].map(t=>renderThoughtCard(t)).join('');
+    });
+
+    // Then items without subtopic
+    html+=noSub.map(t=>renderThoughtCard(t)).join('');
   });
   el.innerHTML=html;
+}
+
+function renderThoughtCard(t) {
+  return `<div class="thought-card">
+    <div class="thought-text">${esc(t.content)}</div>
+    <div class="card-actions" style="flex-shrink:0">
+      ${t.subtopic?`<span style="font-size:10px;color:var(--accent2);margin-right:2px">↳ ${esc(t.subtopic)}</span>`:''}
+      <span class="date-label" style="margin-right:4px">${fmtDate(t.createdAt)}</span>
+      <button class="icon-btn" onclick="openThoughtToTask('${t.id}')" title="Als Task speichern" style="font-size:13px">✓</button>
+      <button class="icon-btn" onclick="openEditThought('${t.id}')" title="Bearbeiten">✏</button>
+      <button class="icon-btn del" onclick="delThought('${t.id}')" title="Löschen">×</button>
+    </div>
+  </div>`;
+}
+
+async function deleteThoughtCategory(name) {
+  const count=D.thoughts.filter(t=>(t.topic||'Allgemein')===name).length;
+  if(!confirm(`"${name}" löschen? ${count} Thought${count!==1?'s':''} wandern zu "Allgemein".`)) return;
+  const affected=D.thoughts.filter(t=>(t.topic||'Allgemein')===name);
+  await Promise.all(affected.map(t=>{ t.topic='Allgemein'; t.subtopic=null; return fsUpdate('thoughts',t); }));
+  removeThoughtCategory(name);
+  if(thoughtTopicFilter===name) thoughtTopicFilter='Alle';
+  toast(`"${name}" gelöscht — ${count} Thoughts zu Allgemein`);
+  renderThoughts();
+}
+
+async function renameThoughtSubtopic(topic, oldSub) {
+  const newName=prompt(`Unterkategorie umbenennen:\n"${oldSub}" → neuer Name:`, oldSub);
+  if(!newName||newName.trim()===''||newName.trim()===oldSub) return;
+  const affected=D.thoughts.filter(t=>(t.topic||'Allgemein')===topic && t.subtopic===oldSub);
+  await Promise.all(affected.map(t=>{ t.subtopic=newName.trim(); return fsUpdate('thoughts',t); }));
+  toast(`"${oldSub}" → "${newName.trim()}"`);
+  renderThoughts();
+}
+
+async function deleteThoughtSubtopic(topic, subName) {
+  const affected=D.thoughts.filter(t=>(t.topic||'Allgemein')===topic && t.subtopic===subName);
+  if(!confirm(`"${subName}" auflösen? ${affected.length} Thought${affected.length!==1?'s':''} bleiben in "${topic}".`)) return;
+  await Promise.all(affected.map(t=>{ t.subtopic=null; return fsUpdate('thoughts',t); }));
+  toast(`"${subName}" aufgelöst`);
+  renderThoughts();
 }
 
 function setThoughtTopic(tp, el){
@@ -2717,26 +2866,38 @@ async function thoughtToTask(id, forcedCategory=null, forcedSubcategory=null) {
 async function addThoughtManual(){
   const content=document.getElementById('th-text').value.trim();
   if(!content){toast('Bitte etwas eingeben','err');return;}
-  const topic=document.getElementById('th-topic').value.trim()||'Allgemein';
-  await fsAdd('thoughts',{id:uid(),content,topic,createdAt:Date.now()});
+  const topic=document.getElementById('th-topic').value||'Allgemein';
+  const subtopic=document.getElementById('th-subtopic').value.trim()||null;
+  await fsAdd('thoughts',{id:uid(),content,topic,subtopic,createdAt:Date.now()});
   document.getElementById('th-text').value='';
-  document.getElementById('th-topic').value='';
+  document.getElementById('th-subtopic').value='';
   toggleForm('add-thought-form'); toast('Thought gespeichert!');
 }
 
 function openEditThought(id){
   const t=D.thoughts.find(x=>x.id===id); if(!t) return;
-  const topics=getExistingTopics();
   modalMode={type:'thought',id};
   document.getElementById('modal-title').textContent='Thought bearbeiten';
   document.getElementById('modal-body').innerHTML=`
     <div class="form-row"><textarea class="form-ta" id="m-content" style="min-height:120px">${esc(t.content)}</textarea></div>
     <div class="form-row">
-      <input type="text" id="m-topic" value="${esc(t.topic||'Allgemein')}" placeholder="Thema" list="m-topic-list" />
-      <datalist id="m-topic-list">${topics.map(tp=>`<option value="${esc(tp)}">`).join('')}</datalist>
+      <select id="m-topic" style="max-width:220px" onchange="updateModalThoughtSubtopic()">
+        ${renderThoughtCategoryOptions(t.topic||'Allgemein')}
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="openNewThoughtCategoryPrompt('m-topic')">+ Kategorie</button>
+    </div>
+    <div class="form-row">
+      <input type="text" id="m-subtopic" value="${esc(t.subtopic||'')}" placeholder="Unterkategorie (optional)" list="m-subtopic-list" style="max-width:260px" />
+      <datalist id="m-subtopic-list">${getExistingThoughtSubtopics(t.topic||'Allgemein').map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
     </div>`;
   document.getElementById('modal').style.display='flex';
   setTimeout(()=>document.getElementById('m-content').focus(),50);
+}
+
+function updateModalThoughtSubtopic() {
+  const topic=document.getElementById('m-topic')?.value;
+  const dl=document.getElementById('m-subtopic-list');
+  if(topic&&dl) dl.innerHTML=getExistingThoughtSubtopics(topic).map(s=>`<option value="${esc(s)}">`).join('');
 }
 
 // ── SNIPPETS ─────────────────────────────────────────────────
@@ -2809,7 +2970,8 @@ async function saveModal(){
     const t=D.thoughts.find(x=>x.id===modalMode.id); if(!t) return;
     const c=document.getElementById('m-content').value.trim();
     if(!c){toast('Inhalt darf nicht leer sein','err');return;}
-    t.content=c; t.topic=document.getElementById('m-topic')?.value.trim()||t.topic||'Allgemein';
+    t.content=c; t.topic=document.getElementById('m-topic')?.value||t.topic||'Allgemein';
+    t.subtopic=document.getElementById('m-subtopic')?.value.trim()||null;
     await fsUpdate('thoughts',t); closeModal(); toast('Thought aktualisiert!');
   } else if(modalMode.type==='thought-to-task'){
     const kat=document.getElementById('m-tt-kat')?.value||'sonstiges';
@@ -2838,7 +3000,9 @@ function exportData(){
     taskCategoryLabels:S.taskCategoryLabels||{},
     taskCategoryOrder:S.taskCategoryOrder||[],
     taskCategoryShowSubsCollapsed:S.taskCategoryShowSubsCollapsed||{},
-    taskCategoryParents:S.taskCategoryParents||{}
+    taskCategoryParents:S.taskCategoryParents||{},
+    thoughtCategories:S.thoughtCategories||[],
+    thoughtCategoryLabels:S.thoughtCategoryLabels||{}
   }},null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download='minddump-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url);
@@ -2864,7 +3028,10 @@ function importData(e){
         if(Array.isArray(imp.meta?.taskCategoryOrder)) S.taskCategoryOrder = imp.meta.taskCategoryOrder;
         if(imp.meta?.taskCategoryShowSubsCollapsed && typeof imp.meta.taskCategoryShowSubsCollapsed === 'object') S.taskCategoryShowSubsCollapsed = imp.meta.taskCategoryShowSubsCollapsed;
         if(imp.meta?.taskCategoryParents && typeof imp.meta.taskCategoryParents === 'object') S.taskCategoryParents = imp.meta.taskCategoryParents;
+        if(Array.isArray(imp.meta?.thoughtCategories)) S.thoughtCategories = imp.meta.thoughtCategories;
+        if(imp.meta?.thoughtCategoryLabels && typeof imp.meta.thoughtCategoryLabels === 'object') S.thoughtCategoryLabels = imp.meta.thoughtCategoryLabels;
         ensureTaskCategorySettings();
+        ensureThoughtCategorySettings();
         saveSettings();
         saveTaskCategoriesToFirebase();
         renderTaskCategoryInputs();
@@ -2877,7 +3044,10 @@ function importData(e){
         if(Array.isArray(imp.meta?.taskCategoryOrder)) S.taskCategoryOrder = imp.meta.taskCategoryOrder;
         if(imp.meta?.taskCategoryShowSubsCollapsed && typeof imp.meta.taskCategoryShowSubsCollapsed === 'object') S.taskCategoryShowSubsCollapsed = imp.meta.taskCategoryShowSubsCollapsed;
         if(imp.meta?.taskCategoryParents && typeof imp.meta.taskCategoryParents === 'object') S.taskCategoryParents = imp.meta.taskCategoryParents;
+        if(Array.isArray(imp.meta?.thoughtCategories)) S.thoughtCategories = imp.meta.thoughtCategories;
+        if(imp.meta?.thoughtCategoryLabels && typeof imp.meta.thoughtCategoryLabels === 'object') S.thoughtCategoryLabels = imp.meta.thoughtCategoryLabels;
         ensureTaskCategorySettings();
+        ensureThoughtCategorySettings();
         saveSettings();
         renderTaskCategoryInputs();
         renderTasks();
