@@ -339,9 +339,19 @@ select option { background:#1c1c1c; }
   .toggle-btn { right:14px !important; left:auto !important; z-index:300 !important; }
   #sidebar-close-btn { display:block !important; }
 
-  /* Body: kein Flex mehr auf Mobile — Main nimmt garantiert 100% */
-  body { display:block; overflow:hidden; }
-  .main { width:100%; padding:8px 6px; padding-top:48px; overflow-y:auto; height:100vh; box-sizing:border-box; }
+  /* Sidebar komplett aus dem Layout — kein Platz mehr reserviert */
+  .sidebar { display:none !important; }
+  .sidebar:not(.collapsed) {
+    display:flex !important;
+    position:fixed !important;
+    left:0; top:0; bottom:0;
+    z-index:200;
+    width:210px !important;
+    min-width:210px !important;
+    flex-direction:column;
+  }
+  /* Main nimmt volle Breite */
+  .main { width:100%; padding:8px 6px; padding-top:48px; box-sizing:border-box; }
   .tab-panel { max-width:100%; }
   .page-header h1 { font-size:18px; }
   .page-header p { font-size:12px; }
