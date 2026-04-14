@@ -319,6 +319,8 @@ select option { background:#1c1c1c; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:#2a2a2a; border-radius:3px; }
 
+#mobile-topbar { display:none; }
+
 @media (max-width: 900px) {
   .week-grid { grid-template-columns:repeat(7,minmax(90px,1fr)); overflow-x:auto; }
   .main { padding:16px; padding-top:22px; }
@@ -341,9 +343,23 @@ select option { background:#1c1c1c; }
     flex-direction:column;
   }
 
-  /* ☰ button top-right, above overlay */
-  .toggle-btn { right:14px !important; left:auto !important; z-index:300 !important; }
-  #sidebar-close-btn { display:block !important; }
+  /* Floating ☰ button hidden — replaced by topbar */
+  .toggle-btn { display:none !important; }
+
+  /* Sticky top bar */
+  #mobile-topbar {
+    display:flex;
+    align-items:center;
+    position:fixed;
+    top:0; left:0; right:0;
+    height:46px;
+    background:var(--bg);
+    border-bottom:1px solid var(--border);
+    z-index:150;
+    padding:0 14px;
+    gap:12px;
+  }
+  #topbar-title { font-size:15px; font-weight:600; color:var(--text); }
 
   /* Main fills full viewport width */
   .main { width:100%; padding:0; padding-top:46px; box-sizing:border-box; }
@@ -419,6 +435,11 @@ select option { background:#1c1c1c; }
     <div class="user-area" id="user-area"></div>
   </div>
 </aside>
+
+<div id="mobile-topbar">
+  <button id="topbar-menu-btn" onclick="toggleSidebar()" style="background:none;border:1px solid rgba(124,58,237,.4);border-radius:7px;color:var(--accent2);cursor:pointer;font-size:16px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">☰</button>
+  <span id="topbar-title">Brain Dump</span>
+</div>
 
 <main class="main">
 
@@ -932,12 +953,17 @@ function nextDueDate(dueDate, recurrence) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
+const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',settings:'Settings'};
 function go(tab) {
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b=>{ if(b.getAttribute('onclick').includes("'"+tab+"'")) b.classList.add('active'); });
   currentTab=tab;
+  const titleEl=document.getElementById('topbar-title');
+  if(titleEl) titleEl.textContent=TAB_TITLES[tab]||tab;
+  // Auto-close sidebar on mobile after navigation
+  if(window.innerWidth<=600){const sb=document.querySelector('.sidebar');if(sb&&!sb.classList.contains('collapsed')){sb.classList.add('collapsed');const bd=document.getElementById('sidebar-backdrop');if(bd)bd.style.display='none';}}
   if(tab==='tasks') renderTasks();
   if(tab==='heute') renderHeute();
   if(tab==='thoughts') renderThoughts();
