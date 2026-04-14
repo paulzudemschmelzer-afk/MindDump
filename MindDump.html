@@ -2473,20 +2473,54 @@ function parseEstMins(est) {
   return total||60;
 }
 
+const CAL_START_H=7, CAL_END_H=22, CAL_PX_PER_MIN=1.2;
+const KAT_COLORS = {
+  geld:     {bg:'rgba(245,158,11,.3)',  border:'#fbbf24'},
+  haushalt: {bg:'rgba(16,185,129,.25)', border:'#34d399'},
+  einkaufen:{bg:'rgba(59,130,246,.25)', border:'#60a5fa'},
+  business: {bg:'rgba(239,68,68,.25)',  border:'#f87171'},
+  schule:   {bg:'rgba(168,85,247,.25)', border:'#c084fc'},
+  tech:     {bg:'rgba(124,58,237,.3)',  border:'#a78bfa'},
+  familie:  {bg:'rgba(236,72,153,.25)', border:'#f472b6'},
+  sonstiges:{bg:'rgba(107,114,128,.2)', border:'#9ca3af'},
+};
+function getKatColor(kat) { return KAT_COLORS[kat] || KAT_COLORS.sonstiges; }
+
+function calStartMinutes(t) {
+  if(t.calStartTime) {
+    const [h,m]=(t.calStartTime||'').split(':').map(Number);
+    if(!isNaN(h)) return h*60+(m||0);
+  }
+  return null;
+}
+
 let draggedTaskId=null, dragSourceDay=null;
 function dragTask(e,id){ draggedTaskId=id; dragSourceDay=D.tasks.find(x=>x.id===id)?.dueDate||null; e.dataTransfer.effectAllowed='move'; }
+
+function dropYToTime(e, colEl) {
+  const rect=colEl.getBoundingClientRect();
+  const y=e.clientY-rect.top;
+  const totalMins=y/CAL_PX_PER_MIN;
+  let mins=Math.round((CAL_START_H*60+totalMins)/15)*15; // Snap to 15min
+  mins=Math.max(CAL_START_H*60, Math.min(mins, CAL_END_H*60-15));
+  const hh=String(Math.floor(mins/60)).padStart(2,'0');
+  const mm=String(mins%60).padStart(2,'0');
+  return hh+':'+mm;
+}
+
 async function dropTask(e,ds){
   e.preventDefault();
   if(!draggedTaskId) return;
   const t=D.tasks.find(x=>x.id===draggedTaskId);
   if(!t) return;
-  if(t.dueDate!==ds){
-    // Anderen Tag → ans Ende der Tagesliste hängen
-    const dayTasks=D.tasks.filter(x=>x.dueDate===ds).sort((a,b)=>(a.dayOrder??a.createdAt??0)-(b.dayOrder??b.createdAt??0));
-    t.dayOrder=dayTasks.length>0?(dayTasks[dayTasks.length-1].dayOrder??dayTasks.length*10)+10:0;
-    t.dueDate=ds;
-    if(currentUser&&db) await fsUpdate('tasks',t); else {saveLocal();renderWeek();}
-  }
+  const col=e.currentTarget;
+  const startTime=dropYToTime(e, col);
+  t.calStartTime=startTime;
+  t.dueDate=ds;
+  const dayTasks=D.tasks.filter(x=>x.dueDate===ds&&x.id!==t.id).sort((a,b)=>(a.dayOrder??a.createdAt??0)-(b.dayOrder??b.createdAt??0));
+  t.dayOrder=dayTasks.length>0?(dayTasks[dayTasks.length-1].dayOrder??dayTasks.length*10)+10:0;
+  await fsUpdate('tasks',t);
+  if(!useFS()){saveLocal();renderWeek();}
   draggedTaskId=null; dragSourceDay=null;
 }
 async function reorderTask(e,targetId,ds){
@@ -2503,16 +2537,44 @@ async function reorderTask(e,targetId,ds){
   draggedTaskId=null; dragSourceDay=null;
 }
 
+function openCalEvent(e, id) {
+  e.stopPropagation();
+  const t=D.tasks.find(x=>x.id===id); if(!t) return;
+  const startTime=t.calStartTime||'09:00';
+  modalMode={type:'cal-event',id};
+  document.getElementById('modal-title').textContent='Kalender-Event bearbeiten';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><input type="text" id="m-cal-title" value="${esc(t.title)}" placeholder="Titel" /></div>
+    <div class="form-row">
+      <label style="font-size:12px;color:var(--sub);min-width:70px">Startzeit:</label>
+      <input type="time" id="m-cal-start" value="${startTime}" style="max-width:130px" />
+      <label style="font-size:12px;color:var(--sub);min-width:50px;margin-left:8px">Dauer:</label>
+      <input type="text" id="m-cal-est" value="${esc(t.estimatedTime||'1h')}" placeholder="z.B. 30min, 2h" style="max-width:140px" />
+    </div>
+    <div class="form-row">
+      <select id="m-cal-prio" style="max-width:130px">
+        <option value="hoch" ${t.priority==='hoch'?'selected':''}>🔴 Hoch</option>
+        <option value="mittel" ${(t.priority||'mittel')==='mittel'?'selected':''}>🟡 Mittel</option>
+        <option value="niedrig" ${t.priority==='niedrig'?'selected':''}>🟢 Niedrig</option>
+      </select>
+      <input type="date" id="m-cal-date" value="${t.dueDate||''}" style="max-width:160px" />
+    </div>
+    <div class="form-row" style="gap:6px">
+      <button class="btn btn-ghost btn-sm" onclick="toggleTask('${t.id}');closeModal()" style="font-size:12px">${t.done?'↩ Wiederherstellen':'✓ Erledigt'}</button>
+      <button class="btn btn-ghost btn-sm" onclick="openEditTask('${t.id}');closeModal()" style="font-size:12px">Alle Details</button>
+    </div>`;
+  document.getElementById('modal').style.display='flex';
+}
+
 function renderWeek() {
   const days=getWeekDays();
   const todayStr=dateStr(new Date());
   const s=days[0], e=days[6];
   document.getElementById('week-label').textContent=`KW ${getKW(s)} · ${s.getDate()}. ${MONTHS[s.getMonth()]} – ${e.getDate()}. ${MONTHS[e.getMonth()]} ${e.getFullYear()}`;
 
-  const PX_PER_MIN=1.2;
-  const START_H=7, END_H=22;
-  const TOTAL_MINS=(END_H-START_H)*60;
-  const gridH=TOTAL_MINS*PX_PER_MIN;
+  const PX_PER_MIN=CAL_PX_PER_MIN;
+  const START_H=CAL_START_H, END_H=CAL_END_H;
+  const gridH=(END_H-START_H)*60*PX_PER_MIN;
 
   let html='<div class="ap-cal">';
 
@@ -2541,7 +2603,13 @@ function renderWeek() {
   days.forEach(day=>{
     const ds=dateStr(day);
     const isToday=ds===todayStr;
-    const allTasks=D.tasks.filter(t=>t.dueDate===ds).sort((a,b)=>(a.dayOrder??a.createdAt??0)-(b.dayOrder??b.createdAt??0));
+    const allTasks=D.tasks.filter(t=>t.dueDate===ds).sort((a,b)=>{
+      const aMin=calStartMinutes(a), bMin=calStartMinutes(b);
+      if(aMin!==null && bMin!==null) return aMin-bMin;
+      if(aMin!==null) return -1;
+      if(bMin!==null) return 1;
+      return (a.dayOrder??a.createdAt??0)-(b.dayOrder??b.createdAt??0);
+    });
 
     html+=`<div class="ap-day-col ${isToday?'today-col':''}" style="height:${gridH}px"
       ondragover="event.preventDefault();this.classList.add('drag-over')"
@@ -2553,24 +2621,39 @@ function renderWeek() {
       html+=`<div class="ap-hour-line" style="top:${h*60*PX_PER_MIN}px"></div>`;
     }
 
-    // Stack tasks from 9:00
-    let curTop=(9-START_H)*60*PX_PER_MIN;
+    // Place tasks at their calStartTime, or stack unscheduled ones
+    let nextFreeTop=(9-START_H)*60*PX_PER_MIN;
     allTasks.forEach(t=>{
       const mins=parseEstMins(t.estimatedTime);
       const h=Math.max(mins*PX_PER_MIN,28);
-      html+=`<div class="ap-event prio-${t.priority||'mittel'} ${t.done?'done':''}"
-        style="top:${curTop}px;height:${h}px;left:3px;right:3px"
+      const kat=t.kategorie||'sonstiges';
+      const katCol=getKatColor(kat);
+      const startMins=calStartMinutes(t);
+      let top;
+      if(startMins!==null) {
+        top=(startMins-START_H*60)*PX_PER_MIN;
+      } else {
+        top=nextFreeTop;
+      }
+      const timeLabel=startMins!==null?`${String(Math.floor(startMins/60)).padStart(2,'0')}:${String(startMins%60).padStart(2,'0')}`:null;
+
+      html+=`<div class="ap-event ${t.done?'done':''}"
+        style="top:${top}px;height:${h}px;left:3px;right:3px;background:${katCol.bg};border-left:3px solid ${katCol.border}"
         draggable="true"
         ondragstart="dragTask(event,'${t.id}')"
         ondragover="event.preventDefault();event.stopPropagation();this.classList.add('reorder-target')"
         ondragleave="this.classList.remove('reorder-target')"
         ondrop="this.classList.remove('reorder-target');reorderTask(event,'${t.id}','${ds}')"
-        onclick="toggleTask('${t.id}')"
-        title="${esc(t.title)}">
-        <div class="ap-event-title">${esc(t.title.length>26?t.title.slice(0,26)+'…':t.title)}</div>
+        onclick="openCalEvent(event,'${t.id}')"
+        title="${esc(t.title)}${timeLabel?' ('+timeLabel+')':''}">
+        <div class="ap-event-title">${timeLabel?`<span style="opacity:.6;font-size:10px">${timeLabel}</span> `:''}${esc(t.title.length>22?t.title.slice(0,22)+'…':t.title)}</div>
         ${t.estimatedTime&&h>28?`<div class="ap-event-dur">${t.estimatedTime}</div>`:''}
       </div>`;
-      curTop+=h+3;
+      if(startMins!==null) {
+        nextFreeTop=Math.max(nextFreeTop, top+h+3);
+      } else {
+        nextFreeTop=top+h+3;
+      }
     });
 
     html+=`<button class="ap-add-btn" onclick="addCalTask('${ds}')">+</button>`;
@@ -2985,6 +3068,16 @@ async function saveModal(){
     if(!title||!content){toast('Titel und Inhalt darf nicht leer sein','err');return;}
     s.title=title; s.content=content; s.category=document.getElementById('m-sn-cat').value;
     await fsUpdate('snippets',s); closeModal(); toast('Snippet aktualisiert!');
+  } else if(modalMode.type==='cal-event'){
+    const t=D.tasks.find(x=>x.id===modalMode.id); if(!t) return;
+    const title=document.getElementById('m-cal-title').value.trim();
+    if(!title){toast('Titel darf nicht leer sein','err');return;}
+    t.title=title;
+    t.calStartTime=document.getElementById('m-cal-start').value||null;
+    t.estimatedTime=document.getElementById('m-cal-est').value.trim()||null;
+    t.priority=document.getElementById('m-cal-prio').value;
+    t.dueDate=document.getElementById('m-cal-date').value||null;
+    await fsUpdate('tasks',t); closeModal(); toast('Event aktualisiert!');
   }
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
