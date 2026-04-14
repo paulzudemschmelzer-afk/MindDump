@@ -2561,7 +2561,7 @@ function openCalEvent(e, id) {
     </div>
     <div class="form-row" style="gap:6px">
       <button class="btn btn-ghost btn-sm" onclick="toggleTask('${t.id}');closeModal()" style="font-size:12px">${t.done?'↩ Wiederherstellen':'✓ Erledigt'}</button>
-      <button class="btn btn-ghost btn-sm" onclick="openEditTask('${t.id}');closeModal()" style="font-size:12px">Alle Details</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal();setTimeout(()=>openEditTask('${t.id}'),50)" style="font-size:12px">Alle Details</button>
     </div>`;
   document.getElementById('modal').style.display='flex';
 }
