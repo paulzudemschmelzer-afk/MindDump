@@ -359,14 +359,15 @@ select option { background:#1c1c1c; }
     padding:0 14px;
     gap:12px;
   }
-  #topbar-title { font-size:15px; font-weight:600; color:var(--text); }
+  #topbar-title { font-size:15px; font-weight:600; color:var(--text); flex:1; }
+  #topbar-actions { margin-left:auto; display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  #topbar-actions .btn { padding:6px 11px; font-size:12px; }
 
   /* Main fills full viewport width */
   .main { width:100%; padding:0; padding-top:46px; box-sizing:border-box; }
   .tab-panel { max-width:100%; padding:0 4px; }
-  /* Title already shown in topbar — hide redundant h1/p in content */
-  .page-header > div:first-child { display:none; }
-  .page-header.header-row { justify-content:flex-end; margin-bottom:10px; }
+  /* Title + action button moved to topbar — hide page-header in content */
+  .page-header { display:none; }
 
   /* Filter-Tabs: horizontal scroll */
   .ftabs { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
@@ -440,6 +441,7 @@ select option { background:#1c1c1c; }
 <div id="mobile-topbar">
   <button id="topbar-menu-btn" onclick="toggleSidebar()" style="background:none;border:1px solid rgba(124,58,237,.4);border-radius:7px;color:var(--accent2);cursor:pointer;font-size:16px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">☰</button>
   <span id="topbar-title">Brain Dump</span>
+  <div id="topbar-actions"></div>
 </div>
 
 <main class="main">
@@ -955,6 +957,12 @@ function nextDueDate(dueDate, recurrence) {
 
 // ── NAVIGATION ────────────────────────────────────────────────
 const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',settings:'Settings'};
+const TAB_ACTIONS = {
+  tasks:    `<button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">+ Hinzufügen</button>`,
+  heute:    `<button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>`,
+  thoughts: `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-thought-form')">+ Hinzufügen</button>`,
+  snippets: `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-snippet-form')">+ Hinzufügen</button>`,
+};
 function go(tab) {
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -963,6 +971,8 @@ function go(tab) {
   currentTab=tab;
   const titleEl=document.getElementById('topbar-title');
   if(titleEl) titleEl.textContent=TAB_TITLES[tab]||tab;
+  const actEl=document.getElementById('topbar-actions');
+  if(actEl) actEl.innerHTML=TAB_ACTIONS[tab]||'';
   // Auto-close sidebar on mobile after navigation
   if(window.innerWidth<=600){const sb=document.querySelector('.sidebar');if(sb&&!sb.classList.contains('collapsed')){sb.classList.add('collapsed');const bd=document.getElementById('sidebar-backdrop');if(bd)bd.style.display='none';}}
   if(tab==='tasks') renderTasks();
