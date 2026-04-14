@@ -336,8 +336,8 @@ select option { background:#1c1c1c; }
     transition: transform .25s ease;
   }
   .sidebar:not(.collapsed) { transform: translateX(0); }
-  body:has(.sidebar:not(.collapsed)) .toggle-btn { left:222px; }
-  .toggle-btn { left:14px !important; }
+  body:has(.sidebar:not(.collapsed)) .toggle-btn { left:222px !important; }
+  .toggle-btn { left:14px !important; z-index:300 !important; }
 
   /* Main nimmt jetzt volle Breite */
   .main { padding:10px 8px; padding-top:50px; width:100%; }
@@ -2958,6 +2958,8 @@ function init() {
   updateApiIndicator();
   badges();
   renderUserArea();
+  // Sidebar auf Mobile geschlossen starten
+  if(window.innerWidth <= 600) document.querySelector('.sidebar').classList.add('collapsed');
 
   // Taurus init
   loadTaurusSettings();
