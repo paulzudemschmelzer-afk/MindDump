@@ -340,7 +340,8 @@ select option { background:#1c1c1c; }
   #sidebar-close-btn { display:block !important; }
 
   /* Main nimmt jetzt volle Breite */
-  .main { padding:10px 8px; padding-top:50px; width:100%; }
+  .main { padding:8px 6px; padding-top:48px; width:100%; }
+  .tab-panel { max-width:100%; }
   .page-header h1 { font-size:18px; }
   .page-header p { font-size:12px; }
 
@@ -350,19 +351,26 @@ select option { background:#1c1c1c; }
   .ftab { white-space:nowrap; flex-shrink:0; padding:5px 11px; font-size:12px; }
 
   /* Task Cards: Buttons oben rechts absolut, Text volle Breite */
-  .task-card { position:relative; padding:10px 80px 10px 10px; gap:8px; align-items:flex-start; }
+  .task-card { position:relative; padding:10px 76px 10px 10px; gap:8px; align-items:flex-start; }
   .task-card .card-actions { position:absolute; top:8px; right:6px; flex-direction:row; gap:1px; }
   .task-title { font-size:13px; }
   .task-ctx { font-size:12px; }
   .task-meta { gap:4px; margin-top:6px; }
 
-  /* Heute Tasks gleich */
+  /* Thought Cards: gleiche Behandlung wie Task Cards */
+  .thought-card { position:relative; padding:12px 68px 12px 12px; display:block; }
+  .thought-card .card-actions { position:absolute; top:8px; right:6px; flex-direction:column; gap:2px; }
+  .thought-text { font-size:13px; }
+
+  /* Heute Tasks */
   .heute-task { position:relative; padding:10px 44px 10px 10px; gap:8px; }
   .heute-task > .icon-btn:last-child { position:absolute; top:8px; right:6px; }
 
-  /* Kategorie-Header kompakter */
-  .kat-header { padding:8px 10px; gap:6px; }
+  /* Kategorie-Header: "Bearbeiten" Text ausblenden, nur Icon bleibt */
+  .kat-header { padding:8px 10px; gap:5px; }
   .kat-name { font-size:13px; }
+  .kat-actions .kat-edit-link { display:none; }
+  .subkat-actions .kat-edit-link { display:none; }
   .icon-btn { padding:4px 6px; font-size:14px; }
   .card-actions { gap:2px; }
 
