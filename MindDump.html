@@ -916,7 +916,9 @@ function updateFBStatus(ok) {
 
 // ── UTILS ─────────────────────────────────────────────────────
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2); }
-function esc(s) { if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s) { if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+// Safe embedding of user-supplied strings inside JS string literals that are nested in HTML attributes (e.g. onclick="fn('${escJs(x)}')")
+function escJs(s) { if(!s) return ''; return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/\r/g,'\\r').replace(/\n/g,'\\n'); }
 function normalizeCategoryKey(name) {
   return (name||'')
     .toLowerCase()
@@ -1041,7 +1043,7 @@ function renderTagFilterRow() {
   if(!tags.length) { row.style.display='none'; return; }
   row.style.display='flex';
   row.innerHTML = `<span style="font-size:11px;color:var(--sub);margin-right:4px">Tags:</span>` +
-    tags.map(tag=>`<span class="tag-chip ${taskTagFilter===tag?'active':''}" onclick="setTaskTagFilter('${esc(tag)}')">#${esc(tag)}</span>`).join('') +
+    tags.map(tag=>`<span class="tag-chip ${taskTagFilter===tag?'active':''}" onclick="setTaskTagFilter('${escJs(tag)}')">#${esc(tag)}</span>`).join('') +
     (taskTagFilter ? `<span style="font-size:11px;color:var(--sub);cursor:pointer;margin-left:4px" onclick="setTaskTagFilter(null)">× Filter löschen</span>` : '');
 }
 
@@ -1130,7 +1132,6 @@ function renderDumpResult(p) {
     html+=`<div class="section-label" style="margin-top:24px">✓ ${tasks.length} Task${tasks.length>1?'s':''} — auswählen was gespeichert wird</div>`;
     tasks.forEach((t,i)=>{
       const pc='prio-'+(t.priority||'mittel').toLowerCase();
-      const suggestedCategory=autoKategorie(t.title||'', t.context||'');
       html+=`<div class="dump-check">
         <input type="checkbox" id="dt-${i}" checked onchange="updateSelCount()">
         <div style="flex:1">
@@ -1997,7 +1998,7 @@ function renderTaskCard(t) {
         ${t.recurrence?.type?`<span class="recur-badge">🔁 ${RECUR_LABELS[t.recurrence.type]||t.recurrence.type}</span>`:''}
         <span class="date-label">${fmtDate(t.createdAt)}</span>
       </div>
-      ${t.tags?.length?`<div class="task-tags">${t.tags.map(tag=>`<span class="tag-chip" onclick="setTaskTagFilter('${esc(tag)}');event.stopPropagation()">#${esc(tag)}</span>`).join('')}</div>`:''}
+      ${t.tags?.length?`<div class="task-tags">${t.tags.map(tag=>`<span class="tag-chip" onclick="setTaskTagFilter('${escJs(tag)}');event.stopPropagation()">#${esc(tag)}</span>`).join('')}</div>`:''}
     </div>
     <div class="card-actions">
       <button class="icon-btn" onclick="toggleForToday('${t.id}')" title="${t.forToday?'Von Heute entfernen':'Für heute markieren'}" style="color:${t.forToday?'#f59e0b':'#555'}">☀</button>
@@ -2533,8 +2534,8 @@ function renderThoughts(){
       tp==='Alle'
         ? `<button class="ftab ${thoughtTopicFilter==='Alle'?'active':''}" onclick="setThoughtTopic('Alle',this)">Alle</button>`
         : `<span style="display:inline-flex;align-items:center;gap:2px;margin:0 2px 6px">
-            <button class="ftab ${thoughtTopicFilter===tp?'active':''}" style="margin:0" onclick="setThoughtTopic('${esc(tp)}',this)">${esc(tp)}</button>
-            <button class="icon-btn" style="font-size:11px;padding:2px 5px" onclick="renameTopic('${esc(tp)}')" title="Umbenennen">✏</button>
+            <button class="ftab ${thoughtTopicFilter===tp?'active':''}" style="margin:0" onclick="setThoughtTopic('${escJs(tp)}',this)">${esc(tp)}</button>
+            <button class="icon-btn" style="font-size:11px;padding:2px 5px" onclick="renameTopic('${escJs(tp)}')" title="Umbenennen">✏</button>
            </span>`
     ).join('');
   }
@@ -2558,7 +2559,7 @@ function renderThoughts(){
 
   let html='';
   Object.entries(grouped).forEach(([topic,items])=>{
-    if(thoughtTopicFilter==='Alle') html+=`<div style="margin-bottom:6px;margin-top:16px;display:flex;align-items:center;gap:8px"><span class="topic-badge" onclick="setThoughtTopicStr('${esc(topic)}')">${esc(topic)}</span><span style="font-size:11px;color:var(--sub)">${items.length} Eintr${items.length===1?'ag':'äge'}</span><button class="icon-btn" style="font-size:11px;padding:2px 5px" onclick="renameTopic('${esc(topic)}')" title="Umbenennen">✏</button></div>`;
+    if(thoughtTopicFilter==='Alle') html+=`<div style="margin-bottom:6px;margin-top:16px;display:flex;align-items:center;gap:8px"><span class="topic-badge" onclick="setThoughtTopicStr('${escJs(topic)}')">${esc(topic)}</span><span style="font-size:11px;color:var(--sub)">${items.length} Eintr${items.length===1?'ag':'äge'}</span><button class="icon-btn" style="font-size:11px;padding:2px 5px" onclick="renameTopic('${escJs(topic)}')" title="Umbenennen">✏</button></div>`;
     html+=items.map(t=>`<div class="thought-card">
       <div class="thought-text">${esc(t.content)}</div>
       <div class="card-actions" style="flex-shrink:0">
@@ -3068,7 +3069,7 @@ function initGCal(){
 }
 
 function connectGCal(){ if(gcalTokenClient) gcalTokenClient.requestAccessToken(); else toast('Seite neu laden und nochmal versuchen','err'); }
-function disconnectGCal(){ gcalToken=null; google.accounts.oauth2.revoke(gcalToken,()=>{}); updateGCalBtn(); toast('Google Calendar getrennt'); }
+function disconnectGCal(){ const t=gcalToken; gcalToken=null; if(t) google.accounts.oauth2.revoke(t,()=>{}); updateGCalBtn(); toast('Google Calendar getrennt'); }
 function updateGCalBtn(){
   const btn=document.getElementById('gcal-btn');
   if(!btn) return;
