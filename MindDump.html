@@ -380,7 +380,8 @@ select option { background:#1c1c1c; }
 </head>
 <body>
 
-<button class="toggle-btn" onclick="document.querySelector('.sidebar').classList.toggle('collapsed')" title="Menü ein/ausblenden">☰</button>
+<button class="toggle-btn" onclick="toggleSidebar()" title="Menü ein/ausblenden">☰</button>
+<div id="sidebar-backdrop" onclick="toggleSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199;"></div>
 <aside class="sidebar">
   <div class="logo">Mind<span>Dump</span></div>
   <nav>
@@ -2948,6 +2949,14 @@ async function taurusSend() {
 
   taurusBusy = false;
   document.getElementById('taurus-send-btn').disabled = false;
+}
+
+// ── SIDEBAR TOGGLE ───────────────────────────────────────────
+function toggleSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  sidebar.classList.toggle('collapsed');
+  if(backdrop) backdrop.style.display = (window.innerWidth <= 600 && !sidebar.classList.contains('collapsed')) ? 'block' : 'none';
 }
 
 // ── INIT ─────────────────────────────────────────────────────
