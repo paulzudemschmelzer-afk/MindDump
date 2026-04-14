@@ -456,6 +456,7 @@ select option { background:#1c1c1c; }
     </div>
     <div class="btn-row">
       <button class="btn btn-primary" id="process-btn" onclick="processDump()">⚡ Verarbeiten</button>
+      <button class="btn btn-ghost" onclick="saveDumpAsOneTask()">📋 Als ganzen Task</button>
       <button class="btn btn-ghost" onclick="document.getElementById('dump-input').value=''">Leeren</button>
       <span class="hint">Ctrl+Enter</span>
     </div>
@@ -1113,6 +1114,71 @@ ${text}`;
   btn.disabled=false; btn.textContent='⚡ Verarbeiten';
 }
 
+function saveDumpAsOneTask() {
+  const text=document.getElementById('dump-input').value.trim();
+  if(!text){ toast('Bitte erst etwas eintippen!','err'); return; }
+  const firstLine=text.split('\n')[0].trim();
+  const title=firstLine.length>80?firstLine.slice(0,77)+'...':firstLine;
+  const autoKat=autoKategorie(title,text);
+  document.getElementById('dump-result').innerHTML=`<div class="result-block">
+    <div class="section-label" style="margin-top:24px">📋 Ganzer Dump als ein Task</div>
+    <div class="task-card" style="margin-bottom:0">
+      <div class="task-body" style="width:100%">
+        <div class="form-row" style="margin-bottom:6px">
+          <input type="text" id="dump-one-title" value="${esc(title)}" placeholder="Titel" style="font-weight:500" />
+        </div>
+        <div class="form-row" style="margin-bottom:6px">
+          <textarea class="form-ta" id="dump-one-ctx" style="min-height:100px;font-size:13px">${esc(text)}</textarea>
+        </div>
+        <div class="dump-task-routing">
+          <select class="topic-inp-sm" id="dump-one-prio" style="min-width:110px">
+            <option value="hoch">🔴 Hoch</option>
+            <option value="mittel" selected>🟡 Mittel</option>
+            <option value="niedrig">🟢 Niedrig</option>
+          </select>
+          <select class="topic-inp-sm" id="dump-one-kat" onchange="updateDumpOneSubkat()" style="min-width:150px">${renderTaskCategoryOptions(autoKat)}</select>
+          <input class="topic-inp-sm" id="dump-one-subkat" placeholder="Sub (optional)" list="dump-one-subkat-list" style="min-width:130px" />
+          <datalist id="dump-one-subkat-list">${getExistingSubcategories(autoKat).map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
+        </div>
+        <div class="dump-task-routing" style="margin-top:4px">
+          <input type="date" class="topic-inp-sm" id="dump-one-date" style="min-width:140px" />
+          <input type="text" class="topic-inp-sm" id="dump-one-est" placeholder="Geschätzte Zeit" style="min-width:130px" />
+        </div>
+      </div>
+    </div>
+    <div class="save-sel-row">
+      <button class="btn btn-primary" onclick="saveDumpOneConfirm()">✓ Task speichern</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('dump-result').innerHTML=''">Abbrechen</button>
+    </div>
+  </div>`;
+}
+
+function updateDumpOneSubkat() {
+  const kat=document.getElementById('dump-one-kat')?.value;
+  const dl=document.getElementById('dump-one-subkat-list');
+  if(kat&&dl) dl.innerHTML=getExistingSubcategories(kat).map(s=>`<option value="${esc(s)}">`).join('');
+}
+
+async function saveDumpOneConfirm() {
+  const title=document.getElementById('dump-one-title').value.trim();
+  if(!title){ toast('Bitte Titel eingeben','err'); return; }
+  const kategorie=document.getElementById('dump-one-kat').value;
+  const subkategorie=document.getElementById('dump-one-subkat').value.trim()||null;
+  if(subkategorie) ensureTaskSubcategory(kategorie, subkategorie);
+  await fsAdd('tasks',{
+    id:uid(), title,
+    context:document.getElementById('dump-one-ctx').value.trim(),
+    priority:document.getElementById('dump-one-prio').value,
+    kategorie, subkategorie,
+    dueDate:document.getElementById('dump-one-date').value||null,
+    estimatedTime:document.getElementById('dump-one-est').value.trim()||null,
+    done:false, createdAt:Date.now()
+  });
+  document.getElementById('dump-result').innerHTML='';
+  document.getElementById('dump-input').value='';
+  toast('Task gespeichert!');
+}
+
 function getExistingTopics() {
   const topics = [...new Set(D.thoughts.map(t=>t.topic).filter(Boolean))];
   return topics.sort();
@@ -1122,34 +1188,37 @@ function renderDumpResult(p) {
   const tasks=p.tasks||[], thoughts=p.thoughts||[];
   const existingTopics = getExistingTopics();
   const topicOpts = ['Allgemein',...existingTopics.filter(t=>t!=='Allgemein')].map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
-  const taskCategoryOptions = renderTaskCategoryOptions('sonstiges', false);
 
   let html='<div class="result-block">';
 
   if(tasks.length){
-    html+=`<div class="section-label" style="margin-top:24px">✓ ${tasks.length} Task${tasks.length>1?'s':''} — auswählen was gespeichert wird</div>`;
+    html+=`<div class="section-label" style="margin-top:24px">✓ ${tasks.length} Task${tasks.length>1?'s':''} — bearbeiten & auswählen</div>`;
     tasks.forEach((t,i)=>{
-      const pc='prio-'+(t.priority||'mittel').toLowerCase();
-      const suggestedCategory=autoKategorie(t.title||'', t.context||'');
+      const autoKat=autoKategorie(t.title||'', t.context||'');
       html+=`<div class="dump-check">
         <input type="checkbox" id="dt-${i}" checked onchange="updateSelCount()">
-        <div style="flex:1">
         <div class="task-card" style="flex:1;margin-bottom:0">
-          <div class="task-body">
-            <div class="task-title">${esc(t.title)}</div>
-            ${t.context?`<div class="task-ctx">${esc(t.context)}</div>`:''}
-            <div class="task-meta">
-              <span class="prio ${pc}">${t.priority||'mittel'}</span>
-              ${t.dueDate&&t.dueDate!=='null'?`<span class="date-chip">📅 ${fmtDue(t.dueDate)}</span>`:''}
+          <div class="task-body" style="width:100%">
+            <div class="form-row" style="margin-bottom:6px">
+              <input type="text" id="dt-title-${i}" value="${esc(t.title)}" placeholder="Titel" style="font-weight:500" />
             </div>
-          </div>
-        </div>
-          <div class="dump-task-routing">
-            <label>Kategorie:</label>
-            <select class="topic-inp-sm" id="dt-kat-${i}" onchange="updateDumpTaskSubkatSuggestions(${i})" style="min-width:150px">${taskCategoryOptions}</select>
-            <label>Sub:</label>
-            <input class="topic-inp-sm" id="dt-subkat-${i}" list="dt-subkat-list-${i}" placeholder="optional" style="min-width:150px" />
-            <datalist id="dt-subkat-list-${i}"></datalist>
+            <div class="form-row" style="margin-bottom:6px">
+              <textarea class="form-ta" id="dt-ctx-${i}" placeholder="Kontext / Details" style="min-height:50px;font-size:13px">${esc(t.context||'')}</textarea>
+            </div>
+            <div class="dump-task-routing">
+              <select class="topic-inp-sm" id="dt-prio-${i}" style="min-width:110px">
+                <option value="hoch" ${(t.priority||'mittel')==='hoch'?'selected':''}>🔴 Hoch</option>
+                <option value="mittel" ${(t.priority||'mittel')==='mittel'?'selected':''}>🟡 Mittel</option>
+                <option value="niedrig" ${(t.priority||'mittel')==='niedrig'?'selected':''}>🟢 Niedrig</option>
+              </select>
+              <select class="topic-inp-sm" id="dt-kat-${i}" onchange="updateDumpTaskSubkatSuggestions(${i})" style="min-width:150px">${renderTaskCategoryOptions(autoKat)}</select>
+              <input class="topic-inp-sm" id="dt-subkat-${i}" list="dt-subkat-list-${i}" placeholder="Sub (optional)" style="min-width:130px" />
+              <datalist id="dt-subkat-list-${i}"></datalist>
+            </div>
+            <div class="dump-task-routing" style="margin-top:4px">
+              <input type="date" class="topic-inp-sm" id="dt-date-${i}" value="${t.dueDate&&t.dueDate!=='null'?t.dueDate:''}" style="min-width:140px" />
+              <input type="text" class="topic-inp-sm" id="dt-est-${i}" value="${esc(t.estimatedTime&&t.estimatedTime!=='null'?t.estimatedTime:'')}" placeholder="Geschätzte Zeit" style="min-width:130px" />
+            </div>
           </div>
         </div>
       </div><div style="margin-bottom:8px"></div>`;
@@ -1157,13 +1226,13 @@ function renderDumpResult(p) {
   }
 
   if(thoughts.length){
-    html+=`<div class="section-label" style="margin-top:20px">💡 ${thoughts.length} Thought${thoughts.length>1?'s':''} — Thema zuweisen</div>`;
+    html+=`<div class="section-label" style="margin-top:20px">💡 ${thoughts.length} Thought${thoughts.length>1?'s':''} — bearbeiten & Thema zuweisen</div>`;
     thoughts.forEach((t,i)=>{
       html+=`<div class="dump-check">
         <input type="checkbox" id="dth-${i}" checked onchange="updateSelCount()">
         <div style="flex:1">
-          <div class="thought-card" style="margin-bottom:0">
-            <div class="thought-text">${esc(t.content)}</div>
+          <div class="form-row" style="margin-bottom:6px">
+            <textarea class="form-ta" id="dth-text-${i}" style="min-height:50px;font-size:13px">${esc(t.content)}</textarea>
           </div>
           <div class="topic-select-inline">
             <label>Thema:</label>
@@ -1185,9 +1254,6 @@ function renderDumpResult(p) {
   html+='</div>';
   document.getElementById('dump-result').innerHTML=html;
   tasks.forEach((t,i)=>{
-    const suggestedCategory=autoKategorie(t.title||'', t.context||'');
-    const sel=document.getElementById('dt-kat-'+i);
-    if(sel) sel.value=suggestedCategory;
     updateDumpTaskSubkatSuggestions(i);
   });
 }
@@ -1220,17 +1286,23 @@ async function saveSelected() {
   let nt=0, nth=0;
   (pendingResult.tasks||[]).forEach((t,i)=>{
     if(document.getElementById('dt-'+i)?.checked){
-      const kategorie=document.getElementById('dt-kat-'+i)?.value||autoKategorie(t.title,t.context);
+      const title=document.getElementById('dt-title-'+i)?.value.trim()||t.title;
+      const context=document.getElementById('dt-ctx-'+i)?.value.trim()||'';
+      const priority=document.getElementById('dt-prio-'+i)?.value||'mittel';
+      const kategorie=document.getElementById('dt-kat-'+i)?.value||autoKategorie(title,context);
       const subkategorie=document.getElementById('dt-subkat-'+i)?.value.trim()||null;
+      const dueDate=document.getElementById('dt-date-'+i)?.value||null;
+      const estimatedTime=document.getElementById('dt-est-'+i)?.value.trim()||null;
       if(subkategorie) ensureTaskSubcategory(kategorie, subkategorie);
-      ps.push(fsAdd('tasks',{id:uid(),title:t.title,context:t.context||'',priority:t.priority||'mittel',kategorie,subkategorie,dueDate:(t.dueDate&&t.dueDate!=='null')?t.dueDate:null,estimatedTime:(t.estimatedTime&&t.estimatedTime!=='null')?t.estimatedTime:null,done:false,createdAt:Date.now()}));
+      ps.push(fsAdd('tasks',{id:uid(),title,context,priority,kategorie,subkategorie,dueDate,estimatedTime,done:false,createdAt:Date.now()}));
       nt++;
     }
   });
   (pendingResult.thoughts||[]).forEach((t,i)=>{
     if(document.getElementById('dth-'+i)?.checked){
+      const content=document.getElementById('dth-text-'+i)?.value.trim()||t.content;
       const topic=document.getElementById('dth-topic-'+i)?.value.trim()||'Allgemein';
-      ps.push(fsAdd('thoughts',{id:uid(),content:t.content,topic,createdAt:Date.now()}));
+      ps.push(fsAdd('thoughts',{id:uid(),content,topic,createdAt:Date.now()}));
       nth++;
     }
   });
