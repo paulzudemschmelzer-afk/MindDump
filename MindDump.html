@@ -356,15 +356,15 @@ select option { background:#1c1c1c; }
     background:var(--bg);
     border-bottom:1px solid var(--border);
     z-index:150;
-    padding:0 14px;
-    gap:12px;
+    padding:0 8px;
+    gap:10px;
   }
   #topbar-title { font-size:15px; font-weight:600; color:var(--text); flex:1; }
   #topbar-actions { margin-left:auto; display:flex; align-items:center; gap:6px; flex-shrink:0; }
   #topbar-actions .btn { padding:6px 11px; font-size:12px; }
 
-  /* Main fills full viewport width */
-  .main { width:100%; padding:0; padding-top:46px; box-sizing:border-box; }
+  /* Main fills full viewport width — 54px gives breathing room below topbar */
+  .main { width:100%; padding:0; padding-top:54px; box-sizing:border-box; }
   .tab-panel { max-width:100%; padding:0 4px; }
   /* Title + action button moved to topbar — hide page-header in content */
   .page-header { display:none; }
