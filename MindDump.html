@@ -61,7 +61,7 @@ body:has(.sidebar.collapsed) .main { padding-left:52px; }
 .btn-sm { padding:6px 12px; font-size:12px; }
 .icon-btn { background:none; border:none; color:#555; cursor:pointer; font-size:15px; line-height:1; padding:4px 7px; border-radius:5px; transition:all .15s; }
 .icon-btn:hover { color:var(--text); background:var(--card2); }
-.icon-btn.edit-btn { color:#fbbf24; font-size:17px; writing-mode:vertical-lr; }
+.icon-btn.edit-btn { color:#fbbf24; font-size:17px; }
 .icon-btn.edit-btn:hover { color:#f59e0b; background:rgba(245,158,11,.1); }
 .icon-btn.del:hover { color:var(--red); background:rgba(239,68,68,.1); }
 
@@ -322,6 +322,49 @@ select option { background:#1c1c1c; }
 @media (max-width: 900px) {
   .week-grid { grid-template-columns:repeat(7,minmax(90px,1fr)); overflow-x:auto; }
   .main { padding:16px; padding-top:22px; }
+}
+
+@media (max-width: 600px) {
+  /* Sidebar startet eingeklappt */
+  .sidebar { transform:translateX(-210px); width:0; min-width:0; overflow:hidden; border:none; }
+  .sidebar:not(.collapsed) { transform:translateX(0); width:210px; min-width:210px; overflow:visible; border-right:1px solid var(--border); }
+  body:has(.sidebar:not(.collapsed)) .toggle-btn { left:222px; }
+  .toggle-btn { left:14px !important; }
+
+  /* Hauptbereich */
+  .main { padding:12px 10px; padding-top:50px; }
+  .page-header h1 { font-size:18px; }
+  .page-header p { font-size:12px; }
+
+  /* Filter-Tabs horizontal scrollbar statt umbrechen */
+  .ftabs { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .ftabs::-webkit-scrollbar { display:none; }
+  .ftab { white-space:nowrap; flex-shrink:0; padding:5px 11px; font-size:12px; }
+
+  /* Task Cards kompakter */
+  .task-card { padding:10px 10px; gap:8px; }
+  .task-title { font-size:13px; }
+  .task-ctx { font-size:12px; }
+  .task-meta { gap:4px; margin-top:6px; }
+
+  /* Kategorie-Header: nur Icons + Name + Count, Actions rechts */
+  .kat-header { padding:8px 10px; gap:6px; }
+  .kat-name { font-size:13px; }
+  .icon-btn { padding:4px 6px; font-size:14px; }
+  .card-actions { gap:2px; }
+
+  /* Heute */
+  .heute-task { padding:10px 10px; gap:8px; }
+
+  /* Formular-Zeilen stacken */
+  .form-row { flex-wrap:wrap; }
+  .form-row input[type=date], .form-row input[style*="max-width"] { max-width:100% !important; }
+
+  /* Modal */
+  .modal { padding:16px; }
+
+  /* Add-Form */
+  .add-form { padding:14px; }
 }
 </style>
 </head>
