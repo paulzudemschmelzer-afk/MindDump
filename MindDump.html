@@ -364,8 +364,9 @@ select option { background:#1c1c1c; }
   /* Main fills full viewport width */
   .main { width:100%; padding:0; padding-top:46px; box-sizing:border-box; }
   .tab-panel { max-width:100%; padding:0 4px; }
-  .page-header h1 { font-size:18px; }
-  .page-header p { font-size:12px; }
+  /* Title already shown in topbar — hide redundant h1/p in content */
+  .page-header > div:first-child { display:none; }
+  .page-header.header-row { justify-content:flex-end; margin-bottom:10px; }
 
   /* Filter-Tabs: horizontal scroll */
   .ftabs { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
