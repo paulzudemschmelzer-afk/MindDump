@@ -339,8 +339,9 @@ select option { background:#1c1c1c; }
   .toggle-btn { right:14px !important; left:auto !important; z-index:300 !important; }
   #sidebar-close-btn { display:block !important; }
 
-  /* Main nimmt jetzt volle Breite */
-  .main { padding:8px 6px; padding-top:48px; width:100%; }
+  /* Body: kein Flex mehr auf Mobile — Main nimmt garantiert 100% */
+  body { display:block; overflow:hidden; }
+  .main { width:100%; padding:8px 6px; padding-top:48px; overflow-y:auto; height:100vh; box-sizing:border-box; }
   .tab-panel { max-width:100%; }
   .page-header h1 { font-size:18px; }
   .page-header p { font-size:12px; }
