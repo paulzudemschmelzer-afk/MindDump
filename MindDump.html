@@ -301,6 +301,68 @@ select option { background:#1c1c1c; }
 .toast.ok { border-color:rgba(16,185,129,.35); }
 .toast.err { border-color:rgba(239,68,68,.35); }
 
+/* NOTES */
+.notes-layout { display:flex; gap:0; height:calc(100vh - 120px); }
+.notes-sidebar { width:240px; min-width:240px; border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+.notes-sidebar-head { padding:10px 12px; border-bottom:1px solid var(--border); display:flex; gap:8px; align-items:center; }
+.notes-sidebar-head input { flex:1; padding:6px 10px; background:var(--card); border:1px solid var(--border); border-radius:7px; color:var(--text); font-size:12px; outline:none; font-family:inherit; }
+.notes-sidebar-head input:focus { border-color:var(--accent); }
+.notes-list { flex:1; overflow-y:auto; }
+.note-item { padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--border); transition:background .12s; }
+.note-item:hover { background:var(--card); }
+.note-item.active { background:rgba(124,58,237,.12); border-right:2px solid var(--accent2); }
+.note-item-title { font-size:13px; font-weight:600; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.note-item-preview { font-size:11px; color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.note-item-date { font-size:10px; color:#444; margin-top:3px; }
+
+.notes-editor-area { flex:1; display:flex; flex-direction:column; min-width:0; }
+.notes-empty { display:flex; align-items:center; justify-content:center; flex:1; color:var(--sub); font-size:14px; }
+
+/* Notes Toolbar */
+.notes-toolbar { display:flex; flex-wrap:wrap; gap:3px; padding:8px 12px; border-bottom:1px solid var(--border); align-items:center; background:var(--sidebar); }
+.nt-btn { background:none; border:1px solid transparent; color:var(--sub); cursor:pointer; font-size:14px; width:32px; height:30px; border-radius:6px; display:flex; align-items:center; justify-content:center; transition:all .12s; font-family:inherit; }
+.nt-btn:hover { color:var(--text); background:var(--card); }
+.nt-btn.active { color:var(--accent2); background:rgba(124,58,237,.15); border-color:rgba(124,58,237,.3); }
+.nt-sep { width:1px; height:22px; background:var(--border); margin:0 4px; }
+.nt-select { background:var(--card); border:1px solid var(--border); color:var(--text); font-size:12px; padding:4px 6px; border-radius:6px; cursor:pointer; font-family:inherit; }
+.nt-color-btn { width:22px; height:22px; border-radius:50%; border:2px solid var(--border); cursor:pointer; transition:border-color .12s; }
+.nt-color-btn:hover, .nt-color-btn.active { border-color:var(--accent2); }
+
+/* Mode toggle (tippen/zeichnen) */
+.notes-mode-bar { display:flex; gap:0; border-bottom:1px solid var(--border); }
+.notes-mode-btn { flex:1; padding:8px; text-align:center; font-size:13px; font-weight:600; cursor:pointer; background:none; border:none; color:var(--sub); transition:all .12s; font-family:inherit; border-bottom:2px solid transparent; }
+.notes-mode-btn:hover { color:var(--text); }
+.notes-mode-btn.active { color:var(--accent2); border-bottom-color:var(--accent2); background:rgba(124,58,237,.06); }
+
+/* Rich text area */
+.note-content-wrap { flex:1; overflow-y:auto; position:relative; }
+.note-editor { padding:16px 20px; min-height:100%; outline:none; font-size:15px; line-height:1.7; color:var(--text); }
+.note-editor:empty::before { content:attr(data-placeholder); color:#444; pointer-events:none; }
+.note-editor h1 { font-size:26px; font-weight:700; margin:8px 0; }
+.note-editor h2 { font-size:20px; font-weight:600; margin:6px 0; }
+.note-editor h3 { font-size:16px; font-weight:600; margin:4px 0; }
+.note-editor ul, .note-editor ol { padding-left:24px; margin:4px 0; }
+.note-editor blockquote { border-left:3px solid var(--accent); padding-left:12px; color:var(--sub); margin:6px 0; }
+
+/* Drawing canvas */
+.note-canvas-wrap { flex:1; position:relative; overflow:hidden; display:none; background:#1a1a1a; touch-action:none; }
+.note-canvas-wrap.active { display:block; }
+.note-canvas { width:100%; height:100%; cursor:crosshair; }
+
+/* Drawing toolbar */
+.draw-toolbar { display:flex; flex-wrap:wrap; gap:4px; padding:8px 12px; border-bottom:1px solid var(--border); align-items:center; background:var(--sidebar); display:none; }
+.draw-toolbar.active { display:flex; }
+.draw-size-btn { width:28px; height:28px; border-radius:50%; background:none; border:1px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .12s; }
+.draw-size-btn:hover, .draw-size-btn.active { border-color:var(--accent2); background:rgba(124,58,237,.1); }
+.draw-size-dot { border-radius:50%; background:var(--text); }
+
+@media (max-width: 600px) {
+  .notes-layout { flex-direction:column; height:auto; min-height:calc(100vh - 54px); }
+  .notes-sidebar { width:100%; min-width:100%; max-height:180px; border-right:none; border-bottom:1px solid var(--border); }
+  .notes-editor-area { min-height:calc(100vh - 280px); }
+  .note-editor { padding:12px; font-size:14px; }
+}
+
 /* TAURUS CHAT */
 .taurus-wrap { display:flex; flex-direction:column; height:calc(100vh - 120px); max-width:960px; }
 .taurus-tabs { display:flex; gap:6px; margin-bottom:14px; }
@@ -446,6 +508,7 @@ select option { background:#1c1c1c; }
     <button class="nav-btn" onclick="go('week')"><span class="nav-icon">📅</span>Woche</button>
     <button class="nav-btn" onclick="go('thoughts')"><span class="nav-icon">💡</span>Thoughts<span class="badge" id="b-thoughts">0</span></button>
     <button class="nav-btn" onclick="go('snippets')"><span class="nav-icon">⌨</span>Snippets<span class="badge" id="b-snippets">0</span></button>
+    <button class="nav-btn" onclick="go('notes')"><span class="nav-icon">📝</span>Notizen<span class="badge" id="b-notes">0</span></button>
     <button class="nav-btn" onclick="go('settings')" style="margin-top:auto"><span class="nav-icon">⚙</span>Settings</button>
   </nav>
   <div class="sidebar-bottom">
@@ -650,6 +713,96 @@ select option { background:#1c1c1c; }
     <div id="snippets-list"></div>
   </div>
 
+  <!-- NOTIZEN -->
+  <div class="tab-panel" id="tab-notes">
+    <div class="page-header header-row">
+      <div><h1>Notizen</h1><p>Tippen und Zeichnen — wie auf dem iPad.</p></div>
+      <button class="btn btn-ghost" onclick="createNote()">+ Neue Notiz</button>
+    </div>
+    <div class="notes-layout">
+      <div class="notes-sidebar">
+        <div class="notes-sidebar-head">
+          <input type="text" id="notes-search" placeholder="Suchen..." oninput="renderNotesList()" />
+          <button class="nt-btn" onclick="createNote()" title="Neue Notiz" style="flex-shrink:0">+</button>
+        </div>
+        <div class="notes-list" id="notes-list"></div>
+      </div>
+      <div class="notes-editor-area" id="notes-editor-area">
+        <div class="notes-empty" id="notes-empty">Erstelle eine Notiz um loszulegen</div>
+
+        <!-- Mode Toggle -->
+        <div class="notes-mode-bar" id="notes-mode-bar" style="display:none">
+          <button class="notes-mode-btn active" onclick="setNoteMode('type')" id="mode-type-btn">✏️ Tippen</button>
+          <button class="notes-mode-btn" onclick="setNoteMode('draw')" id="mode-draw-btn">🖊️ Zeichnen</button>
+        </div>
+
+        <!-- Text Toolbar -->
+        <div class="notes-toolbar" id="notes-toolbar" style="display:none">
+          <select class="nt-select" onchange="noteExec('formatBlock',this.value);this.selectedIndex=0" title="Überschrift">
+            <option value="">Format</option>
+            <option value="h1">Überschrift 1</option>
+            <option value="h2">Überschrift 2</option>
+            <option value="h3">Überschrift 3</option>
+            <option value="p">Normal</option>
+          </select>
+          <div class="nt-sep"></div>
+          <button class="nt-btn" onclick="noteExec('bold')" title="Fett"><b>F</b></button>
+          <button class="nt-btn" onclick="noteExec('italic')" title="Kursiv"><i>K</i></button>
+          <button class="nt-btn" onclick="noteExec('underline')" title="Unterstrichen"><u>U</u></button>
+          <button class="nt-btn" onclick="noteExec('strikeThrough')" title="Durchgestrichen"><s>S</s></button>
+          <div class="nt-sep"></div>
+          <button class="nt-btn" onclick="noteExec('insertUnorderedList')" title="Aufzählung">•≡</button>
+          <button class="nt-btn" onclick="noteExec('insertOrderedList')" title="Nummerierung">1.</button>
+          <button class="nt-btn" onclick="noteExec('formatBlock','blockquote')" title="Zitat">❝</button>
+          <div class="nt-sep"></div>
+          <select class="nt-select" onchange="noteExec('fontSize',this.value);this.selectedIndex=0" title="Textgröße">
+            <option value="">Größe</option>
+            <option value="1">Klein</option>
+            <option value="3">Normal</option>
+            <option value="5">Groß</option>
+            <option value="7">Sehr groß</option>
+          </select>
+          <div class="nt-sep"></div>
+          <input type="color" class="nt-color-btn" value="#e5e5e5" onchange="noteExec('foreColor',this.value)" title="Textfarbe" />
+          <input type="color" class="nt-color-btn" value="#111111" onchange="noteExec('hiliteColor',this.value)" title="Hintergrund" />
+          <div class="nt-sep"></div>
+          <button class="nt-btn" onclick="noteExec('removeFormat')" title="Formatierung entfernen">✕</button>
+        </div>
+
+        <!-- Draw Toolbar -->
+        <div class="draw-toolbar" id="draw-toolbar">
+          <button class="nt-btn active" onclick="setDrawTool('pen')" id="draw-pen-btn" title="Stift">🖊️</button>
+          <button class="nt-btn" onclick="setDrawTool('eraser')" id="draw-eraser-btn" title="Radierer">🧽</button>
+          <div class="nt-sep"></div>
+          <button class="draw-size-btn active" onclick="setDrawSize(2)" data-size="2" title="Dünn"><div class="draw-size-dot" style="width:4px;height:4px"></div></button>
+          <button class="draw-size-btn" onclick="setDrawSize(4)" data-size="4" title="Normal"><div class="draw-size-dot" style="width:7px;height:7px"></div></button>
+          <button class="draw-size-btn" onclick="setDrawSize(8)" data-size="8" title="Dick"><div class="draw-size-dot" style="width:11px;height:11px"></div></button>
+          <button class="draw-size-btn" onclick="setDrawSize(16)" data-size="16" title="Sehr dick"><div class="draw-size-dot" style="width:15px;height:15px"></div></button>
+          <div class="nt-sep"></div>
+          <input type="color" class="nt-color-btn" id="draw-color" value="#e5e5e5" onchange="drawColor=this.value" title="Stiftfarbe" />
+          <button class="nt-color-btn" style="background:#e5e5e5" onclick="setDrawColor('#e5e5e5',this)"></button>
+          <button class="nt-color-btn" style="background:#ef4444" onclick="setDrawColor('#ef4444',this)"></button>
+          <button class="nt-color-btn" style="background:#3b82f6" onclick="setDrawColor('#3b82f6',this)"></button>
+          <button class="nt-color-btn" style="background:#10b981" onclick="setDrawColor('#10b981',this)"></button>
+          <button class="nt-color-btn" style="background:#f59e0b" onclick="setDrawColor('#f59e0b',this)"></button>
+          <div class="nt-sep"></div>
+          <button class="nt-btn" onclick="clearCanvas()" title="Canvas leeren">🗑️</button>
+          <button class="nt-btn" onclick="undoCanvas()" title="Rückgängig">↩</button>
+        </div>
+
+        <!-- Editor -->
+        <div class="note-content-wrap" id="note-content-wrap" style="display:none">
+          <div class="note-editor" id="note-editor" contenteditable="true" data-placeholder="Hier tippen..." oninput="autoSaveNote()"></div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="note-canvas-wrap" id="note-canvas-wrap">
+          <canvas class="note-canvas" id="note-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- SETTINGS -->
   <div class="tab-panel" id="tab-settings">
     <div class="page-header"><h1>Settings</h1></div>
@@ -761,7 +914,7 @@ select option { background:#1c1c1c; }
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────
-let D = { tasks:[], thoughts:[], snippets:[] };
+let D = { tasks:[], thoughts:[], snippets:[], notes:[] };
 let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{} };
 let pendingResult = null;
 let taskFilter = 'all';
@@ -799,6 +952,7 @@ function autoKategorie(title, context) {
 // ── LOCAL STORAGE ─────────────────────────────────────────────
 function loadLocal() {
   try { const d=localStorage.getItem('md_data'); if(d) D=JSON.parse(d); } catch(e){}
+  if(!D.notes) D.notes=[];
   try { const s=localStorage.getItem('md_settings'); if(s) S=JSON.parse(s); } catch(e){}
   ensureTaskCategorySettings();
 }
@@ -832,6 +986,7 @@ function rerender(colName) {
   if(colName==='tasks') { renderTasks(); if(currentTab==='week') renderWeek(); if(currentTab==='heute') renderHeute(); }
   if(colName==='thoughts') renderThoughts();
   if(colName==='snippets') renderSnips();
+  if(colName==='notes') renderNotes();
 }
 
 // ── FIREBASE ──────────────────────────────────────────────────
@@ -853,7 +1008,7 @@ function connectFirebase() {
       currentUser = user;
       renderUserArea();
       if(user) { subscribeFS(); }
-      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; D={tasks:[],thoughts:[],snippets:[]}; badges(); }
+      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; D={tasks:[],thoughts:[],snippets:[],notes:[]}; badges(); }
     });
 
     S.fbConfig = configStr;
@@ -868,7 +1023,7 @@ function connectFirebase() {
 function subscribeFS() {
   unsubListeners.forEach(u=>u());
   unsubListeners=[];
-  ['tasks','thoughts','snippets'].forEach(name=>{
+  ['tasks','thoughts','snippets','notes'].forEach(name=>{
     unsubListeners.push(
       col(name).onSnapshot(snap=>{
         D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1001,12 +1156,13 @@ function nextDueDate(dueDate, recurrence) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
-const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',settings:'Settings'};
+const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',notes:'Notizen',settings:'Settings'};
 const TAB_ACTIONS = {
   tasks:    `<button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">+ Hinzufügen</button>`,
   heute:    `<button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>`,
   thoughts: `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-thought-form')">+ Hinzufügen</button>`,
   snippets: `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-snippet-form')">+ Hinzufügen</button>`,
+  notes:    `<button class="btn btn-ghost btn-sm" onclick="createNote()">+ Neue Notiz</button>`,
 };
 function go(tab) {
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
@@ -1026,12 +1182,14 @@ function go(tab) {
   if(tab==='snippets') renderSnips();
   if(tab==='week') renderWeek();
   if(tab==='taurus') { renderTaurusChat(); checkTaurusStatus(); }
+  if(tab==='notes') renderNotes();
 }
 
 function badges() {
   document.getElementById('b-tasks').textContent=D.tasks.filter(t=>!t.done).length;
   document.getElementById('b-thoughts').textContent=D.thoughts.length;
   document.getElementById('b-snippets').textContent=D.snippets.length;
+  document.getElementById('b-notes').textContent=D.notes.length;
   const todayStr=dateKey();
   document.getElementById('b-heute').textContent=D.tasks.filter(t=>!t.done&&(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr).length;
 }
@@ -3536,7 +3694,7 @@ function importData(e){
         renderTasks();
         toast(`Zu Firebase hochgeladen: ${imp.tasks.length} Tasks, ${imp.thoughts.length} Thoughts, ${imp.snippets.length} Snippets`);
       } else {
-        D={tasks:imp.tasks,thoughts:imp.thoughts,snippets:imp.snippets}; saveLocal();
+        D={tasks:imp.tasks,thoughts:imp.thoughts,snippets:imp.snippets,notes:imp.notes||[]}; saveLocal();
         if(Array.isArray(imp.meta?.taskCategories)) S.taskCategories = imp.meta.taskCategories;
         if(imp.meta?.taskCategoryLabels && typeof imp.meta.taskCategoryLabels === 'object') S.taskCategoryLabels = imp.meta.taskCategoryLabels;
         if(Array.isArray(imp.meta?.taskCategoryOrder)) S.taskCategoryOrder = imp.meta.taskCategoryOrder;
@@ -3557,7 +3715,7 @@ function importData(e){
 }
 function clearAll(){
   if(confirm('Wirklich ALLE Daten löschen?')){
-    D={tasks:[],thoughts:[],snippets:[]}; saveLocal();
+    D={tasks:[],thoughts:[],snippets:[],notes:[]}; saveLocal();
     renderTasks();renderThoughts();renderSnips();
     toast('Alle Daten gelöscht');
   }
@@ -3745,6 +3903,327 @@ async function taurusSend() {
 
   taurusBusy = false;
   document.getElementById('taurus-send-btn').disabled = false;
+}
+
+// ── NOTIZEN ──────────────────────────────────────────────────
+let activeNoteId = null;
+let noteMode = 'type'; // 'type' | 'draw'
+let drawTool = 'pen';
+let drawSize = 2;
+let drawColor = '#e5e5e5';
+let isDrawing = false;
+let canvasHistory = [];
+let noteAutoSaveTimer = null;
+
+async function createNote() {
+  const note = {
+    id: uid(),
+    title: 'Neue Notiz',
+    html: '',
+    canvasData: null,
+    created: new Date().toISOString(),
+    updated: new Date().toISOString()
+  };
+  activeNoteId = note.id;
+  await fsAdd('notes', note);
+  renderNotes();
+  setTimeout(()=>{
+    const ed = document.getElementById('note-editor');
+    if(ed) ed.focus();
+  }, 100);
+}
+
+async function deleteNote(id) {
+  if(!confirm('Notiz wirklich löschen?')) return;
+  if(activeNoteId === id) activeNoteId = null;
+  await fsDel('notes', id);
+  renderNotes();
+  toast('Notiz gelöscht');
+}
+
+function renderNotes() {
+  renderNotesList();
+  renderNoteEditor();
+  badges();
+}
+
+function renderNotesList() {
+  const list = document.getElementById('notes-list');
+  if(!list) return;
+  const q = (document.getElementById('notes-search')?.value || '').toLowerCase();
+  const sorted = [...D.notes].sort((a,b) => new Date(b.updated) - new Date(a.updated));
+  const filtered = q ? sorted.filter(n => n.title.toLowerCase().includes(q) || stripHtml(n.html).toLowerCase().includes(q)) : sorted;
+
+  if(!filtered.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--sub);font-size:13px">' + (D.notes.length ? 'Keine Treffer' : 'Noch keine Notizen') + '</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(n => `
+    <div class="note-item ${n.id===activeNoteId?'active':''}" onclick="openNote('${n.id}')">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="note-item-title" style="flex:1">${esc(n.title)}</div>
+        <button class="icon-btn del" onclick="event.stopPropagation();deleteNote('${n.id}')" style="flex-shrink:0;font-size:12px">✕</button>
+      </div>
+      <div class="note-item-preview">${stripHtml(n.html).slice(0,60) || '(leer)'}</div>
+      <div class="note-item-date">${formatNoteDate(n.updated)}</div>
+    </div>
+  `).join('');
+}
+
+function openNote(id) {
+  // Save current note before switching
+  if(activeNoteId && activeNoteId !== id) saveCurrentNote();
+  activeNoteId = id;
+  noteMode = 'type';
+  canvasHistory = [];
+  renderNotes();
+}
+
+function renderNoteEditor() {
+  const empty = document.getElementById('notes-empty');
+  const modeBar = document.getElementById('notes-mode-bar');
+  const toolbar = document.getElementById('notes-toolbar');
+  const drawBar = document.getElementById('draw-toolbar');
+  const contentWrap = document.getElementById('note-content-wrap');
+  const canvasWrap = document.getElementById('note-canvas-wrap');
+
+  if(!activeNoteId || !D.notes.find(n=>n.id===activeNoteId)) {
+    activeNoteId = null;
+    if(empty) empty.style.display = 'flex';
+    if(modeBar) modeBar.style.display = 'none';
+    if(toolbar) toolbar.style.display = 'none';
+    if(drawBar) drawBar.classList.remove('active');
+    if(contentWrap) contentWrap.style.display = 'none';
+    if(canvasWrap) canvasWrap.classList.remove('active');
+    return;
+  }
+
+  const note = D.notes.find(n=>n.id===activeNoteId);
+  if(empty) empty.style.display = 'none';
+  if(modeBar) modeBar.style.display = 'flex';
+
+  // Mode buttons
+  document.getElementById('mode-type-btn')?.classList.toggle('active', noteMode==='type');
+  document.getElementById('mode-draw-btn')?.classList.toggle('active', noteMode==='draw');
+
+  if(noteMode === 'type') {
+    if(toolbar) toolbar.style.display = 'flex';
+    if(drawBar) drawBar.classList.remove('active');
+    if(contentWrap) contentWrap.style.display = 'block';
+    if(canvasWrap) canvasWrap.classList.remove('active');
+    const editor = document.getElementById('note-editor');
+    if(editor && editor.innerHTML !== note.html) editor.innerHTML = note.html || '';
+  } else {
+    if(toolbar) toolbar.style.display = 'none';
+    if(drawBar) drawBar.classList.add('active');
+    if(contentWrap) contentWrap.style.display = 'none';
+    if(canvasWrap) canvasWrap.classList.add('active');
+    initCanvas(note);
+  }
+}
+
+function setNoteMode(mode) {
+  saveCurrentNote();
+  noteMode = mode;
+  renderNoteEditor();
+}
+
+function noteExec(cmd, val) {
+  document.execCommand(cmd, false, val || null);
+  document.getElementById('note-editor')?.focus();
+}
+
+function autoSaveNote() {
+  clearTimeout(noteAutoSaveTimer);
+  noteAutoSaveTimer = setTimeout(()=> saveCurrentNote(), 800);
+  // Update title from first line
+  const editor = document.getElementById('note-editor');
+  if(editor && activeNoteId) {
+    const note = D.notes.find(n=>n.id===activeNoteId);
+    if(note) {
+      const firstLine = stripHtml(editor.innerHTML).split('\n')[0].trim().slice(0,80);
+      if(firstLine && firstLine !== note.title) {
+        note.title = firstLine;
+        renderNotesList();
+      }
+    }
+  }
+}
+
+function saveCurrentNote() {
+  if(!activeNoteId) return;
+  const note = D.notes.find(n=>n.id===activeNoteId);
+  if(!note) return;
+
+  const editor = document.getElementById('note-editor');
+  if(editor && noteMode === 'type') note.html = editor.innerHTML;
+
+  // Save canvas data (only when in draw mode)
+  if(noteMode === 'draw') {
+    const canvas = document.getElementById('note-canvas');
+    if(canvas && canvas.width > 0) {
+      note.canvasData = canvas.toDataURL('image/png');
+    }
+  }
+
+  note.updated = new Date().toISOString();
+  fsUpdate('notes', note);
+}
+
+// ── CANVAS DRAWING ──────────────────────────────────────────
+function initCanvas(note) {
+  const canvas = document.getElementById('note-canvas');
+  const wrap = document.getElementById('note-canvas-wrap');
+  if(!canvas || !wrap) return;
+
+  // Size canvas to container
+  const rect = wrap.getBoundingClientRect();
+  canvas.width = rect.width || 800;
+  canvas.height = rect.height || 600;
+
+  const ctx = canvas.getContext('2d');
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Restore existing drawing
+  if(note.canvasData) {
+    const img = new Image();
+    img.onload = () => { ctx.drawImage(img, 0, 0); canvasHistory = [canvas.toDataURL()]; };
+    img.src = note.canvasData;
+  } else {
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    canvasHistory = [canvas.toDataURL()];
+  }
+
+  // Remove old listeners by replacing canvas
+  const newCanvas = canvas.cloneNode(true);
+  canvas.parentNode.replaceChild(newCanvas, canvas);
+  const nCtx = newCanvas.getContext('2d');
+  nCtx.lineCap = 'round';
+  nCtx.lineJoin = 'round';
+
+  // Restore image on new canvas
+  if(note.canvasData) {
+    const img2 = new Image();
+    img2.onload = () => { nCtx.drawImage(img2, 0, 0); };
+    img2.src = note.canvasData;
+  } else {
+    nCtx.fillStyle = '#1a1a1a';
+    nCtx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+  }
+
+  let lastX, lastY;
+
+  function getPos(e) {
+    const r = newCanvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  }
+
+  function startDraw(e) {
+    e.preventDefault();
+    isDrawing = true;
+    const p = getPos(e);
+    lastX = p.x; lastY = p.y;
+    nCtx.beginPath();
+    nCtx.moveTo(p.x, p.y);
+  }
+
+  function draw(e) {
+    if(!isDrawing) return;
+    e.preventDefault();
+    const p = getPos(e);
+    nCtx.strokeStyle = drawTool === 'eraser' ? '#1a1a1a' : drawColor;
+    nCtx.lineWidth = drawTool === 'eraser' ? drawSize * 4 : drawSize;
+    nCtx.globalCompositeOperation = drawTool === 'eraser' ? 'source-over' : 'source-over';
+    nCtx.beginPath();
+    nCtx.moveTo(lastX, lastY);
+    nCtx.lineTo(p.x, p.y);
+    nCtx.stroke();
+    lastX = p.x; lastY = p.y;
+  }
+
+  function endDraw(e) {
+    if(!isDrawing) return;
+    isDrawing = false;
+    // Save state for undo
+    if(canvasHistory.length > 30) canvasHistory.shift();
+    canvasHistory.push(newCanvas.toDataURL());
+    autoSaveNote();
+  }
+
+  // Pointer events (stylus + mouse + touch)
+  newCanvas.addEventListener('pointerdown', startDraw);
+  newCanvas.addEventListener('pointermove', draw);
+  newCanvas.addEventListener('pointerup', endDraw);
+  newCanvas.addEventListener('pointerleave', endDraw);
+  newCanvas.style.touchAction = 'none';
+}
+
+function setDrawTool(tool) {
+  drawTool = tool;
+  document.getElementById('draw-pen-btn')?.classList.toggle('active', tool==='pen');
+  document.getElementById('draw-eraser-btn')?.classList.toggle('active', tool==='eraser');
+}
+
+function setDrawSize(size) {
+  drawSize = size;
+  document.querySelectorAll('.draw-size-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.size)===size);
+  });
+}
+
+function setDrawColor(color, btn) {
+  drawColor = color;
+  document.getElementById('draw-color').value = color;
+  drawTool = 'pen';
+  setDrawTool('pen');
+}
+
+function clearCanvas() {
+  if(!confirm('Canvas wirklich leeren?')) return;
+  const canvas = document.getElementById('note-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  canvasHistory = [canvas.toDataURL()];
+  autoSaveNote();
+}
+
+function undoCanvas() {
+  const canvas = document.getElementById('note-canvas');
+  if(!canvas || canvasHistory.length < 2) return;
+  canvasHistory.pop();
+  const img = new Image();
+  img.onload = () => {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+  };
+  img.src = canvasHistory[canvasHistory.length - 1];
+  autoSaveNote();
+}
+
+// ── HELPERS ──────────────────────────────────────────────────
+function stripHtml(html) {
+  if(!html) return '';
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || '';
+}
+
+function formatNoteDate(iso) {
+  if(!iso) return '';
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = now - d;
+  if(diff < 60000) return 'gerade eben';
+  if(diff < 3600000) return Math.floor(diff/60000) + ' Min.';
+  if(diff < 86400000) return Math.floor(diff/3600000) + ' Std.';
+  return d.toLocaleDateString('de-DE', {day:'numeric',month:'short'});
 }
 
 // ── SIDEBAR TOGGLE ───────────────────────────────────────────
