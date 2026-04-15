@@ -199,6 +199,17 @@ textarea::placeholder { color:#444; }
 .ftab:hover { color:var(--text); }
 .ftab.active { background:rgba(124,58,237,.15); color:var(--accent2); border-color:rgba(124,58,237,.3); }
 
+/* TASK INSIGHTS */
+.task-insights { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-bottom:14px; }
+.insight-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:11px 12px; }
+.insight-label { font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:.6px; }
+.insight-value { font-size:21px; font-weight:700; margin-top:4px; line-height:1; }
+.insight-note { font-size:11px; color:#666; margin-top:5px; }
+.task-progress { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:16px; }
+.task-progress-row { display:flex; justify-content:space-between; gap:10px; font-size:12px; color:var(--sub); margin-bottom:7px; }
+.task-progress-bar { height:7px; border-radius:999px; background:#151515; border:1px solid #222; overflow:hidden; }
+.task-progress-fill { height:100%; background:linear-gradient(90deg,#7c3aed,#a78bfa); }
+
 /* SEARCH */
 .search-row { display:flex; gap:8px; margin-bottom:16px; }
 .search-input { flex:1; padding:8px 13px; background:var(--card); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; outline:none; font-family:inherit; }
@@ -511,12 +522,14 @@ select option { background:#1c1c1c; }
         <button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">Abbrechen</button>
       </div>
     </div>
-    <div class="ftabs">
+    <div class="ftabs" id="task-state-tabs">
       <button class="ftab active" onclick="setTaskFilter('all',this)">Alle</button>
       <button class="ftab" onclick="setTaskFilter('open',this)">Offen</button>
       <button class="ftab" onclick="setTaskFilter('done',this)">Erledigt</button>
     </div>
+    <div id="task-insights"></div>
     <div class="ftabs" id="task-sort-tabs"></div>
+    <div class="ftabs" id="task-due-tabs"></div>
     <div class="ftabs" id="kat-ftabs"></div>
     <div id="tag-filter-row" style="display:none;flex-wrap:wrap;gap:5px;margin-bottom:12px;align-items:center"></div>
     <div id="tasks-list"></div>
@@ -1244,10 +1257,79 @@ async function saveSelected() {
 // ── TASKS ─────────────────────────────────────────────────────
 let taskKatFilter = 'alle';
 let taskSortMode = 'priority';
+let taskDueFilter = 'all';
 
-function setTaskFilter(f,el){ taskFilter=f; document.querySelectorAll('#tab-tasks .ftab').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderTasks(); }
+function setTaskFilter(f,el){ taskFilter=f; document.querySelectorAll('#task-state-tabs .ftab').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderTasks(); }
 function setTaskKatFilter(k,el){ taskKatFilter=k; document.querySelectorAll('#kat-ftabs .ftab').forEach(b=>b.classList.remove('active')); if(el) el.classList.add('active'); renderTasks(); }
 function setTaskSort(mode, el){ taskSortMode=mode; document.querySelectorAll('#task-sort-tabs .ftab').forEach(b=>b.classList.remove('active')); if(el) el.classList.add('active'); renderTasks(); }
+function setTaskDueFilter(mode, el){ taskDueFilter=mode; document.querySelectorAll('#task-due-tabs .ftab').forEach(b=>b.classList.remove('active')); if(el) el.classList.add('active'); renderTasks(); }
+function parseDueDate(dueDate){
+  if(!dueDate) return null;
+  const date = new Date(dueDate + 'T00:00:00');
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+function dueFilterMatches(task){
+  if(taskDueFilter==='all') return true;
+  const due=parseDueDate(task.dueDate);
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  const in7=new Date(today);
+  in7.setDate(in7.getDate()+7);
+  if(taskDueFilter==='nodate') return !due;
+  if(!due) return false;
+  if(taskDueFilter==='overdue') return due < today;
+  if(taskDueFilter==='today') return due.getTime()===today.getTime();
+  if(taskDueFilter==='next7') return due>=today && due<=in7;
+  return true;
+}
+function renderTaskDueTabs(list){
+  const tabs=document.getElementById('task-due-tabs');
+  if(!tabs) return;
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  const in7=new Date(today);
+  in7.setDate(in7.getDate()+7);
+  const openTasks=(list||[]).filter(t=>!t.done);
+  const counts={all:openTasks.length,overdue:0,today:0,next7:0,nodate:0};
+  openTasks.forEach(t=>{
+    const due=parseDueDate(t.dueDate);
+    if(!due){ counts.nodate++; return; }
+    if(due < today) counts.overdue++;
+    if(due.getTime()===today.getTime()) counts.today++;
+    if(due>=today && due<=in7) counts.next7++;
+  });
+  const defs=[
+    {id:'all',label:'Alle offen'},
+    {id:'overdue',label:'Überfällig'},
+    {id:'today',label:'Heute fällig'},
+    {id:'next7',label:'Nächste 7 Tage'},
+    {id:'nodate',label:'Ohne Datum'}
+  ];
+  tabs.innerHTML = defs.map(d=>`<button class="ftab ${taskDueFilter===d.id?'active':''}" onclick="setTaskDueFilter('${d.id}',this)">${d.label} (${counts[d.id]||0})</button>`).join('');
+}
+function renderTaskInsights(allTasks){
+  const host=document.getElementById('task-insights');
+  if(!host) return;
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  const open=(allTasks||[]).filter(t=>!t.done);
+  const done=(allTasks||[]).filter(t=>t.done).length;
+  const overdue=open.filter(t=>{ const due=parseDueDate(t.dueDate); return due && due<today; }).length;
+  const dueToday=open.filter(t=>{ const due=parseDueDate(t.dueDate); return due && due.getTime()===today.getTime(); }).length;
+  const forToday=open.filter(t=>t.forToday).length;
+  const total=(allTasks||[]).length;
+  const pct=total?Math.round((done/total)*100):0;
+  host.innerHTML = `<div class="task-insights">
+      <div class="insight-card"><div class="insight-label">Offen</div><div class="insight-value">${open.length}</div><div class="insight-note">Aktive Aufgaben</div></div>
+      <div class="insight-card"><div class="insight-label">Überfällig</div><div class="insight-value" style="color:#f87171">${overdue}</div><div class="insight-note">Vor heute fällig</div></div>
+      <div class="insight-card"><div class="insight-label">Heute fällig</div><div class="insight-value" style="color:#fbbf24">${dueToday}</div><div class="insight-note">Deadline heute</div></div>
+      <div class="insight-card"><div class="insight-label">Heute markiert</div><div class="insight-value" style="color:#a78bfa">${forToday}</div><div class="insight-note">☀ Fokusliste</div></div>
+    </div>
+    <div class="task-progress">
+      <div class="task-progress-row"><span>Abschlussquote</span><span>${done}/${total} erledigt (${pct}%)</span></div>
+      <div class="task-progress-bar"><div class="task-progress-fill" style="width:${pct}%"></div></div>
+    </div>`;
+}
 
 const KAT_LABELS = {geld:'Geld',haushalt:'Haushalt',einkaufen:'Einkaufen',business:'Business',schule:'Schule',tech:'Tech',familie:'Familie',sonstiges:'Sonstiges'};
 const KAT_ICONS = {geld:'💰',haushalt:'🏠',einkaufen:'🛒',business:'💼',schule:'📚',tech:'💻',familie:'👨‍👩‍👦',sonstiges:'📋'};
@@ -2054,12 +2136,19 @@ function renderTasks() {
     if(prio!==0) return prio;
     return (b.createdAt??0)-(a.createdAt??0);
   });
-  if(taskFilter==='open') list=list.filter(t=>!t.done);
-  if(taskFilter==='done') list=list.filter(t=>t.done);
-  if(taskKatFilter!=='alle') list=list.filter(t=>(t.kategorie||'sonstiges')===taskKatFilter);
-  if(taskTagFilter) list=list.filter(t=>(t.tags||[]).includes(taskTagFilter));
+  const baseFiltered=list.filter(t=>{
+    if(taskFilter==='open' && t.done) return false;
+    if(taskFilter==='done' && !t.done) return false;
+    if(taskDueFilter!=='all' && t.done) return false;
+    if(!dueFilterMatches(t)) return false;
+    if(taskKatFilter!=='alle' && (t.kategorie||'sonstiges')!==taskKatFilter) return false;
+    if(taskTagFilter && !(t.tags||[]).includes(taskTagFilter)) return false;
+    return true;
+  });
+  list=baseFiltered;
 
   renderTagFilterRow();
+  renderTaskInsights(D.tasks);
   // Kategorie-Filter rendern
   const katOrder = getTopLevelTaskCategories();
   const countSource = D.tasks.filter(t => {
@@ -2070,6 +2159,7 @@ function renderTasks() {
   const katCounts={};
   countSource.forEach(t=>{ const k=t.kategorie||'sonstiges'; katCounts[k]=(katCounts[k]||0)+1; });
   renderTaskSortTabs();
+  renderTaskDueTabs(D.tasks);
   renderTaskCategoryTabs(katCounts);
   const el=document.getElementById('tasks-list');
 
