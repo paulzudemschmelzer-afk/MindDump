@@ -994,7 +994,7 @@ function badges() {
   document.getElementById('b-thoughts').textContent=D.thoughts.length;
   document.getElementById('b-snippets').textContent=D.snippets.length;
   const todayStr=new Date().toISOString().slice(0,10);
-  document.getElementById('b-heute').textContent=D.tasks.filter(t=>!t.done&&(t.forToday||t.dueDate===todayStr)).length;
+  document.getElementById('b-heute').textContent=D.tasks.filter(t=>!t.done&&(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr).length;
 }
 
 // ── TAGS ──────────────────────────────────────────────────────
@@ -2237,6 +2237,7 @@ async function toggleForToday(id) {
   const t = D.tasks.find(x => x.id === id);
   if(!t) return;
   t.forToday = !t.forToday;
+  if(t.forToday) delete t.hideFromHeute;
   await fsUpdate('tasks', t);
   toast(t.forToday ? '☀ Zu Heute hinzugefügt' : 'Von Heute entfernt');
 }
@@ -2314,7 +2315,7 @@ function heuteDragStart(e, id) {
 
 async function reorderHeuteTasks(dragId, targetId) {
   const todayStr = new Date().toISOString().slice(0,10);
-  const sorted = D.tasks.filter(t=>t.forToday||t.dueDate===todayStr)
+  const sorted = D.tasks.filter(t=>(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr)
     .sort((a,b)=>(a.heuteOrder??9999)-(b.heuteOrder??9999));
   const origIdx = sorted.findIndex(t=>t.id===dragId);
   const targetIdx = sorted.findIndex(t=>t.id===targetId);
@@ -2380,7 +2381,7 @@ async function heuteTouchEnd(e) {
 
 function renderHeute() {
   const todayStr = new Date().toISOString().slice(0,10);
-  const list = D.tasks.filter(t => t.forToday || t.dueDate === todayStr)
+  const list = D.tasks.filter(t => (t.forToday || t.dueDate === todayStr) && t.hideFromHeute !== todayStr)
     .sort((a,b) => {
       if(a.done!==b.done) return a.done?1:-1;
       const aHasOrder=a.heuteOrder!==undefined, bHasOrder=b.heuteOrder!==undefined;
@@ -2429,6 +2430,7 @@ async function dropHeute(e) {
   const t = D.tasks.find(x => x.id === draggedTaskId);
   if(!t) return;
   t.forToday = true;
+  delete t.hideFromHeute;
   await fsUpdate('tasks', t);
   draggedTaskId = null;
   renderHeute();
@@ -2438,9 +2440,11 @@ async function removeFromHeute(id) {
   const t = D.tasks.find(x => x.id === id);
   if(!t) return;
   const todayStr = new Date().toISOString().slice(0,10);
-  // Only remove forToday flag; if it's due today by date we leave it alone
-  if(t.forToday) { t.forToday = false; await fsUpdate('tasks', t); }
+  if(t.forToday) t.forToday = false;
+  if(t.dueDate === todayStr) t.hideFromHeute = todayStr;
+  await fsUpdate('tasks', t);
   renderHeute();
+  toast('Von Heute entfernt');
 }
 
 async function clearHeute() {
