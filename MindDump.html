@@ -874,14 +874,10 @@ select option { background:#1c1c1c; }
   <div class="tab-panel" id="tab-settings">
     <div class="page-header"><h1>Settings</h1></div>
 
-    <!-- GROQ API KEY -->
+    <!-- AI / OPENCLAW -->
     <div class="set-card">
-      <h3>Groq API Key <span class="free-badge">GRATIS</span></h3>
-      <p>Für den Brain Dump. Kostenlos auf <b>console.groq.com</b> — 14.400 Anfragen/Tag gratis.</p>
-      <div class="form-row">
-        <input type="password" id="api-key-in" placeholder="gsk_..." />
-        <button class="btn btn-primary" onclick="saveKey()" style="flex:0;white-space:nowrap">Speichern</button>
-      </div>
+      <h3>KI für Brain Dump</h3>
+      <p>MindDump nutzt standardmäßig deinen OpenClaw/Taurus-Agenten. Der Groq-Key soll möglichst nicht im Browser landen.</p>
       <div class="form-row">
         <label class="field">
           <span class="field-label">Brain-Dump KI-Modus</span>
@@ -894,73 +890,58 @@ select option { background:#1c1c1c; }
         </label>
         <button class="btn btn-ghost" onclick="saveBrainAiSettings()" style="flex:0;white-space:nowrap">Modus speichern</button>
       </div>
-      <div class="info-box info-purple">Datenschutz: OpenClaw/Taurus bleibt lokal bzw. bei deinem Agenten. Groq direkt kann auf GitHub Pages durch CORS blockiert werden. Der oeffentliche Proxy funktioniert oft, sieht aber API-Key und Brain-Dump-Inhalt.</div>
-    </div>
-
-    <!-- FIREBASE SYNC -->
-    <div class="set-card">
-      <h3>Firebase Sync <span class="free-badge">GRATIS</span></h3>
-      <p>Für Sync zwischen PC und Handy. Einmalige Einrichtung, danach automatisch.</p>
-      <ol class="steps">
-        <li><div class="step-num">1</div><div>Geh auf <b>firebase.google.com</b> → "Projekt erstellen"</div></li>
-        <li><div class="step-num">2</div><div>Im Projekt: <b>"Web App hinzufügen"</b> → Config kopieren (das JSON-Objekt)</div></li>
-        <li><div class="step-num">3</div><div><b>Firestore Database</b> aktivieren → "Im Testmodus starten"</div></li>
-        <li><div class="step-num">4</div><div><b>Authentication</b> → "Google" als Anmeldeanbieter aktivieren</div></li>
-        <li><div class="step-num">5</div><div>Config unten einfügen → Verbinden</div></li>
-      </ol>
-      <div class="form-row" style="margin-top:4px">
-        <textarea class="form-ta" id="fb-config-in" style="min-height:90px;font-family:'Consolas',monospace;font-size:12px" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
+      <div class="form-row">
+        <label class="field"><span class="field-label">Taurus/OpenClaw URL</span><input type="text" id="taurus-url-in" placeholder="http://localhost:18889" /></label>
       </div>
       <div class="form-row">
-        <button class="btn btn-primary btn-sm" onclick="connectFirebase()">🔥 Firebase verbinden</button>
-        <div class="fb-status-row" id="fb-status-row">
-          <span id="fb-status" style="color:var(--sub)">Nicht eingerichtet</span>
-        </div>
-      </div>
-      <div class="info-box info-yellow" style="margin-top:12px">
-        ⚠️ Nach der Einrichtung: In Firebase → Authentication → Settings → "Authorized domains" → deine GitHub Pages URL hinzufügen (z.B. <b>deinname.github.io</b>)
-      </div>
-    </div>
-
-    <!-- GITHUB PAGES -->
-    <div class="set-card">
-      <h3>Auf GitHub Pages hosten <span class="free-badge">GRATIS</span></h3>
-      <p>Damit die App von überall (auch Handy) erreichbar ist.</p>
-      <ol class="steps">
-        <li><div class="step-num">1</div><div>Geh auf <b>github.com</b> → Account erstellen → "New repository" → Name: <b>minddump</b></div></li>
-        <li><div class="step-num">2</div><div>Diese HTML-Datei ins Repository hochladen (drag & drop)</div></li>
-        <li><div class="step-num">3</div><div>Repository → <b>Settings → Pages</b> → Branch: main → Save</div></li>
-        <li><div class="step-num">4</div><div>Deine URL: <b>deinname.github.io/minddump</b></div></li>
-      </ol>
-      <div class="info-box info-green">✓ Dann diese URL auf dem Handy als Lesezeichen oder als Web-App zum Homescreen hinzufügen.</div>
-    </div>
-
-    <!-- TAURUS -->
-    <div class="set-card">
-      <h3>Taurus (OpenClaw Agent)</h3>
-      <p>Verbinde MindDump mit deinem AI-Agenten auf dem VPS.</p>
-      <div class="form-row">
-        <input type="text" id="taurus-url-in" placeholder="http://localhost:18889" />
-      </div>
-      <div class="form-row">
-        <input type="password" id="taurus-token-in" placeholder="Gateway Token" />
+        <label class="field"><span class="field-label">Gateway Token</span><input type="password" id="taurus-token-in" placeholder="Token" /></label>
         <button class="btn btn-primary" onclick="saveTaurusConfig()" style="flex:0;white-space:nowrap">Speichern</button>
       </div>
       <div class="form-row" style="margin-top:4px">
         <button class="btn btn-ghost btn-sm" onclick="testTaurusConnection()">Verbindung testen</button>
         <span id="taurus-test-result" style="font-size:12px;color:var(--sub)"></span>
       </div>
-      <div class="info-box info-purple">SSH-Tunnel muss laufen: localhost:18889 → VPS:18789</div>
+      <div class="info-box info-purple">Auf dem PC kann ein SSH-Tunnel mit localhost funktionieren. Auf dem Handy braucht die URL einen erreichbaren HTTPS-Endpunkt oder VPN/Tunnel.</div>
     </div>
 
-    <!-- GOOGLE CALENDAR -->
+    <!-- SYNC / CALENDAR -->
     <div class="set-card">
-      <h3>Google Calendar Sync</h3>
-      <p>Tasks mit Datum werden automatisch als Kalender-Events angelegt.</p>
-      <div style="margin-top:10px">
+      <h3>Sync & Kalender</h3>
+      <p>Firebase synchronisiert deine App-Daten. Google Calendar sendet Termine und Erinnerungen ans Handy.</p>
+      <div class="form-row" style="align-items:center">
+        <div class="fb-status-row" id="fb-status-row">
+          <span id="fb-status" style="color:var(--sub)">Firebase: Nicht eingerichtet</span>
+        </div>
         <button id="gcal-btn" class="btn btn-ghost" onclick="connectGCal()">Mit Google Calendar verbinden</button>
       </div>
     </div>
+
+    <!-- ADVANCED -->
+    <details class="set-card">
+      <summary style="cursor:pointer;font-weight:600">Erweitert: Groq, Firebase Setup, GitHub Pages</summary>
+      <div style="margin-top:16px">
+        <h3>Groq API Key</h3>
+        <p>Nur nötig, wenn du nicht über Taurus/OpenClaw gehst. Groq direkt wird auf GitHub Pages oft von CORS blockiert.</p>
+        <div class="form-row">
+          <input type="password" id="api-key-in" placeholder="gsk_..." />
+          <button class="btn btn-primary" onclick="saveKey()" style="flex:0;white-space:nowrap">Speichern</button>
+        </div>
+        <div class="info-box info-yellow">Öffentlicher Proxy funktioniert oft, kann aber API-Key und Brain-Dump-Inhalt sehen.</div>
+      </div>
+      <div style="margin-top:18px">
+        <h3>Firebase verbinden</h3>
+        <p>Nur nötig, wenn die bestehende Verbindung kaputt ist oder du ein neues Projekt nutzt.</p>
+        <div class="form-row" style="margin-top:4px">
+          <textarea class="form-ta" id="fb-config-in" style="min-height:90px;font-family:'Consolas',monospace;font-size:12px" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="connectFirebase()">Firebase verbinden</button>
+        <div class="info-box info-yellow">Falls Login nicht geht: In Firebase → Authentication → Settings → Authorized domains deine GitHub-Pages-Domain hinzufügen.</div>
+      </div>
+      <div style="margin-top:18px">
+        <h3>GitHub Pages</h3>
+        <p>Ist für diese App bereits aktiv. URL: <b>paulzudemschmelzer-afk.github.io/MindDump</b></p>
+      </div>
+    </details>
 
     <!-- DATA -->
     <div class="set-card">
