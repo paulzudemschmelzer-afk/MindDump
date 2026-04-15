@@ -160,42 +160,54 @@ textarea::placeholder { color:#444; }
 .copy-btn:hover { background:rgba(124,58,237,.25); }
 .copy-btn.ok { background:rgba(16,185,129,.15); color:#34d399; border-color:rgba(16,185,129,.25); }
 
-/* WEEK CALENDAR */
-.week-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px; }
-.week-label { font-size:14px; font-weight:500; }
-.week-grid { margin-bottom:24px; }
-/* APPLE CALENDAR */
-.ap-cal { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
-.ap-header { display:flex; border-bottom:1px solid var(--border); }
-.ap-time-gutter { width:48px; min-width:48px; flex-shrink:0; }
-.ap-day-head { flex:1; text-align:center; padding:10px 4px; border-left:1px solid var(--border); }
-.ap-day-head.today { background:rgba(124,58,237,.07); }
-.ap-day-name { font-size:10px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:.5px; }
-.ap-day-num { font-size:18px; font-weight:700; line-height:1.3; }
-.ap-today-num { color:#fff; background:var(--accent); border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; margin:0 auto; font-size:14px; }
-.ap-body { display:flex; overflow-y:auto; max-height:580px; position:relative; }
-.ap-time-col { width:48px; min-width:48px; flex-shrink:0; position:relative; }
-.ap-time-label { position:absolute; right:6px; font-size:10px; color:var(--sub); transform:translateY(-50%); white-space:nowrap; }
-.ap-day-col { flex:1; position:relative; border-left:1px solid var(--border); min-width:0; }
-.ap-day-col.today-col { background:rgba(124,58,237,.03); }
-.ap-day-col.drag-over { background:rgba(124,58,237,.12); }
-.ap-hour-line { position:absolute; left:0; right:0; height:1px; background:var(--border); pointer-events:none; opacity:.5; }
-.ap-event { position:absolute; border-radius:6px; padding:4px 6px; cursor:grab; overflow:hidden; transition:opacity .15s,transform .1s; border-left:3px solid rgba(255,255,255,.3); user-select:none; }
-.ap-event:hover { opacity:.85; transform:scale(1.01); }
-.ap-event:active { cursor:grabbing; }
-.ap-event.done { opacity:.3; }
-.ap-event.reorder-target { outline:2px solid var(--accent2); outline-offset:1px; }
-.ap-event.prio-hoch,.ap-event.prio-high { background:rgba(239,68,68,.28); border-left-color:#f87171; }
-.ap-event.prio-mittel,.ap-event.prio-medium { background:rgba(124,58,237,.3); border-left-color:var(--accent2); }
-.ap-event.prio-niedrig,.ap-event.prio-low { background:rgba(16,185,129,.22); border-left-color:#34d399; }
-.ap-event-title { font-size:11px; font-weight:500; line-height:1.3; }
-.ap-event-dur { font-size:10px; opacity:.65; margin-top:1px; }
-.ap-add-btn { position:absolute; bottom:6px; left:50%; transform:translateX(-50%); background:none; border:1px dashed #333; border-radius:5px; color:#444; cursor:pointer; font-size:11px; padding:3px 8px; transition:all .15s; white-space:nowrap; font-family:inherit; }
-.ap-add-btn:hover { border-color:var(--accent); color:var(--accent2); }
-.unscheduled-area { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; }
+/* WEEK CALENDAR — Apple Calendar Style */
+.week-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:10px 16px; }
+.week-nav .btn { font-weight:500; }
+.week-label { font-size:15px; font-weight:600; letter-spacing:-.2px; }
+.week-grid { margin-bottom:20px; }
+.ap-cal { background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:14px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,.25); }
+.ap-header { display:flex; border-bottom:1px solid rgba(255,255,255,.06); background:rgba(255,255,255,.02); }
+.ap-time-gutter { width:52px; min-width:52px; flex-shrink:0; }
+.ap-day-head { flex:1; text-align:center; padding:10px 4px 8px; border-left:1px solid rgba(255,255,255,.04); }
+.ap-day-head.today { background:none; }
+.ap-day-name { font-size:11px; font-weight:600; color:var(--sub); text-transform:uppercase; letter-spacing:.8px; }
+.ap-day-num { font-size:20px; font-weight:300; line-height:1.4; color:var(--sub); }
+.ap-today-num { color:#fff; background:#e8453c; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; margin:0 auto; font-size:15px; font-weight:500; }
+.ap-body { display:flex; overflow-y:auto; max-height:680px; position:relative; scroll-behavior:smooth; }
+.ap-time-col { width:52px; min-width:52px; flex-shrink:0; position:relative; }
+.ap-time-label { position:absolute; right:8px; font-size:11px; color:rgba(255,255,255,.3); transform:translateY(-50%); white-space:nowrap; font-weight:400; font-variant-numeric:tabular-nums; }
+.ap-day-col { flex:1; position:relative; border-left:1px solid rgba(255,255,255,.05); min-width:0; }
+.ap-day-col.today-col { background:rgba(232,69,60,.02); }
+.ap-day-col.drag-over { background:rgba(124,58,237,.08); }
+.ap-hour-line { position:absolute; left:0; right:0; height:1px; background:rgba(255,255,255,.06); pointer-events:none; }
+.ap-half-line { position:absolute; left:0; right:0; height:1px; background:rgba(255,255,255,.03); pointer-events:none; }
+.ap-now-line { position:absolute; left:-6px; right:0; height:2px; background:#e8453c; pointer-events:none; z-index:5; }
+.ap-now-dot { position:absolute; left:-5px; top:-4px; width:10px; height:10px; border-radius:50%; background:#e8453c; }
+.ap-event { position:absolute; border-radius:5px; padding:4px 7px; cursor:grab; overflow:hidden; transition:box-shadow .15s,opacity .15s; border-left:4px solid; user-select:none; z-index:2; }
+.ap-event:hover { box-shadow:0 2px 8px rgba(0,0,0,.3); z-index:3; }
+.ap-event:active { cursor:grabbing; opacity:.9; }
+.ap-event.done { opacity:.25; text-decoration:line-through; }
+.ap-event.reorder-target { box-shadow:0 0 0 2px var(--accent2); }
+.ap-event-title { font-size:11px; font-weight:600; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ap-event-time { font-size:10px; opacity:.7; font-weight:400; margin-top:1px; }
+.ap-event-dur { font-size:10px; opacity:.5; margin-top:1px; }
+.ap-event-resize { position:absolute; bottom:0; left:0; right:0; height:6px; cursor:ns-resize; border-radius:0 0 5px 5px; }
+.ap-event-resize:hover { background:rgba(255,255,255,.1); }
+.ap-add-btn { display:none; }
+.unscheduled-area { background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:16px; box-shadow:0 2px 8px rgba(0,0,0,.15); }
 .unsched-tasks { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-.unsched-task { background:rgba(124,58,237,.1); border:1px solid rgba(124,58,237,.2); border-radius:7px; padding:6px 10px; font-size:12px; display:flex; align-items:center; gap:6px; cursor:grab; }
+.unsched-task { background:rgba(124,58,237,.08); border:1px solid rgba(124,58,237,.15); border-radius:8px; padding:7px 12px; font-size:12px; display:flex; align-items:center; gap:6px; cursor:grab; transition:background .15s; }
 .unsched-task:hover { background:rgba(124,58,237,.18); }
+/* Quick-add overlay for calendar */
+.cal-assign-list { max-height:200px; overflow-y:auto; margin:8px 0; }
+.cal-assign-item { padding:8px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:8px; transition:background .1s; font-size:13px; }
+.cal-assign-item:hover { background:rgba(255,255,255,.06); }
+.cal-assign-item .prio { font-size:10px; }
+.cal-assign-search { width:100%; padding:8px 12px; background:#141414; border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; outline:none; font-family:inherit; margin-bottom:6px; }
+.cal-assign-search:focus { border-color:var(--accent); }
+.cal-assign-tabs { display:flex; gap:0; margin-bottom:10px; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.cal-assign-tab { flex:1; padding:7px 0; text-align:center; font-size:12px; font-weight:600; cursor:pointer; background:none; border:none; color:var(--sub); transition:all .15s; font-family:inherit; }
+.cal-assign-tab.active { background:rgba(124,58,237,.15); color:var(--accent2); }
 
 /* FILTER TABS */
 .ftabs { display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap; }
@@ -2541,7 +2553,7 @@ function parseEstMins(est) {
   return total||60;
 }
 
-const CAL_START_H=7, CAL_END_H=22, CAL_PX_PER_MIN=1.2;
+const CAL_START_H=0, CAL_END_H=24, CAL_PX_PER_MIN=1.5;
 const KAT_COLORS = {
   geld:     {bg:'rgba(245,158,11,.3)',  border:'#fbbf24'},
   haushalt: {bg:'rgba(16,185,129,.25)', border:'#34d399'},
@@ -2640,9 +2652,9 @@ function renderWeek() {
   const s=days[0], e=days[6];
   document.getElementById('week-label').textContent=`KW ${getKW(s)} · ${s.getDate()}. ${MONTHS[s.getMonth()]} – ${e.getDate()}. ${MONTHS[e.getMonth()]} ${e.getFullYear()}`;
 
-  const PX_PER_MIN=CAL_PX_PER_MIN;
-  const START_H=CAL_START_H, END_H=CAL_END_H;
-  const gridH=(END_H-START_H)*60*PX_PER_MIN;
+  const PX=CAL_PX_PER_MIN;
+  const SH=CAL_START_H, EH=CAL_END_H;
+  const gridH=(EH-SH)*60*PX;
 
   let html='<div class="ap-cal">';
 
@@ -2658,12 +2670,12 @@ function renderWeek() {
   html+='</div>';
 
   // Body
-  html+=`<div class="ap-body">`;
+  html+=`<div class="ap-body" id="cal-body">`;
 
   // Time labels
   html+='<div class="ap-time-col" style="height:'+gridH+'px">';
-  for(let h=START_H;h<=END_H;h++){
-    html+=`<div class="ap-time-label" style="top:${(h-START_H)*60*PX_PER_MIN}px">${h}:00</div>`;
+  for(let h=SH;h<EH;h++){
+    html+=`<div class="ap-time-label" style="top:${(h-SH)*60*PX}px">${String(h).padStart(2,'0')}:00</div>`;
   }
   html+='</div>';
 
@@ -2688,29 +2700,40 @@ function renderWeek() {
       ontouchmove="calColTouchMove(event)"
       ontouchend="calColTouchEnd(event)">`;
 
-    // Hour lines
-    for(let h=0;h<(END_H-START_H);h++){
-      html+=`<div class="ap-hour-line" style="top:${h*60*PX_PER_MIN}px"></div>`;
+    // Hour + half-hour lines
+    for(let h=0;h<(EH-SH);h++){
+      html+=`<div class="ap-hour-line" style="top:${h*60*PX}px"></div>`;
+      html+=`<div class="ap-half-line" style="top:${(h*60+30)*PX}px"></div>`;
     }
 
-    // Place tasks at their calStartTime, or stack unscheduled ones
-    let nextFreeTop=(9-START_H)*60*PX_PER_MIN;
+    // Now indicator
+    if(isToday) {
+      const now=new Date();
+      const nowMins=now.getHours()*60+now.getMinutes();
+      const nowTop=(nowMins-SH*60)*PX;
+      html+=`<div class="ap-now-line" style="top:${nowTop}px"><div class="ap-now-dot"></div></div>`;
+    }
+
+    // Place tasks
+    let nextFreeTop=(9-SH)*60*PX;
     allTasks.forEach(t=>{
-      const mins=parseEstMins(t.estimatedTime);
-      const h=Math.max(mins*PX_PER_MIN,28);
+      const estMins=parseEstMins(t.estimatedTime);
+      const h=Math.max(estMins*PX,24);
       const kat=t.kategorie||'sonstiges';
       const katCol=getKatColor(kat);
       const startMins=calStartMinutes(t);
       let top;
       if(startMins!==null) {
-        top=(startMins-START_H*60)*PX_PER_MIN;
+        top=(startMins-SH*60)*PX;
       } else {
         top=nextFreeTop;
       }
-      const timeLabel=startMins!==null?`${String(Math.floor(startMins/60)).padStart(2,'0')}:${String(startMins%60).padStart(2,'0')}`:null;
+      const endMins=startMins!==null?startMins+estMins:null;
+      const timeLabel=startMins!==null?`${String(Math.floor(startMins/60)).padStart(2,'0')}:${String(startMins%60).padStart(2,'0')}`:'';
+      const endLabel=endMins!==null?`${String(Math.floor(endMins/60)).padStart(2,'0')}:${String(endMins%60).padStart(2,'0')}`:'';
 
       html+=`<div class="ap-event ${t.done?'done':''}"
-        style="top:${top}px;height:${h}px;left:3px;right:3px;background:${katCol.bg};border-left:3px solid ${katCol.border}"
+        style="top:${top}px;height:${h}px;left:2px;right:2px;background:${katCol.bg};border-color:${katCol.border}"
         draggable="true"
         ondragstart="dragTask(event,'${t.id}')"
         ondragover="event.preventDefault();event.stopPropagation();this.classList.add('reorder-target')"
@@ -2720,24 +2743,33 @@ function renderWeek() {
         ontouchstart="calEventTouchStart(event,'${t.id}')"
         ontouchmove="calEventTouchMove(event,'${t.id}')"
         ontouchend="calEventTouchEnd(event)"
-        title="${esc(t.title)}${timeLabel?' ('+timeLabel+')':''}">
-        <div class="ap-event-title">${timeLabel?`<span style="opacity:.6;font-size:10px">${timeLabel}</span> `:''}${esc(t.title.length>22?t.title.slice(0,22)+'…':t.title)}</div>
-        ${t.estimatedTime&&h>28?`<div class="ap-event-dur">${t.estimatedTime}</div>`:''}
+        title="${esc(t.title)}">
+        <div class="ap-event-title">${esc(t.title)}</div>
+        ${timeLabel?`<div class="ap-event-time">${timeLabel} – ${endLabel}</div>`:''}
+        <div class="ap-event-resize" ontouchstart="resizeTouchStart(event,'${t.id}')" onmousedown="resizeMouseDown(event,'${t.id}')"></div>
       </div>`;
       if(startMins!==null) {
-        nextFreeTop=Math.max(nextFreeTop, top+h+3);
+        nextFreeTop=Math.max(nextFreeTop, top+h+2);
       } else {
-        nextFreeTop=top+h+3;
+        nextFreeTop=top+h+2;
       }
     });
 
-    html+=`<button class="ap-add-btn" onclick="addCalTask('${ds}')">+</button>`;
     html+='</div>';
   });
 
   html+='</div></div>';
 
   document.getElementById('week-grid').innerHTML=html;
+
+  // Scroll to ~7:00 or current time on first render
+  const body=document.getElementById('cal-body');
+  if(body && !body.dataset.scrolled) {
+    const now=new Date();
+    const scrollToH=weekOffset===0?Math.max(now.getHours()-1,6):7;
+    body.scrollTop=(scrollToH-CAL_START_H)*60*CAL_PX_PER_MIN;
+    body.dataset.scrolled='1';
+  }
 
   const unsched=D.tasks.filter(t=>!t.dueDate&&!t.done);
   const ua=document.getElementById('unscheduled-area');
@@ -2755,6 +2787,8 @@ function renderWeek() {
     ua.innerHTML='';
   }
 }
+// Update now-indicator every minute
+setInterval(()=>{ if(currentTab==='week') renderWeek(); }, 60000);
 
 function addCalTask(ds) {
   go('tasks');
@@ -2845,26 +2879,135 @@ function calColClick(e, ds) {
 
 function openQuickAddCal(ds, time) {
   modalMode={type:'cal-quick-add',date:ds,time:time};
-  document.getElementById('modal-title').textContent='Neuer Task';
+  const dayLabel=new Date(ds+'T00:00').toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short'});
+  document.getElementById('modal-title').textContent=`${dayLabel} · ${time}`;
   document.getElementById('modal-body').innerHTML=`
-    <div class="form-row"><input type="text" id="m-qa-title" placeholder="Was steht an?" /></div>
-    <div class="form-row">
-      <label style="font-size:12px;color:var(--sub);min-width:50px">Zeit:</label>
-      <input type="time" id="m-qa-time" value="${time}" style="max-width:130px" />
-      <label style="font-size:12px;color:var(--sub);min-width:50px;margin-left:8px">Dauer:</label>
-      <input type="text" id="m-qa-est" value="1h" placeholder="z.B. 30min, 2h" style="max-width:130px" />
+    <div class="cal-assign-tabs">
+      <button class="cal-assign-tab active" onclick="switchCalTab('assign')">Bestehender Task</button>
+      <button class="cal-assign-tab" onclick="switchCalTab('new')">Neuer Task</button>
     </div>
-    <div class="form-row">
-      <select id="m-qa-prio" style="max-width:130px">
-        <option value="hoch">🔴 Hoch</option>
-        <option value="mittel" selected>🟡 Mittel</option>
-        <option value="niedrig">🟢 Niedrig</option>
-      </select>
-      <select id="m-qa-kat" style="max-width:160px">${renderTaskCategoryOptions('sonstiges')}</select>
-      <input type="date" id="m-qa-date" value="${ds}" style="max-width:160px" />
+    <div id="cal-tab-assign">
+      <input type="text" class="cal-assign-search" id="cal-assign-search" placeholder="Task suchen…" oninput="filterCalAssign()" />
+      <div class="cal-assign-list" id="cal-assign-list"></div>
+    </div>
+    <div id="cal-tab-new" style="display:none">
+      <div class="form-row"><input type="text" id="m-qa-title" placeholder="Was steht an?" /></div>
+      <div class="form-row">
+        <input type="time" id="m-qa-time" value="${time}" style="max-width:130px" />
+        <input type="text" id="m-qa-est" value="1h" placeholder="Dauer z.B. 30min" style="max-width:130px" />
+      </div>
+      <div class="form-row">
+        <select id="m-qa-prio" style="max-width:130px">
+          <option value="hoch">🔴 Hoch</option>
+          <option value="mittel" selected>🟡 Mittel</option>
+          <option value="niedrig">🟢 Niedrig</option>
+        </select>
+        <select id="m-qa-kat" style="max-width:160px">${renderTaskCategoryOptions('sonstiges')}</select>
+      </div>
     </div>`;
   document.getElementById('modal').style.display='flex';
-  setTimeout(()=>document.getElementById('m-qa-title').focus(),100);
+  filterCalAssign();
+  setTimeout(()=>document.getElementById('cal-assign-search').focus(),100);
+}
+
+function switchCalTab(tab) {
+  document.querySelectorAll('.cal-assign-tab').forEach((el,i)=>el.classList.toggle('active',i===(tab==='assign'?0:1)));
+  document.getElementById('cal-tab-assign').style.display=tab==='assign'?'':'none';
+  document.getElementById('cal-tab-new').style.display=tab==='new'?'':'none';
+  if(tab==='new') setTimeout(()=>document.getElementById('m-qa-title').focus(),50);
+  if(tab==='assign') setTimeout(()=>document.getElementById('cal-assign-search').focus(),50);
+}
+
+function filterCalAssign() {
+  const q=(document.getElementById('cal-assign-search')?.value||'').toLowerCase();
+  const list=D.tasks.filter(t=>!t.done&&t.title.toLowerCase().includes(q)).slice(0,20);
+  const el=document.getElementById('cal-assign-list');
+  if(!list.length){el.innerHTML='<div style="padding:12px;color:var(--sub);font-size:13px">Keine Tasks gefunden</div>';return;}
+  const prioIcon={hoch:'🔴',mittel:'🟡',niedrig:'🟢'};
+  el.innerHTML=list.map(t=>{
+    const kat=t.kategorie||'sonstiges';
+    const katCol=getKatColor(kat);
+    return `<div class="cal-assign-item" onclick="assignTaskToCal('${t.id}')">
+      <div style="width:4px;height:24px;border-radius:2px;background:${katCol.border};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.title)}</div>
+        <div style="font-size:11px;color:var(--sub)">${prioIcon[t.priority]||'🟡'} ${t.estimatedTime||'1h'}${t.dueDate?' · '+t.dueDate:''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function assignTaskToCal(id) {
+  const t=D.tasks.find(x=>x.id===id);
+  if(!t||!modalMode) return;
+  t.dueDate=modalMode.date;
+  t.calStartTime=modalMode.time;
+  if(!t.estimatedTime) t.estimatedTime='1h';
+  await fsUpdate('tasks',t);
+  closeModal();
+  renderWeek();
+  toast('Task eingeplant!');
+}
+
+// ── CALENDAR RESIZE ──────────────────────────────────────────
+let resizeId=null, resizeStartY=0, resizeOrigH=0, resizeEl=null;
+
+function resizeMouseDown(e, id) {
+  e.preventDefault(); e.stopPropagation();
+  resizeId=id; resizeStartY=e.clientY;
+  resizeEl=e.target.closest('.ap-event');
+  resizeOrigH=resizeEl.offsetHeight;
+  document.addEventListener('mousemove',resizeMouseMove);
+  document.addEventListener('mouseup',resizeMouseUp);
+}
+function resizeMouseMove(e) {
+  if(!resizeEl) return;
+  const diff=e.clientY-resizeStartY;
+  const newH=Math.max(24, resizeOrigH+diff);
+  resizeEl.style.height=newH+'px';
+}
+async function resizeMouseUp(e) {
+  document.removeEventListener('mousemove',resizeMouseMove);
+  document.removeEventListener('mouseup',resizeMouseUp);
+  if(!resizeId||!resizeEl) return;
+  const newH=resizeEl.offsetHeight;
+  const mins=Math.round(newH/CAL_PX_PER_MIN/15)*15;
+  const t=D.tasks.find(x=>x.id===resizeId);
+  if(t) {
+    t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');
+    await fsUpdate('tasks',t);
+    renderWeek();
+  }
+  resizeId=null; resizeEl=null;
+}
+
+function resizeTouchStart(e, id) {
+  e.preventDefault(); e.stopPropagation();
+  resizeId=id; resizeStartY=e.touches[0].clientY;
+  resizeEl=e.target.closest('.ap-event');
+  resizeOrigH=resizeEl.offsetHeight;
+  resizeEl.addEventListener('touchmove',resizeTouchMove,{passive:false});
+  resizeEl.addEventListener('touchend',resizeTouchEnd);
+}
+function resizeTouchMove(e) {
+  e.preventDefault();
+  if(!resizeEl) return;
+  const diff=e.touches[0].clientY-resizeStartY;
+  resizeEl.style.height=Math.max(24,resizeOrigH+diff)+'px';
+}
+async function resizeTouchEnd(e) {
+  if(!resizeId||!resizeEl) return;
+  resizeEl.removeEventListener('touchmove',resizeTouchMove);
+  resizeEl.removeEventListener('touchend',resizeTouchEnd);
+  const newH=resizeEl.offsetHeight;
+  const mins=Math.round(newH/CAL_PX_PER_MIN/15)*15;
+  const t=D.tasks.find(x=>x.id===resizeId);
+  if(t) {
+    t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');
+    await fsUpdate('tasks',t);
+    renderWeek();
+  }
+  resizeId=null; resizeEl=null;
 }
 
 // ── THOUGHTS ─────────────────────────────────────────────────
@@ -3258,16 +3401,19 @@ async function saveModal(){
     t.dueDate=document.getElementById('m-cal-date').value||null;
     await fsUpdate('tasks',t); closeModal(); toast('Event aktualisiert!');
   } else if(modalMode.type==='cal-quick-add'){
+    // Check if we're on the "new task" tab
+    const newTab=document.getElementById('cal-tab-new');
+    if(!newTab||newTab.style.display==='none'){toast('Wähle einen Task aus der Liste','err');return;}
     const title=document.getElementById('m-qa-title').value.trim();
     if(!title){toast('Titel eingeben','err');return;}
     const task={id:uid(),title,context:'',priority:document.getElementById('m-qa-prio').value,
       kategorie:document.getElementById('m-qa-kat').value,subkategorie:null,
-      dueDate:document.getElementById('m-qa-date').value||modalMode.date,
+      dueDate:modalMode.date,
       calStartTime:document.getElementById('m-qa-time').value||modalMode.time,
       estimatedTime:document.getElementById('m-qa-est').value.trim()||'1h',
       done:false,createdAt:Date.now(),tags:[],recurrence:null};
     D.tasks.push(task); await fsUpdate('tasks',task);
-    closeModal(); toast('Task erstellt!');
+    closeModal(); renderWeek(); toast('Task erstellt!');
   }
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
