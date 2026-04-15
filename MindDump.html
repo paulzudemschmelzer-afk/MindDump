@@ -506,7 +506,6 @@ select option { background:#1c1c1c; }
     <button class="nav-btn" onclick="go('tasks')"><span class="nav-icon">✓</span>Tasks<span class="badge" id="b-tasks">0</span></button>
     <button class="nav-btn" onclick="go('heute')"><span class="nav-icon">☀</span>Heute<span class="badge" id="b-heute" style="background:#f59e0b">0</span></button>
     <button class="nav-btn" onclick="go('week')"><span class="nav-icon">📅</span>Woche</button>
-    <button class="nav-btn" onclick="go('thoughts')"><span class="nav-icon">💡</span>Thoughts<span class="badge" id="b-thoughts">0</span></button>
     <button class="nav-btn" onclick="go('snippets')"><span class="nav-icon">⌨</span>Snippets<span class="badge" id="b-snippets">0</span></button>
     <button class="nav-btn" onclick="go('notes')"><span class="nav-icon">📝</span>Notizen<span class="badge" id="b-notes">0</span></button>
     <button class="nav-btn" onclick="go('settings')" style="margin-top:auto"><span class="nav-icon">⚙</span>Settings</button>
@@ -649,30 +648,8 @@ select option { background:#1c1c1c; }
     <div id="unscheduled-area"></div>
   </div>
 
-  <!-- THOUGHTS -->
-  <div class="tab-panel" id="tab-thoughts">
-    <div class="page-header header-row">
-      <div><h1>Thoughts</h1><p>Ideen und Notizen — nach Thema organisiert.</p></div>
-      <button class="btn btn-ghost" onclick="toggleForm('add-thought-form')">+ Hinzufügen</button>
-    </div>
-    <div class="add-form" id="add-thought-form" style="display:none">
-      <div class="form-row">
-        <textarea class="form-ta" id="th-text" placeholder="Dein Gedanke, Idee oder Notiz..."></textarea>
-      </div>
-      <div class="form-row">
-        <select id="th-topic" style="max-width:220px" title="Kategorie"></select>
-        <button class="btn btn-ghost btn-sm" onclick="openNewThoughtCategoryPrompt('th-topic')">+ Kategorie</button>
-        <input type="text" id="th-subtopic" placeholder="Unterkategorie (optional)" list="th-subtopic-sugg" style="max-width:220px" />
-        <datalist id="th-subtopic-sugg"></datalist>
-      </div>
-      <div class="form-row">
-        <button class="btn btn-primary btn-sm" onclick="addThoughtManual()">Speichern</button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleForm('add-thought-form')">Abbrechen</button>
-      </div>
-    </div>
-    <div class="ftabs" id="thought-ftabs"></div>
-    <div id="thoughts-list"></div>
-  </div>
+  <!-- THOUGHTS (migriert zu Notizen) -->
+  <div class="tab-panel" id="tab-thoughts" style="display:none"></div>
 
   <!-- SNIPPETS -->
   <div class="tab-panel" id="tab-snippets">
@@ -953,6 +930,25 @@ function autoKategorie(title, context) {
 function loadLocal() {
   try { const d=localStorage.getItem('md_data'); if(d) D=JSON.parse(d); } catch(e){}
   if(!D.notes) D.notes=[];
+  // Migration: Thoughts → Notizen
+  if(D.thoughts && D.thoughts.length) {
+    D.thoughts.forEach(t=>{
+      const exists = D.notes.some(n=>n.migratedFrom===t.id);
+      if(!exists) {
+        const title = (t.content||'').split('\n')[0].trim().slice(0,80) || 'Thought';
+        const topicTag = t.topic && t.topic!=='Allgemein' ? `<p><b>[${t.topic}${t.subtopic?'/'+t.subtopic:''}]</b></p>` : '';
+        D.notes.push({
+          id: uid(), title, migratedFrom: t.id,
+          html: topicTag + '<p>' + (t.content||'').replace(/\n/g,'</p><p>') + '</p>',
+          canvasData: null,
+          created: t.createdAt ? new Date(t.createdAt).toISOString() : new Date().toISOString(),
+          updated: t.createdAt ? new Date(t.createdAt).toISOString() : new Date().toISOString()
+        });
+      }
+    });
+    D.thoughts = [];
+    saveLocal();
+  }
   try { const s=localStorage.getItem('md_settings'); if(s) S=JSON.parse(s); } catch(e){}
   ensureTaskCategorySettings();
 }
@@ -984,7 +980,6 @@ async function fsDel(colName, id) {
 
 function rerender(colName) {
   if(colName==='tasks') { renderTasks(); if(currentTab==='week') renderWeek(); if(currentTab==='heute') renderHeute(); }
-  if(colName==='thoughts') renderThoughts();
   if(colName==='snippets') renderSnips();
   if(colName==='notes') renderNotes();
 }
@@ -1156,11 +1151,10 @@ function nextDueDate(dueDate, recurrence) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
-const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',notes:'Notizen',settings:'Settings'};
+const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',week:'Woche',snippets:'Snippets',notes:'Notizen',settings:'Settings'};
 const TAB_ACTIONS = {
   tasks:    `<button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">+ Hinzufügen</button>`,
   heute:    `<button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>`,
-  thoughts: `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-thought-form')">+ Hinzufügen</button>`,
   snippets: `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-snippet-form')">+ Hinzufügen</button>`,
   notes:    `<button class="btn btn-ghost btn-sm" onclick="createNote()">+ Neue Notiz</button>`,
 };
@@ -1178,7 +1172,6 @@ function go(tab) {
   if(window.innerWidth<=600){const sb=document.querySelector('.sidebar');if(sb&&!sb.classList.contains('collapsed')){sb.classList.add('collapsed');const bd=document.getElementById('sidebar-backdrop');if(bd)bd.style.display='none';}}
   if(tab==='tasks') renderTasks();
   if(tab==='heute') renderHeute();
-  if(tab==='thoughts') renderThoughts();
   if(tab==='snippets') renderSnips();
   if(tab==='week') renderWeek();
   if(tab==='taurus') { renderTaurusChat(); checkTaurusStatus(); }
@@ -1187,7 +1180,6 @@ function go(tab) {
 
 function badges() {
   document.getElementById('b-tasks').textContent=D.tasks.filter(t=>!t.done).length;
-  document.getElementById('b-thoughts').textContent=D.thoughts.length;
   document.getElementById('b-snippets').textContent=D.snippets.length;
   document.getElementById('b-notes').textContent=D.notes.length;
   const todayStr=dateKey();
@@ -1426,20 +1418,13 @@ function renderDumpResult(p) {
   }
 
   if(thoughts.length){
-    html+=`<div class="section-label" style="margin-top:20px">💡 ${thoughts.length} Thought${thoughts.length>1?'s':''} — bearbeiten & Kategorie zuweisen</div>`;
+    html+=`<div class="section-label" style="margin-top:20px">📝 ${thoughts.length} Notiz${thoughts.length>1?'en':''} — bearbeiten</div>`;
     thoughts.forEach((t,i)=>{
       html+=`<div class="dump-check">
         <input type="checkbox" id="dth-${i}" checked onchange="updateSelCount()">
         <div style="flex:1">
           <div class="form-row" style="margin-bottom:6px">
             <textarea class="form-ta" id="dth-text-${i}" style="min-height:50px;font-size:13px">${esc(t.content)}</textarea>
-          </div>
-          <div class="dump-task-routing">
-            <label>Kategorie:</label>
-            <select class="topic-inp-sm" id="dth-topic-${i}" onchange="updateDumpThoughtSubtopic(${i})" style="min-width:150px">${renderThoughtCategoryOptions('Allgemein')}</select>
-            <label>Sub:</label>
-            <input class="topic-inp-sm" id="dth-subtopic-${i}" list="dth-subtopic-list-${i}" placeholder="optional" style="min-width:130px" />
-            <datalist id="dth-subtopic-list-${i}"></datalist>
           </div>
         </div>
       </div><div style="margin-bottom:10px"></div>`;
@@ -1509,9 +1494,8 @@ async function saveSelected() {
   (pendingResult.thoughts||[]).forEach((t,i)=>{
     if(document.getElementById('dth-'+i)?.checked){
       const content=document.getElementById('dth-text-'+i)?.value.trim()||t.content;
-      const topic=document.getElementById('dth-topic-'+i)?.value||'Allgemein';
-      const subtopic=document.getElementById('dth-subtopic-'+i)?.value.trim()||null;
-      ps.push(fsAdd('thoughts',{id:uid(),content,topic,subtopic,createdAt:Date.now()}));
+      const title=content.split('\n')[0].trim().slice(0,80)||'Notiz';
+      ps.push(fsAdd('notes',{id:uid(),title,html:'<p>'+esc(content).replace(/\n/g,'</p><p>')+'</p>',canvasData:null,created:new Date().toISOString(),updated:new Date().toISOString()}));
       nth++;
     }
   });
@@ -1519,7 +1503,7 @@ async function saveSelected() {
   pendingResult=null;
   document.getElementById('dump-result').innerHTML='';
   document.getElementById('dump-input').value='';
-  toast(`Gespeichert: ${nt} Task${nt!==1?'s':''}, ${nth} Thought${nth!==1?'s':''}`);
+  toast(`Gespeichert: ${nt} Task${nt!==1?'s':''}, ${nth} Notiz${nth!==1?'en':''}`);
 }
 
 // ── TASKS ─────────────────────────────────────────────────────
