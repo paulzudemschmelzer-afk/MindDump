@@ -215,6 +215,50 @@ textarea::placeholder { color:#444; }
 .ftab:hover { color:var(--text); }
 .ftab.active { background:rgba(124,58,237,.15); color:var(--accent2); border-color:rgba(124,58,237,.3); }
 
+/* TASK INSIGHTS */
+.task-insights { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-bottom:14px; }
+.insight-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:11px 12px; }
+.insight-label { font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:.6px; }
+.insight-value { font-size:21px; font-weight:700; margin-top:4px; line-height:1; }
+.insight-note { font-size:11px; color:#666; margin-top:5px; }
+.task-progress { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:16px; }
+.task-progress-row { display:flex; justify-content:space-between; gap:10px; font-size:12px; color:var(--sub); margin-bottom:7px; }
+.task-progress-bar { height:7px; border-radius:999px; background:#151515; border:1px solid #222; overflow:hidden; }
+.task-progress-fill { height:100%; background:linear-gradient(90deg,#7c3aed,#a78bfa); }
+
+<<<<<<< ours
+/* HABITS */
+.habit-grid { display:grid; gap:12px; }
+.habit-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; }
+.habit-card.recovery { border-color:rgba(245,158,11,.38); box-shadow:0 0 0 1px rgba(245,158,11,.04); }
+.habit-top { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; margin-bottom:12px; }
+.habit-name { font-size:16px; font-weight:650; margin-bottom:4px; }
+.habit-statement { color:var(--sub); font-size:13px; line-height:1.5; }
+.habit-bars { display:grid; grid-template-columns:repeat(4,minmax(120px,1fr)); gap:8px; margin:12px 0; }
+.habit-meter { background:#141414; border:1px solid var(--border); border-radius:8px; padding:8px 9px; min-width:0; }
+.habit-meter-row { display:flex; justify-content:space-between; gap:8px; color:var(--sub); font-size:11px; margin-bottom:6px; }
+.habit-bar { height:7px; border-radius:999px; background:#0f0f0f; overflow:hidden; border:1px solid #242424; }
+.habit-fill { height:100%; border-radius:999px; transition:width .2s ease; }
+.habit-fill.hp { background:linear-gradient(90deg,#ef4444,#f59e0b,#10b981); }
+.habit-fill.strength { background:linear-gradient(90deg,#7c3aed,#a78bfa); }
+.habit-fill.goal { background:linear-gradient(90deg,#0ea5e9,#10b981); }
+.habit-fill.risk { background:linear-gradient(90deg,#10b981,#f59e0b,#ef4444); }
+.habit-meta { display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; }
+.habit-chip { font-size:11px; color:var(--sub); border:1px solid var(--border); border-radius:5px; padding:3px 7px; background:#151515; }
+.habit-chip.good { color:#34d399; border-color:rgba(16,185,129,.25); background:rgba(16,185,129,.08); }
+.habit-chip.warn { color:#fbbf24; border-color:rgba(245,158,11,.25); background:rgba(245,158,11,.08); }
+.habit-chip.bad { color:#f87171; border-color:rgba(239,68,68,.25); background:rgba(239,68,68,.08); }
+.habit-milestones { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
+.milestone { font-size:11px; color:#555; border:1px solid var(--border); border-radius:999px; padding:3px 8px; }
+.milestone.done { color:#34d399; border-color:rgba(16,185,129,.25); background:rgba(16,185,129,.08); }
+.habit-checkin { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); display:grid; grid-template-columns:repeat(6,minmax(80px,1fr)); gap:8px; align-items:end; }
+.habit-checkin input { min-width:0; }
+.habit-checkin .wide { grid-column:span 2; }
+.habit-recovery { margin-top:10px; color:#fbbf24; background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.18); border-radius:8px; padding:9px 10px; font-size:12px; line-height:1.5; }
+.habit-empty { background:var(--card); border:1px dashed var(--border); border-radius:10px; padding:28px 18px; text-align:center; color:var(--sub); }
+
+=======
+>>>>>>> theirs
 /* SEARCH */
 .search-row { display:flex; gap:8px; margin-bottom:16px; }
 .search-input { flex:1; padding:8px 13px; background:var(--card); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; outline:none; font-family:inherit; }
@@ -401,6 +445,9 @@ select option { background:#1c1c1c; }
 
 @media (max-width: 900px) {
   .week-grid { grid-template-columns:repeat(7,minmax(90px,1fr)); overflow-x:auto; }
+  .habit-bars { grid-template-columns:repeat(2,minmax(120px,1fr)); }
+  .habit-checkin { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .habit-checkin .wide { grid-column:span 2; }
   .main { padding:16px; padding-top:22px; }
 }
 
@@ -505,6 +552,7 @@ select option { background:#1c1c1c; }
     <button class="nav-btn active" onclick="go('braindump')"><span class="nav-icon">⚡</span>Brain Dump</button>
     <button class="nav-btn" onclick="go('tasks')"><span class="nav-icon">✓</span>Tasks<span class="badge" id="b-tasks">0</span></button>
     <button class="nav-btn" onclick="go('heute')"><span class="nav-icon">☀</span>Heute<span class="badge" id="b-heute" style="background:#f59e0b">0</span></button>
+    <button class="nav-btn" onclick="go('habits')"><span class="nav-icon">HP</span>Habits<span class="badge" id="b-habits" style="background:#10b981">0</span></button>
     <button class="nav-btn" onclick="go('week')"><span class="nav-icon">📅</span>Woche</button>
     <button class="nav-btn" onclick="go('snippets')"><span class="nav-icon">⌨</span>Snippets<span class="badge" id="b-snippets">0</span></button>
     <button class="nav-btn" onclick="go('notes')"><span class="nav-icon">📝</span>Notizen<span class="badge" id="b-notes">0</span></button>
@@ -594,12 +642,14 @@ select option { background:#1c1c1c; }
         <button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">Abbrechen</button>
       </div>
     </div>
-    <div class="ftabs">
+    <div class="ftabs" id="task-state-tabs">
       <button class="ftab active" onclick="setTaskFilter('all',this)">Alle</button>
       <button class="ftab" onclick="setTaskFilter('open',this)">Offen</button>
       <button class="ftab" onclick="setTaskFilter('done',this)">Erledigt</button>
     </div>
+    <div id="task-insights"></div>
     <div class="ftabs" id="task-sort-tabs"></div>
+    <div class="ftabs" id="task-due-tabs"></div>
     <div class="ftabs" id="kat-ftabs"></div>
     <div id="tag-filter-row" style="display:none;flex-wrap:wrap;gap:5px;margin-bottom:12px;align-items:center"></div>
     <div id="tasks-list"></div>
@@ -628,6 +678,46 @@ select option { background:#1c1c1c; }
       ondrop="dropHeute(event)">
       <div id="heute-list"></div>
     </div>
+  </div>
+
+  <!-- HABITS -->
+  <div class="tab-panel" id="tab-habits">
+    <div class="page-header header-row">
+      <div><h1>Habits</h1><p>Gewohnheiten als Life-Quests mit HP, Ziel-Fortschritt und Recovery.</p></div>
+      <button class="btn btn-ghost" onclick="toggleForm('add-habit-form')">+ Gewohnheit</button>
+    </div>
+    <div class="add-form" id="add-habit-form" style="display:none">
+      <div class="form-row">
+        <input type="text" id="h-name" placeholder="Name, z.B. Fuss- und Kniestabilitaet" />
+        <input type="number" id="h-frequency" min="1" max="14" value="3" style="max-width:120px" title="Ziel pro Woche" />
+      </div>
+      <div class="form-row">
+        <input type="text" id="h-statement" placeholder="Ich mache [Aktion] [Frequenz]" />
+      </div>
+      <div class="form-row">
+        <input type="text" id="h-end-goal" placeholder="Endziel, z.B. langfristig weniger Fuss- und Knieschmerzen" />
+      </div>
+      <div class="form-row">
+        <input type="text" id="h-identity" placeholder="Identitaetsziel: Ich bin jemand, der ..." />
+      </div>
+      <div class="form-row">
+        <input type="text" id="h-cue" placeholder="Trigger/Cue, z.B. nach dem Zaehneputzen" />
+        <input type="text" id="h-reward" placeholder="Direkte Belohnung, z.B. kurzer Check-in + Haken" />
+      </div>
+      <div class="form-row">
+        <input type="text" id="h-minimum" placeholder="Minimalversion fuer schlechte Tage, z.B. 2 Minuten Fussaktivierung" />
+      </div>
+      <div class="form-row">
+        <input type="number" id="h-warn-days" min="1" max="60" value="7" style="max-width:145px" title="Warnung nach Tagen ohne Check-in" />
+        <input type="number" id="h-danger-days" min="2" max="120" value="21" style="max-width:145px" title="Hoher Decay nach Tagen ohne Check-in" />
+        <input type="text" id="h-why" placeholder="Warum ist diese Gewohnheit wichtig?" />
+      </div>
+      <div class="form-row">
+        <button class="btn btn-primary btn-sm" onclick="addHabitManual()">Speichern</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleForm('add-habit-form')">Abbrechen</button>
+      </div>
+    </div>
+    <div id="habits-list" class="habit-grid"></div>
   </div>
 
   <!-- WEEK CALENDAR -->
@@ -891,7 +981,7 @@ select option { background:#1c1c1c; }
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────
-let D = { tasks:[], thoughts:[], snippets:[], notes:[] };
+let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[] };
 let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{} };
 let pendingResult = null;
 let taskFilter = 'all';
@@ -930,6 +1020,7 @@ function autoKategorie(title, context) {
 function loadLocal() {
   try { const d=localStorage.getItem('md_data'); if(d) D=JSON.parse(d); } catch(e){}
   if(!D.notes) D.notes=[];
+  if(!D.habits) D.habits=[];
   // Migration: Thoughts → Notizen
   if(D.thoughts && D.thoughts.length) {
     D.thoughts.forEach(t=>{
@@ -950,6 +1041,10 @@ function loadLocal() {
     saveLocal();
   }
   try { const s=localStorage.getItem('md_settings'); if(s) S=JSON.parse(s); } catch(e){}
+  D.tasks = Array.isArray(D.tasks) ? D.tasks : [];
+  D.thoughts = Array.isArray(D.thoughts) ? D.thoughts : [];
+  D.snippets = Array.isArray(D.snippets) ? D.snippets : [];
+  D.habits = Array.isArray(D.habits) ? D.habits : [];
   ensureTaskCategorySettings();
 }
 function saveLocal() { localStorage.setItem('md_data',JSON.stringify(D)); badges(); }
@@ -980,6 +1075,8 @@ async function fsDel(colName, id) {
 
 function rerender(colName) {
   if(colName==='tasks') { renderTasks(); if(currentTab==='week') renderWeek(); if(currentTab==='heute') renderHeute(); }
+  if(colName==='habits') renderHabits();
+  if(colName==='thoughts') renderThoughts();
   if(colName==='snippets') renderSnips();
   if(colName==='notes') renderNotes();
 }
@@ -1003,7 +1100,7 @@ function connectFirebase() {
       currentUser = user;
       renderUserArea();
       if(user) { subscribeFS(); }
-      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; D={tasks:[],thoughts:[],snippets:[],notes:[]}; badges(); }
+      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; D={tasks:[],thoughts:[],snippets:[],notes:[],habits:[]}; badges(); }
     });
 
     S.fbConfig = configStr;
@@ -1018,7 +1115,7 @@ function connectFirebase() {
 function subscribeFS() {
   unsubListeners.forEach(u=>u());
   unsubListeners=[];
-  ['tasks','thoughts','snippets','notes'].forEach(name=>{
+  ['tasks','thoughts','snippets','notes','habits'].forEach(name=>{
     unsubListeners.push(
       col(name).onSnapshot(snap=>{
         D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1108,7 +1205,7 @@ function updateFBStatus(ok) {
 
 // ── UTILS ─────────────────────────────────────────────────────
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2); }
-function esc(s) { if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s) { if(s===null||s===undefined) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function dateKey(d=new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
@@ -1151,10 +1248,11 @@ function nextDueDate(dueDate, recurrence) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
-const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',week:'Woche',snippets:'Snippets',notes:'Notizen',settings:'Settings'};
+const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',habits:'Habits',week:'Woche',snippets:'Snippets',notes:'Notizen',settings:'Settings'};
 const TAB_ACTIONS = {
   tasks:    `<button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">+ Hinzufügen</button>`,
   heute:    `<button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>`,
+  habits:   `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-habit-form')">+ Gewohnheit</button>`,
   snippets: `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-snippet-form')">+ Hinzufügen</button>`,
   notes:    `<button class="btn btn-ghost btn-sm" onclick="createNote()">+ Neue Notiz</button>`,
 };
@@ -1172,6 +1270,8 @@ function go(tab) {
   if(window.innerWidth<=600){const sb=document.querySelector('.sidebar');if(sb&&!sb.classList.contains('collapsed')){sb.classList.add('collapsed');const bd=document.getElementById('sidebar-backdrop');if(bd)bd.style.display='none';}}
   if(tab==='tasks') renderTasks();
   if(tab==='heute') renderHeute();
+  if(tab==='habits') renderHabits();
+  if(tab==='thoughts') renderThoughts();
   if(tab==='snippets') renderSnips();
   if(tab==='week') renderWeek();
   if(tab==='taurus') { renderTaurusChat(); checkTaurusStatus(); }
@@ -1180,6 +1280,8 @@ function go(tab) {
 
 function badges() {
   document.getElementById('b-tasks').textContent=D.tasks.filter(t=>!t.done).length;
+  const habitBadge=document.getElementById('b-habits');
+  if(habitBadge) habitBadge.textContent=(D.habits||[]).filter(h=>!h.archived).length;
   document.getElementById('b-snippets').textContent=D.snippets.length;
   document.getElementById('b-notes').textContent=D.notes.length;
   const todayStr=dateKey();
@@ -1515,10 +1617,79 @@ async function saveSelected() {
 // ── TASKS ─────────────────────────────────────────────────────
 let taskKatFilter = 'alle';
 let taskSortMode = 'priority';
+let taskDueFilter = 'all';
 
-function setTaskFilter(f,el){ taskFilter=f; document.querySelectorAll('#tab-tasks .ftab').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderTasks(); }
+function setTaskFilter(f,el){ taskFilter=f; document.querySelectorAll('#task-state-tabs .ftab').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderTasks(); }
 function setTaskKatFilter(k,el){ taskKatFilter=k; document.querySelectorAll('#kat-ftabs .ftab').forEach(b=>b.classList.remove('active')); if(el) el.classList.add('active'); renderTasks(); }
 function setTaskSort(mode, el){ taskSortMode=mode; document.querySelectorAll('#task-sort-tabs .ftab').forEach(b=>b.classList.remove('active')); if(el) el.classList.add('active'); renderTasks(); }
+function setTaskDueFilter(mode, el){ taskDueFilter=mode; document.querySelectorAll('#task-due-tabs .ftab').forEach(b=>b.classList.remove('active')); if(el) el.classList.add('active'); renderTasks(); }
+function parseDueDate(dueDate){
+  if(!dueDate) return null;
+  const date = new Date(dueDate + 'T00:00:00');
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+function dueFilterMatches(task){
+  if(taskDueFilter==='all') return true;
+  const due=parseDueDate(task.dueDate);
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  const in7=new Date(today);
+  in7.setDate(in7.getDate()+7);
+  if(taskDueFilter==='nodate') return !due;
+  if(!due) return false;
+  if(taskDueFilter==='overdue') return due < today;
+  if(taskDueFilter==='today') return due.getTime()===today.getTime();
+  if(taskDueFilter==='next7') return due>=today && due<=in7;
+  return true;
+}
+function renderTaskDueTabs(list){
+  const tabs=document.getElementById('task-due-tabs');
+  if(!tabs) return;
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  const in7=new Date(today);
+  in7.setDate(in7.getDate()+7);
+  const openTasks=(list||[]).filter(t=>!t.done);
+  const counts={all:openTasks.length,overdue:0,today:0,next7:0,nodate:0};
+  openTasks.forEach(t=>{
+    const due=parseDueDate(t.dueDate);
+    if(!due){ counts.nodate++; return; }
+    if(due < today) counts.overdue++;
+    if(due.getTime()===today.getTime()) counts.today++;
+    if(due>=today && due<=in7) counts.next7++;
+  });
+  const defs=[
+    {id:'all',label:'Alle offen'},
+    {id:'overdue',label:'Überfällig'},
+    {id:'today',label:'Heute fällig'},
+    {id:'next7',label:'Nächste 7 Tage'},
+    {id:'nodate',label:'Ohne Datum'}
+  ];
+  tabs.innerHTML = defs.map(d=>`<button class="ftab ${taskDueFilter===d.id?'active':''}" onclick="setTaskDueFilter('${d.id}',this)">${d.label} (${counts[d.id]||0})</button>`).join('');
+}
+function renderTaskInsights(allTasks){
+  const host=document.getElementById('task-insights');
+  if(!host) return;
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  const open=(allTasks||[]).filter(t=>!t.done);
+  const done=(allTasks||[]).filter(t=>t.done).length;
+  const overdue=open.filter(t=>{ const due=parseDueDate(t.dueDate); return due && due<today; }).length;
+  const dueToday=open.filter(t=>{ const due=parseDueDate(t.dueDate); return due && due.getTime()===today.getTime(); }).length;
+  const forToday=open.filter(t=>t.forToday).length;
+  const total=(allTasks||[]).length;
+  const pct=total?Math.round((done/total)*100):0;
+  host.innerHTML = `<div class="task-insights">
+      <div class="insight-card"><div class="insight-label">Offen</div><div class="insight-value">${open.length}</div><div class="insight-note">Aktive Aufgaben</div></div>
+      <div class="insight-card"><div class="insight-label">Überfällig</div><div class="insight-value" style="color:#f87171">${overdue}</div><div class="insight-note">Vor heute fällig</div></div>
+      <div class="insight-card"><div class="insight-label">Heute fällig</div><div class="insight-value" style="color:#fbbf24">${dueToday}</div><div class="insight-note">Deadline heute</div></div>
+      <div class="insight-card"><div class="insight-label">Heute markiert</div><div class="insight-value" style="color:#a78bfa">${forToday}</div><div class="insight-note">☀ Fokusliste</div></div>
+    </div>
+    <div class="task-progress">
+      <div class="task-progress-row"><span>Abschlussquote</span><span>${done}/${total} erledigt (${pct}%)</span></div>
+      <div class="task-progress-bar"><div class="task-progress-fill" style="width:${pct}%"></div></div>
+    </div>`;
+}
 
 const KAT_LABELS = {geld:'Geld',haushalt:'Haushalt',einkaufen:'Einkaufen',business:'Business',schule:'Schule',tech:'Tech',familie:'Familie',sonstiges:'Sonstiges'};
 const KAT_ICONS = {geld:'💰',haushalt:'🏠',einkaufen:'🛒',business:'💼',schule:'📚',tech:'💻',familie:'👨‍👩‍👦',sonstiges:'📋'};
@@ -2352,12 +2523,19 @@ function renderTasks() {
     if(prio!==0) return prio;
     return (b.createdAt??0)-(a.createdAt??0);
   });
-  if(taskFilter==='open') list=list.filter(t=>!t.done);
-  if(taskFilter==='done') list=list.filter(t=>t.done);
-  if(taskKatFilter!=='alle') list=list.filter(t=>(t.kategorie||'sonstiges')===taskKatFilter);
-  if(taskTagFilter) list=list.filter(t=>(t.tags||[]).includes(taskTagFilter));
+  const baseFiltered=list.filter(t=>{
+    if(taskFilter==='open' && t.done) return false;
+    if(taskFilter==='done' && !t.done) return false;
+    if(taskDueFilter!=='all' && t.done) return false;
+    if(!dueFilterMatches(t)) return false;
+    if(taskKatFilter!=='alle' && (t.kategorie||'sonstiges')!==taskKatFilter) return false;
+    if(taskTagFilter && !(t.tags||[]).includes(taskTagFilter)) return false;
+    return true;
+  });
+  list=baseFiltered;
 
   renderTagFilterRow();
+  renderTaskInsights(D.tasks);
   // Kategorie-Filter rendern
   const katOrder = getTopLevelTaskCategories();
   const countSource = D.tasks.filter(t => {
@@ -2368,6 +2546,7 @@ function renderTasks() {
   const katCounts={};
   countSource.forEach(t=>{ const k=t.kategorie||'sonstiges'; katCounts[k]=(katCounts[k]||0)+1; });
   renderTaskSortTabs();
+  renderTaskDueTabs(D.tasks);
   renderTaskCategoryTabs(katCounts);
   const el=document.getElementById('tasks-list');
 
@@ -2518,6 +2697,229 @@ function openEditTask(id){
     </div>`;
   document.getElementById('modal').style.display='flex';
   setTimeout(()=>document.getElementById('m-title').focus(),50);
+}
+
+// -- HABITS -----------------------------------------------------
+function clamp(n,min=0,max=100){ return Math.max(min, Math.min(max, Number(n)||0)); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function daysBetweenISO(a,b){
+  if(!a||!b) return 0;
+  const da=new Date(a+'T12:00:00'), db=new Date(b+'T12:00:00');
+  return Math.floor((db-da)/86400000);
+}
+function habitCheckins(h){ return Array.isArray(h.checkins) ? h.checkins : []; }
+function habitWeighted(c){ return c.mode==='minimal' ? 0.55 : 1; }
+function habitSinceDays(h){
+  const last=habitCheckins(h).map(c=>c.date).sort().pop();
+  return last ? daysBetweenISO(last,todayISO()) : 999;
+}
+function habitWeekKey(date){
+  const d=new Date(date+'T12:00:00');
+  const first=new Date(d.getFullYear(),0,1);
+  return d.getFullYear()+'-'+Math.ceil((((d-first)/86400000)+first.getDay()+1)/7);
+}
+function habitScore(h){
+  const checkins=habitCheckins(h);
+  const target=Math.max(1, Number(h.frequencyCount)||3);
+  const now=todayISO();
+  const recent=checkins.filter(c=>daysBetweenISO(c.date,now)<=6);
+  const recentWeight=recent.reduce((sum,c)=>sum+habitWeighted(c),0);
+  const totalWeight=checkins.reduce((sum,c)=>sum+habitWeighted(c),0);
+  const warnDays=Math.max(1, Number(h.decayWarnDays)||7);
+  const dangerDays=Math.max(warnDays+1, Number(h.decayDangerDays)||21);
+  const since=habitSinceDays(h);
+  if(!checkins.length) return {hp:0, strength:0, goal:0, risk:20, since, recentWeight:0, totalWeight:0, solidWeeks:0, recovery:false, fresh:true};
+
+  let hp=clamp((recentWeight/target)*100);
+  if(since>=warnDays) hp=Math.min(hp,70);
+  if(since>=dangerDays) hp=Math.min(hp,30);
+
+  const strengthTarget=Math.max(18,target*12);
+  let strength=clamp((1-Math.exp(-totalWeight/strengthTarget))*100);
+  if(since>=warnDays) strength=Math.max(0,strength-12);
+  if(since>=dangerDays) strength=Math.max(0,strength-28);
+
+  const withPain=checkins.filter(c=>Number.isFinite(Number(c.painAfter)));
+  const withStability=checkins.filter(c=>Number.isFinite(Number(c.stability)));
+  let outcome=strength*0.65;
+  if(withPain.length>=3){
+    const first=withPain.slice(0,3).reduce((s,c)=>s+Number(c.painAfter),0)/Math.min(3,withPain.length);
+    const last=withPain.slice(-3).reduce((s,c)=>s+Number(c.painAfter),0)/Math.min(3,withPain.slice(-3).length);
+    outcome += clamp((first-last)*12, -20, 35);
+  }
+  if(withStability.length>=3){
+    const first=withStability.slice(0,3).reduce((s,c)=>s+Number(c.stability),0)/Math.min(3,withStability.length);
+    const last=withStability.slice(-3).reduce((s,c)=>s+Number(c.stability),0)/Math.min(3,withStability.slice(-3).length);
+    outcome += clamp((last-first)*8, -15, 25);
+  }
+  const goal=clamp(outcome);
+
+  let risk=15;
+  if(recentWeight<target) risk+=Math.round((1-(recentWeight/target))*35);
+  if(since>=warnDays) risk+=25;
+  if(since>=dangerDays) risk+=35;
+  risk=clamp(risk);
+
+  const weekScores={};
+  checkins.forEach(c=>{ const k=habitWeekKey(c.date); weekScores[k]=(weekScores[k]||0)+habitWeighted(c); });
+  const solidWeeks=Object.values(weekScores).filter(v=>v>=target).length;
+  const plannedGap=Math.ceil(7/target);
+  const recovery=checkins.length && (since>plannedGap*2 || hp<50);
+  return {hp, strength, goal, risk, since, recentWeight, totalWeight, solidWeeks, recovery};
+}
+function habitStatus(score){
+  if(score.fresh) return {cls:'warn', text:'Startbereit'};
+  if(score.risk>=75) return {cls:'bad', text:'Decay hoch'};
+  if(score.recovery) return {cls:'warn', text:'Recovery'};
+  if(score.hp>=85) return {cls:'good', text:'Stabil'};
+  return {cls:'warn', text:'Aufbau'};
+}
+function habitMilestones(score){
+  return [
+    {label:'Start', done:score.totalWeight>=1},
+    {label:'1 Woche Rhythmus', done:score.solidWeeks>=1},
+    {label:'4 Wochen Aufbau', done:score.solidWeeks>=4},
+    {label:'8 Wochen Staerke', done:score.solidWeeks>=8},
+    {label:'12 Wochen Maintenance', done:score.solidWeeks>=12}
+  ];
+}
+async function addHabitManual(){
+  const name=document.getElementById('h-name').value.trim();
+  if(!name){ toast('Bitte Habit-Namen eingeben','err'); return; }
+  const habit={
+    id:uid(),
+    name,
+    statement:document.getElementById('h-statement').value.trim()||name,
+    endGoal:document.getElementById('h-end-goal').value.trim(),
+    identityGoal:document.getElementById('h-identity').value.trim(),
+    why:document.getElementById('h-why').value.trim(),
+    cue:document.getElementById('h-cue').value.trim(),
+    reward:document.getElementById('h-reward').value.trim(),
+    minimumVersion:document.getElementById('h-minimum').value.trim()||'2 Minuten Minimalversion',
+    frequencyCount:Math.max(1, Number(document.getElementById('h-frequency').value)||3),
+    frequencyPeriod:'week',
+    decayWarnDays:Math.max(1, Number(document.getElementById('h-warn-days').value)||7),
+    decayDangerDays:Math.max(2, Number(document.getElementById('h-danger-days').value)||21),
+    checkins:[],
+    archived:false,
+    createdAt:Date.now()
+  };
+  await fsAdd('habits',habit);
+  ['h-name','h-statement','h-end-goal','h-identity','h-why','h-cue','h-reward','h-minimum'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('h-frequency').value=3;
+  document.getElementById('h-warn-days').value=7;
+  document.getElementById('h-danger-days').value=21;
+  toggleForm('add-habit-form');
+  toast('Habit Quest erstellt');
+}
+function habitField(id,field){ return document.getElementById(`hc-${field}-${id}`); }
+async function addHabitCheckin(id,mode='full'){
+  const h=D.habits.find(x=>x.id===id); if(!h) return;
+  const checkin={
+    id:uid(),
+    date:todayISO(),
+    mode,
+    duration:Number(habitField(id,'duration')?.value)||null,
+    painBefore:habitField(id,'painBefore')?.value===''?null:Number(habitField(id,'painBefore')?.value),
+    painAfter:habitField(id,'painAfter')?.value===''?null:Number(habitField(id,'painAfter')?.value),
+    stability:habitField(id,'stability')?.value===''?null:Number(habitField(id,'stability')?.value),
+    energy:habitField(id,'energy')?.value===''?null:Number(habitField(id,'energy')?.value),
+    note:habitField(id,'note')?.value.trim()||'',
+    createdAt:Date.now()
+  };
+  h.checkins=habitCheckins(h).filter(c=>!(c.date===checkin.date && c.mode===mode));
+  h.checkins.push(checkin);
+  await fsUpdate('habits',h);
+  toast(mode==='minimal' ? 'Minimalversion zaehlt. Hauptsache zurueck.' : 'Check-in gespeichert');
+}
+async function deleteHabit(id){
+  if(!confirm('Habit wirklich loeschen?')) return;
+  await fsDel('habits',id);
+  toast('Habit geloescht');
+}
+function openEditHabit(id){
+  const h=D.habits.find(x=>x.id===id); if(!h) return;
+  modalMode={type:'habit',id};
+  document.getElementById('modal-title').textContent='Habit bearbeiten';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><input type="text" id="m-h-name" value="${esc(h.name)}" placeholder="Name" /></div>
+    <div class="form-row"><input type="text" id="m-h-statement" value="${esc(h.statement)}" placeholder="Habit Statement" /></div>
+    <div class="form-row"><input type="text" id="m-h-end-goal" value="${esc(h.endGoal)}" placeholder="Endziel" /></div>
+    <div class="form-row"><input type="text" id="m-h-identity" value="${esc(h.identityGoal)}" placeholder="Identitaetsziel" /></div>
+    <div class="form-row">
+      <input type="text" id="m-h-cue" value="${esc(h.cue)}" placeholder="Trigger/Cue" />
+      <input type="text" id="m-h-reward" value="${esc(h.reward)}" placeholder="Belohnung" />
+    </div>
+    <div class="form-row"><input type="text" id="m-h-minimum" value="${esc(h.minimumVersion)}" placeholder="Minimalversion" /></div>
+    <div class="form-row">
+      <input type="number" id="m-h-frequency" min="1" max="14" value="${esc(h.frequencyCount||3)}" style="max-width:130px" />
+      <input type="number" id="m-h-warn-days" min="1" max="60" value="${esc(h.decayWarnDays||7)}" style="max-width:150px" />
+      <input type="number" id="m-h-danger-days" min="2" max="120" value="${esc(h.decayDangerDays||21)}" style="max-width:150px" />
+    </div>
+    <div class="form-row"><textarea class="form-ta" id="m-h-why" placeholder="Warum?">${esc(h.why)}</textarea></div>`;
+  document.getElementById('modal').style.display='flex';
+}
+function renderHabitCard(h){
+  const score=habitScore(h);
+  const status=habitStatus(score);
+  const milestones=habitMilestones(score);
+  const target=Math.max(1, Number(h.frequencyCount)||3);
+  const last=habitCheckins(h).map(c=>c.date).sort().pop();
+  return `<div class="habit-card ${score.recovery?'recovery':''}">
+    <div class="habit-top">
+      <div>
+        <div class="habit-name">${esc(h.name)}</div>
+        <div class="habit-statement">${esc(h.statement||'')}</div>
+        <div class="habit-meta">
+          <span class="habit-chip ${status.cls}">${status.text}</span>
+          <span class="habit-chip">${target}x pro Woche</span>
+          <span class="habit-chip">Letzter Check-in: ${last?esc(last):'noch keiner'}</span>
+          ${h.cue?`<span class="habit-chip">Cue: ${esc(h.cue)}</span>`:''}
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="icon-btn edit-btn" onclick="openEditHabit('${h.id}')" title="Bearbeiten">✏</button>
+        <button class="icon-btn del" onclick="deleteHabit('${h.id}')" title="Loeschen">×</button>
+      </div>
+    </div>
+    ${h.endGoal?`<div class="task-ctx"><b>Endziel:</b> ${esc(h.endGoal)}</div>`:''}
+    ${h.identityGoal?`<div class="task-ctx"><b>Identitaet:</b> ${esc(h.identityGoal)}</div>`:''}
+    <div class="habit-bars">
+      ${habitMeter('Consistency HP',score.hp,'hp')}
+      ${habitMeter('Habit Strength',score.strength,'strength')}
+      ${habitMeter('Goal Progress',score.goal,'goal')}
+      ${habitMeter('Decay Risk',score.risk,'risk')}
+    </div>
+    <div class="habit-milestones">${milestones.map(m=>`<span class="milestone ${m.done?'done':''}">${esc(m.label)}</span>`).join('')}</div>
+    ${score.recovery?`<div class="habit-recovery"><b>Recovery Quest:</b> ${esc(h.minimumVersion||'Mach heute nur die Minimalversion.')} Ein Ausfall ist normal; wichtig ist, jetzt wieder einzusteigen.</div>`:''}
+    <div class="habit-checkin">
+      <input type="number" id="hc-duration-${h.id}" placeholder="Min" min="0" />
+      <input type="number" id="hc-painBefore-${h.id}" placeholder="Schmerz vorher 0-10" min="0" max="10" />
+      <input type="number" id="hc-painAfter-${h.id}" placeholder="Schmerz nachher 0-10" min="0" max="10" />
+      <input type="number" id="hc-stability-${h.id}" placeholder="Stabilitaet 0-10" min="0" max="10" />
+      <input type="number" id="hc-energy-${h.id}" placeholder="Energie 0-10" min="0" max="10" />
+      <input class="wide" type="text" id="hc-note-${h.id}" placeholder="Notiz" />
+      <button class="btn btn-primary btn-sm" onclick="addHabitCheckin('${h.id}','full')">Erledigt</button>
+      <button class="btn btn-ghost btn-sm" onclick="addHabitCheckin('${h.id}','minimal')">Minimalversion</button>
+    </div>
+  </div>`;
+}
+function habitMeter(label,value,type){
+  const v=Math.round(clamp(value));
+  return `<div class="habit-meter">
+    <div class="habit-meter-row"><span>${label}</span><span>${v}%</span></div>
+    <div class="habit-bar"><div class="habit-fill ${type}" style="width:${v}%"></div></div>
+  </div>`;
+}
+function renderHabits(){
+  const el=document.getElementById('habits-list');
+  if(!el) return;
+  const habits=(D.habits||[]).filter(h=>!h.archived).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(!habits.length){
+    el.innerHTML='<div class="habit-empty"><h3>Noch keine Habit Quest</h3><p>Formuliere eine Gewohnheit, ihr Endziel und eine Minimalversion fuer schlechte Tage.</p></div>';
+    return;
+  }
+  el.innerHTML=habits.map(renderHabitCard).join('');
 }
 
 // ── HEUTE ─────────────────────────────────────────────────────
@@ -3588,6 +3990,22 @@ async function saveModal(){
     t.recurrence=recurV?{type:recurV}:null;
     t.tags=[...editingTags];
     await fsUpdate('tasks',t); closeModal(); toast('Task aktualisiert!');
+  } else if(modalMode.type==='habit'){
+    const h=D.habits.find(x=>x.id===modalMode.id); if(!h) return;
+    const name=document.getElementById('m-h-name').value.trim();
+    if(!name){toast('Name darf nicht leer sein','err');return;}
+    h.name=name;
+    h.statement=document.getElementById('m-h-statement').value.trim();
+    h.endGoal=document.getElementById('m-h-end-goal').value.trim();
+    h.identityGoal=document.getElementById('m-h-identity').value.trim();
+    h.cue=document.getElementById('m-h-cue').value.trim();
+    h.reward=document.getElementById('m-h-reward').value.trim();
+    h.minimumVersion=document.getElementById('m-h-minimum').value.trim();
+    h.frequencyCount=Math.max(1, Number(document.getElementById('m-h-frequency').value)||3);
+    h.decayWarnDays=Math.max(1, Number(document.getElementById('m-h-warn-days').value)||7);
+    h.decayDangerDays=Math.max(h.decayWarnDays+1, Number(document.getElementById('m-h-danger-days').value)||21);
+    h.why=document.getElementById('m-h-why').value.trim();
+    await fsUpdate('habits',h); closeModal(); toast('Habit aktualisiert!');
   } else if(modalMode.type==='thought'){
     const t=D.thoughts.find(x=>x.id===modalMode.id); if(!t) return;
     const c=document.getElementById('m-content').value.trim();
@@ -3661,9 +4079,11 @@ function importData(e){
     try {
       const imp=JSON.parse(ev.target.result);
       if(!imp.tasks||!imp.thoughts||!imp.snippets) throw new Error('Ungültiges Format');
+      imp.notes = Array.isArray(imp.notes) ? imp.notes : [];
+      imp.habits = Array.isArray(imp.habits) ? imp.habits : [];
       if(currentUser && db) {
         toast('Lade zu Firebase hoch...');
-        for(const name of ['tasks','thoughts','snippets']) {
+        for(const name of ['tasks','thoughts','snippets','notes','habits']) {
           for(const item of imp[name]) {
             const {id,...data}=item;
             await col(name).doc(id).set(data);
@@ -3682,9 +4102,11 @@ function importData(e){
         saveTaskCategoriesToFirebase();
         renderTaskCategoryInputs();
         renderTasks();
-        toast(`Zu Firebase hochgeladen: ${imp.tasks.length} Tasks, ${imp.thoughts.length} Thoughts, ${imp.snippets.length} Snippets`);
+        renderHabits();
+        renderNotes();
+        toast(`Zu Firebase hochgeladen: ${imp.tasks.length} Tasks, ${imp.snippets.length} Snippets, ${imp.notes.length} Notizen, ${imp.habits.length} Habits`);
       } else {
-        D={tasks:imp.tasks,thoughts:imp.thoughts,snippets:imp.snippets,notes:imp.notes||[]}; saveLocal();
+        D={tasks:imp.tasks,thoughts:imp.thoughts,snippets:imp.snippets,notes:imp.notes,habits:imp.habits}; saveLocal();
         if(Array.isArray(imp.meta?.taskCategories)) S.taskCategories = imp.meta.taskCategories;
         if(imp.meta?.taskCategoryLabels && typeof imp.meta.taskCategoryLabels === 'object') S.taskCategoryLabels = imp.meta.taskCategoryLabels;
         if(Array.isArray(imp.meta?.taskCategoryOrder)) S.taskCategoryOrder = imp.meta.taskCategoryOrder;
@@ -3697,7 +4119,9 @@ function importData(e){
         saveSettings();
         renderTaskCategoryInputs();
         renderTasks();
-        toast(`Importiert: ${D.tasks.length} Tasks, ${D.thoughts.length} Thoughts, ${D.snippets.length} Snippets`);
+        renderHabits();
+        renderNotes();
+        toast(`Importiert: ${D.tasks.length} Tasks, ${D.snippets.length} Snippets, ${D.notes.length} Notizen, ${D.habits.length} Habits`);
       }
     } catch(err){ toast('Import fehlgeschlagen: '+err.message,'err'); }
   };
@@ -3705,8 +4129,8 @@ function importData(e){
 }
 function clearAll(){
   if(confirm('Wirklich ALLE Daten löschen?')){
-    D={tasks:[],thoughts:[],snippets:[],notes:[]}; saveLocal();
-    renderTasks();renderThoughts();renderSnips();
+    D={tasks:[],thoughts:[],snippets:[],notes:[],habits:[]}; saveLocal();
+    renderTasks();renderThoughts();renderSnips();renderNotes();renderHabits();
     toast('Alle Daten gelöscht');
   }
 }
