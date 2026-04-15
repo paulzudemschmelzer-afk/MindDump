@@ -4191,7 +4191,7 @@ function saveKey(){
   saveSettings(); updateApiIndicator(); saveApiKeyToFirebase(); toast('API Key gespeichert!');
 }
 function saveBrainAiSettings(){
-  S.brainAiMode=document.getElementById('brain-ai-mode')?.value || 'auto';
+  S.brainAiMode=document.getElementById('brain-ai-mode')?.value || 'taurus';
   saveSettings();
   toast('KI-Modus gespeichert');
 }
