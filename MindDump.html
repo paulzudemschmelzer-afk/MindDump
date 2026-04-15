@@ -882,7 +882,19 @@ select option { background:#1c1c1c; }
         <input type="password" id="api-key-in" placeholder="gsk_..." />
         <button class="btn btn-primary" onclick="saveKey()" style="flex:0;white-space:nowrap">Speichern</button>
       </div>
-      <div class="info-box info-purple">🔒 Wird nur lokal gespeichert, geht direkt an Groq.</div>
+      <div class="form-row">
+        <label class="field">
+          <span class="field-label">Brain-Dump KI-Modus</span>
+          <select id="brain-ai-mode">
+            <option value="auto">Auto: OpenClaw lokal, sonst Groq direkt</option>
+            <option value="taurus">Nur OpenClaw/Taurus lokal</option>
+            <option value="groq-direct">Nur Groq direkt</option>
+            <option value="groq-proxy">Groq ueber oeffentlichen Proxy</option>
+          </select>
+        </label>
+        <button class="btn btn-ghost" onclick="saveBrainAiSettings()" style="flex:0;white-space:nowrap">Modus speichern</button>
+      </div>
+      <div class="info-box info-purple">Datenschutz: OpenClaw/Taurus bleibt lokal bzw. bei deinem Agenten. Groq direkt kann auf GitHub Pages durch CORS blockiert werden. Der oeffentliche Proxy funktioniert oft, sieht aber API-Key und Brain-Dump-Inhalt.</div>
     </div>
 
     <!-- FIREBASE SYNC -->
@@ -982,7 +994,7 @@ select option { background:#1c1c1c; }
 <script>
 // ── STATE ─────────────────────────────────────────────────────
 let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[] };
-let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{} };
+let S = { groqKey:'', fbConfig:'', brainAiMode:'auto', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{} };
 let pendingResult = null;
 let taskFilter = 'all';
 let taskTagFilter = null;
@@ -1363,10 +1375,65 @@ document.addEventListener('keydown',e=>{
   if(e.ctrlKey&&e.key==='Enter'&&document.getElementById('dump-input')===document.activeElement) processDump();
 });
 
+function parseAIJson(raw) {
+  if(!raw) throw new Error('Keine Antwort erhalten');
+  try { return JSON.parse(raw); }
+  catch(e){
+    const m=raw.match(/\{[\s\S]*\}/);
+    if(m) return JSON.parse(m[0]);
+    throw new Error('Kein valides JSON');
+  }
+}
+
+function brainAiMode() {
+  return S.brainAiMode || 'auto';
+}
+
+async function callGroqBrainDump(prompt, usePublicProxy=false) {
+  if(!S.groqKey) throw new Error('Kein Groq API Key - bitte in Settings eintragen oder OpenClaw/Taurus nutzen.');
+  const apiUrl='https://api.groq.com/openai/v1/chat/completions';
+  const url=usePublicProxy ? 'https://corsproxy.io/?'+encodeURIComponent(apiUrl) : apiUrl;
+  const res=await fetch(url,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.groqKey},
+    body:JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:2048})
+  });
+  if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||'HTTP '+res.status); }
+  const data=await res.json();
+  return parseAIJson(data.choices?.[0]?.message?.content?.trim());
+}
+
+async function callTaurusBrainDump(prompt) {
+  const c=getTaurusConfig();
+  if(!c.token) throw new Error('OpenClaw/Taurus Token fehlt - bitte in Settings eintragen.');
+  const res=await fetch(c.url+'/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+c.token},
+    body:JSON.stringify({messages:[{role:'user',content:prompt}],stream:false})
+  });
+  if(!res.ok) throw new Error('OpenClaw/Taurus HTTP '+res.status+': '+(await res.text()).slice(0,200));
+  const data=await res.json();
+  return parseAIJson(data.choices?.[0]?.message?.content?.trim());
+}
+
+async function callBrainDumpAI(prompt) {
+  const mode=brainAiMode();
+  const taurusCfg=getTaurusConfig();
+  if(mode==='taurus' || (mode==='auto' && taurusCfg.token)) return callTaurusBrainDump(prompt);
+  if(mode==='groq-proxy') return callGroqBrainDump(prompt, true);
+  try {
+    return await callGroqBrainDump(prompt, false);
+  } catch(err) {
+    if(mode==='auto' || mode==='groq-direct') {
+      throw new Error('Direkter Groq-Zugriff ist im Browser blockiert. Nutze in Settings den KI-Modus "OpenClaw/Taurus lokal" oder bewusst "Groq ueber oeffentlichen Proxy". Original: '+err.message);
+    }
+    throw err;
+  }
+}
+
 async function processDump() {
   const text=document.getElementById('dump-input').value.trim();
   if(!text){ toast('Bitte erst etwas eintippen!','err'); return; }
-  if(!S.groqKey){ toast('Kein API Key — bitte in Settings eintragen.','err'); go('settings'); return; }
 
   const btn=document.getElementById('process-btn');
   btn.disabled=true; btn.textContent='Verarbeite...';
@@ -1404,24 +1471,7 @@ Brain Dump:
 ${text}`;
 
   try {
-    const apiUrl='https://api.groq.com/openai/v1/chat/completions';
-    const reqBody=JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:2048});
-    const reqHeaders={'Content-Type':'application/json','Authorization':'Bearer '+S.groqKey};
-
-    let res;
-    try {
-      res=await fetch(apiUrl,{method:'POST',headers:reqHeaders,body:reqBody});
-    } catch(networkErr) {
-      // CORS blocked: do not forward private API keys or Brain Dump content to a public proxy.
-      throw new Error('Direkter Groq-Zugriff blockiert. Aus Datenschutzgruenden wird kein fremder CORS-Proxy mit API-Key und Brain-Dump-Inhalt genutzt.');
-    }
-    if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||'HTTP '+res.status); }
-    const data=await res.json();
-    const raw=data.choices?.[0]?.message?.content?.trim();
-    if(!raw) throw new Error('Keine Antwort erhalten');
-    let parsed;
-    try { parsed=JSON.parse(raw); }
-    catch(e){ const m=raw.match(/\{[\s\S]*\}/); if(m) parsed=JSON.parse(m[0]); else throw new Error('Kein valides JSON'); }
+    const parsed=await callBrainDumpAI(prompt);
     pendingResult=parsed;
     renderDumpResult(parsed);
   } catch(err) {
@@ -4114,6 +4164,15 @@ function saveKey(){
   S.groqKey=document.getElementById('api-key-in').value.trim();
   saveSettings(); updateApiIndicator(); saveApiKeyToFirebase(); toast('API Key gespeichert!');
 }
+function saveBrainAiSettings(){
+  S.brainAiMode=document.getElementById('brain-ai-mode')?.value || 'auto';
+  saveSettings();
+  toast('KI-Modus gespeichert');
+}
+function loadBrainAiSettings(){
+  const mode=document.getElementById('brain-ai-mode');
+  if(mode) mode.value=S.brainAiMode||'auto';
+}
 function exportData(){
   const blob=new Blob([JSON.stringify({...D,meta:{
     taskCategories:S.taskCategories||[],
@@ -4709,6 +4768,7 @@ function init() {
   loadLocal();
   renderTaskCategoryInputs();
   if(S.groqKey) document.getElementById('api-key-in').value=S.groqKey;
+  loadBrainAiSettings();
   updateApiIndicator();
   badges();
   renderUserArea();
