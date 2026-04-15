@@ -2727,7 +2727,7 @@ function renderWeek() {
       ondragover="event.preventDefault();this.classList.add('drag-over')"
       ondragleave="this.classList.remove('drag-over')"
       ondrop="dropTask(event,'${ds}');this.classList.remove('drag-over')"
-      onclick="calColClick(event,'${ds}')"
+      ondblclick="calColClick(event,'${ds}')"
       ontouchstart="calColTouchStart(event,'${ds}')"
       ontouchmove="calColTouchMove(event)"
       ontouchend="calColTouchEnd(event)">`;
