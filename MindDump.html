@@ -255,6 +255,9 @@ textarea::placeholder { color:#444; }
 .habit-checkin .wide { grid-column:span 2; }
 .habit-recovery { margin-top:10px; color:#fbbf24; background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.18); border-radius:8px; padding:9px 10px; font-size:12px; line-height:1.5; }
 .habit-empty { background:var(--card); border:1px dashed var(--border); border-radius:10px; padding:28px 18px; text-align:center; color:var(--sub); }
+.field { flex:1; display:flex; flex-direction:column; gap:5px; min-width:0; }
+.field-label { font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:.5px; }
+.field input,.field select,.field textarea { width:100%; }
 
 /* SEARCH */
 .search-row { display:flex; gap:8px; margin-bottom:16px; }
@@ -685,29 +688,29 @@ select option { background:#1c1c1c; }
     </div>
     <div class="add-form" id="add-habit-form" style="display:none">
       <div class="form-row">
-        <input type="text" id="h-name" placeholder="Name, z.B. Fuss- und Kniestabilitaet" />
-        <input type="number" id="h-frequency" min="1" max="14" value="3" style="max-width:120px" title="Ziel pro Woche" />
+        <label class="field"><span class="field-label">Name</span><input type="text" id="h-name" placeholder="z.B. Fuss- und Kniestabilitaet" /></label>
+        <label class="field" style="max-width:140px"><span class="field-label">Ziel / Woche</span><input type="number" id="h-frequency" min="1" max="14" value="3" title="Ziel pro Woche" /></label>
       </div>
       <div class="form-row">
-        <input type="text" id="h-statement" placeholder="Ich mache [Aktion] [Frequenz]" />
+        <label class="field"><span class="field-label">Gewohnheit</span><input type="text" id="h-statement" placeholder="Ich mache [Aktion] [Frequenz]" /></label>
       </div>
       <div class="form-row">
-        <input type="text" id="h-end-goal" placeholder="Endziel, z.B. langfristig weniger Fuss- und Knieschmerzen" />
+        <label class="field"><span class="field-label">Endziel</span><input type="text" id="h-end-goal" placeholder="z.B. langfristig weniger Fuss- und Knieschmerzen" /></label>
       </div>
       <div class="form-row">
-        <input type="text" id="h-identity" placeholder="Identitaetsziel: Ich bin jemand, der ..." />
+        <label class="field"><span class="field-label">Identitaet</span><input type="text" id="h-identity" placeholder="Ich bin jemand, der ..." /></label>
       </div>
       <div class="form-row">
-        <input type="text" id="h-cue" placeholder="Trigger/Cue, z.B. nach dem Zaehneputzen" />
-        <input type="text" id="h-reward" placeholder="Direkte Belohnung, z.B. kurzer Check-in + Haken" />
+        <label class="field"><span class="field-label">Trigger</span><input type="text" id="h-cue" placeholder="z.B. nach dem Zaehneputzen" /></label>
+        <label class="field"><span class="field-label">Belohnung</span><input type="text" id="h-reward" placeholder="z.B. kurzer Check-in + Haken" /></label>
       </div>
       <div class="form-row">
-        <input type="text" id="h-minimum" placeholder="Minimalversion fuer schlechte Tage, z.B. 2 Minuten Fussaktivierung" />
+        <label class="field"><span class="field-label">Minimalversion</span><input type="text" id="h-minimum" placeholder="z.B. 2 Minuten Fussaktivierung" /></label>
       </div>
       <div class="form-row">
-        <input type="number" id="h-warn-days" min="1" max="60" value="7" style="max-width:145px" title="Warnung nach Tagen ohne Check-in" />
-        <input type="number" id="h-danger-days" min="2" max="120" value="21" style="max-width:145px" title="Hoher Decay nach Tagen ohne Check-in" />
-        <input type="text" id="h-why" placeholder="Warum ist diese Gewohnheit wichtig?" />
+        <label class="field" style="max-width:160px"><span class="field-label">Warnung nach Tagen</span><input type="number" id="h-warn-days" min="1" max="60" value="7" title="Warnung nach Tagen ohne Check-in" /></label>
+        <label class="field" style="max-width:160px"><span class="field-label">Hoher Decay nach Tagen</span><input type="number" id="h-danger-days" min="2" max="120" value="21" title="Hoher Decay nach Tagen ohne Check-in" /></label>
+        <label class="field"><span class="field-label">Warum</span><input type="text" id="h-why" placeholder="Warum ist diese Gewohnheit wichtig?" /></label>
       </div>
       <div class="form-row">
         <button class="btn btn-primary btn-sm" onclick="addHabitManual()">Speichern</button>
@@ -1409,8 +1412,8 @@ ${text}`;
     try {
       res=await fetch(apiUrl,{method:'POST',headers:reqHeaders,body:reqBody});
     } catch(networkErr) {
-      // CORS blocked — retry via proxy
-      res=await fetch('https://corsproxy.io/?'+encodeURIComponent(apiUrl),{method:'POST',headers:reqHeaders,body:reqBody});
+      // CORS blocked: do not forward private API keys or Brain Dump content to a public proxy.
+      throw new Error('Direkter Groq-Zugriff blockiert. Aus Datenschutzgruenden wird kein fremder CORS-Proxy mit API-Key und Brain-Dump-Inhalt genutzt.');
     }
     if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||'HTTP '+res.status); }
     const data=await res.json();
@@ -2946,12 +2949,12 @@ function renderHabitCard(h){
     <div class="habit-milestones">${milestones.map(m=>`<span class="milestone ${m.done?'done':''}">${esc(m.label)}</span>`).join('')}</div>
     ${score.recovery?`<div class="habit-recovery"><b>Recovery Quest:</b> ${esc(h.minimumVersion||'Mach heute nur die Minimalversion.')} Ein Ausfall ist normal; wichtig ist, jetzt wieder einzusteigen.</div>`:''}
     <div class="habit-checkin">
-      <input type="number" id="hc-duration-${h.id}" placeholder="Min" min="0" />
-      <input type="number" id="hc-painBefore-${h.id}" placeholder="Schmerz vorher 0-10" min="0" max="10" />
-      <input type="number" id="hc-painAfter-${h.id}" placeholder="Schmerz nachher 0-10" min="0" max="10" />
-      <input type="number" id="hc-stability-${h.id}" placeholder="Stabilitaet 0-10" min="0" max="10" />
-      <input type="number" id="hc-energy-${h.id}" placeholder="Energie 0-10" min="0" max="10" />
-      <input class="wide" type="text" id="hc-note-${h.id}" placeholder="Notiz" />
+      <label class="field"><span class="field-label">Dauer min</span><input type="number" id="hc-duration-${h.id}" placeholder="0" min="0" /></label>
+      <label class="field"><span class="field-label">Schmerz vorher</span><input type="number" id="hc-painBefore-${h.id}" placeholder="0-10" min="0" max="10" /></label>
+      <label class="field"><span class="field-label">Schmerz nachher</span><input type="number" id="hc-painAfter-${h.id}" placeholder="0-10" min="0" max="10" /></label>
+      <label class="field"><span class="field-label">Stabilitaet</span><input type="number" id="hc-stability-${h.id}" placeholder="0-10" min="0" max="10" /></label>
+      <label class="field"><span class="field-label">Energie</span><input type="number" id="hc-energy-${h.id}" placeholder="0-10" min="0" max="10" /></label>
+      <label class="field wide"><span class="field-label">Notiz</span><input type="text" id="hc-note-${h.id}" placeholder="Was war auffaellig?" /></label>
       <button class="btn btn-primary btn-sm" onclick="addHabitCheckin('${h.id}','full')">Erledigt</button>
       <button class="btn btn-ghost btn-sm" onclick="addHabitCheckin('${h.id}','minimal')">Minimalversion</button>
     </div>
@@ -4764,13 +4767,29 @@ function updateGCalBtn(){
 
 function gcalNextDay(ds){ const d=new Date(ds+'T12:00:00'); d.setDate(d.getDate()+1); return dateKey(d); }
 function gcalColor(p){ return p==='hoch'?'11':p==='niedrig'?'10':'9'; }
+function gcalTaskPayload(task){
+  const description=(task.context||'') + '\n\nQuelle: MindDump';
+  const payload={ summary:task.title, description, colorId:gcalColor(task.priority),
+    reminders:{ useDefault:false, overrides:[{method:'popup', minutes:30}] } };
+  if(task.calStartTime){
+    const mins=parseEstMins(task.estimatedTime);
+    const start=new Date(`${task.dueDate}T${task.calStartTime}:00`);
+    const end=new Date(start.getTime()+mins*60000);
+    const tz=Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Berlin';
+    payload.start={dateTime:start.toISOString(), timeZone:tz};
+    payload.end={dateTime:end.toISOString(), timeZone:tz};
+  } else {
+    payload.start={date:task.dueDate};
+    payload.end={date:gcalNextDay(task.dueDate)};
+  }
+  return payload;
+}
 
 async function gcalCreate(task){
   if(!gcalToken||!task.dueDate) return null;
   const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{
     method:'POST', headers:{'Authorization':'Bearer '+gcalToken,'Content-Type':'application/json'},
-    body:JSON.stringify({ summary:task.title, description:task.context||'', colorId:gcalColor(task.priority),
-      start:{date:task.dueDate}, end:{date:gcalNextDay(task.dueDate)} })
+    body:JSON.stringify(gcalTaskPayload(task))
   });
   if(!r.ok) return null;
   return (await r.json()).id;
@@ -4780,8 +4799,7 @@ async function gcalUpdate(task){
   if(!gcalToken||!task.gcalEventId) return;
   await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.gcalEventId}`,{
     method:'PUT', headers:{'Authorization':'Bearer '+gcalToken,'Content-Type':'application/json'},
-    body:JSON.stringify({ summary:task.title, description:task.context||'', colorId:gcalColor(task.priority),
-      start:{date:task.dueDate||dateKey()}, end:{date:gcalNextDay(task.dueDate||dateKey())} })
+    body:JSON.stringify(gcalTaskPayload({...task,dueDate:task.dueDate||dateKey()}))
   });
 }
 
@@ -4798,4 +4816,3 @@ init();
 </script>
 </body>
 </html>
-
