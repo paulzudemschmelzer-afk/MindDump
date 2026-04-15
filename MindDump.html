@@ -1431,6 +1431,26 @@ async function callBrainDumpAI(prompt) {
   }
 }
 
+function enableGroqProxyAndRetry() {
+  S.brainAiMode='groq-proxy';
+  saveSettings();
+  loadBrainAiSettings();
+  toast('Oeffentlichen Groq-Proxy aktiviert');
+  processDump();
+}
+
+function renderBrainAiError(err) {
+  const canOfferProxy = (brainAiMode()==='auto' || brainAiMode()==='groq-direct') && S.groqKey;
+  document.getElementById('dump-result').innerHTML=`<div style="color:var(--red);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:14px;margin-top:16px;font-size:13px;line-height:1.6">
+    <b>Fehler:</b> ${esc(err.message)}
+    ${canOfferProxy?`<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="enableGroqProxyAndRetry()">Proxy bewusst aktivieren & nochmal versuchen</button>
+      <button class="btn btn-ghost btn-sm" onclick="go('settings')">KI-Modus in Settings öffnen</button>
+    </div>
+    <div style="margin-top:8px;color:#fbbf24;font-size:12px">Hinweis: Der öffentliche Proxy kann deinen Groq-Key und Brain-Dump-Inhalt sehen. Sicherer ist OpenClaw/Taurus lokal.</div>`:''}
+  </div>`;
+}
+
 async function processDump() {
   const text=document.getElementById('dump-input').value.trim();
   if(!text){ toast('Bitte erst etwas eintippen!','err'); return; }
@@ -1475,7 +1495,7 @@ ${text}`;
     pendingResult=parsed;
     renderDumpResult(parsed);
   } catch(err) {
-    document.getElementById('dump-result').innerHTML=`<div style="color:var(--red);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:14px;margin-top:16px;font-size:13px"><b>Fehler:</b> ${esc(err.message)}</div>`;
+    renderBrainAiError(err);
   }
   btn.disabled=false; btn.textContent='⚡ Verarbeiten';
 }
