@@ -98,6 +98,10 @@ textarea::placeholder { color:#444; }
 /* HEUTE */
 .heute-drop { min-height:80px; border:2px dashed var(--border); border-radius:10px; padding:14px; margin-bottom:16px; transition:border-color .15s, background .15s; }
 .heute-drop.drag-over { border-color:var(--accent); background:rgba(124,58,237,.06); }
+.heute-quick-add { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.heute-quick-add input[type=text] { min-width:180px; }
+.heute-quick-add select { max-width:145px; }
+.heute-quick-add .quick-est { max-width:145px; }
 .heute-task { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:13px 15px; margin-bottom:7px; display:flex; gap:11px; align-items:flex-start; }
 .heute-drag-handle { width:28px; height:28px; min-width:28px; border-radius:7px; border:1px solid transparent; color:#3a3a3a; cursor:grab; padding:0; font-size:17px; display:flex; align-items:center; justify-content:center; flex-shrink:0; touch-action:none; user-select:none; line-height:1; margin-top:-1px; background:transparent; }
 .heute-drag-handle:hover { color:#666; background:rgba(255,255,255,.03); border-color:#2f2f2f; }
@@ -391,6 +395,8 @@ select option { background:#1c1c1c; }
   .snippet-card .card-actions { position:absolute; top:8px; right:6px; flex-direction:column; gap:2px; }
 
   /* Heute Tasks */
+  .heute-quick-add { padding:10px; gap:7px; }
+  .heute-quick-add input[type=text], .heute-quick-add select, .heute-quick-add .quick-est, .heute-quick-add .btn { flex:1 1 100%; max-width:none; width:100%; }
   .heute-task { position:relative; padding:10px 44px 10px 10px; gap:8px; }
   .heute-task > .icon-btn:last-child { position:absolute; top:8px; right:6px; }
 
@@ -528,6 +534,17 @@ select option { background:#1c1c1c; }
     <div class="page-header header-row">
       <div><h1>Heute</h1><p>Dein Fokus für heute — Tasks reinziehen oder per ☀ markieren.</p></div>
       <button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>
+    </div>
+    <div class="heute-quick-add">
+      <input type="text" id="heute-title" placeholder="Heute-Task schnell erfassen" onkeydown="if(event.key==='Enter')addHeuteQuickTask()" />
+      <select id="heute-prio" title="Prioritaet">
+        <option value="mittel">Mittel</option>
+        <option value="hoch">Hoch</option>
+        <option value="niedrig">Niedrig</option>
+      </select>
+      <select id="heute-kat" title="Kategorie"></select>
+      <input type="text" id="heute-est" class="quick-est" placeholder="Zeit (z.B. 30min)" onkeydown="if(event.key==='Enter')addHeuteQuickTask()" />
+      <button class="btn btn-primary btn-sm" onclick="addHeuteQuickTask()">Speichern</button>
     </div>
     <div class="heute-drop" id="heute-drop"
       ondragover="event.preventDefault();document.getElementById('heute-drop').classList.add('drag-over')"
@@ -923,6 +940,9 @@ function updateFBStatus(ok) {
 // ── UTILS ─────────────────────────────────────────────────────
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2); }
 function esc(s) { if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function dateKey(d=new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function normalizeCategoryKey(name) {
   return (name||'')
     .toLowerCase()
@@ -958,7 +978,7 @@ function nextDueDate(dueDate, recurrence) {
     case 'yearly':  d.setFullYear(d.getFullYear() + 1); break;
     default: return null;
   }
-  return d.toISOString().slice(0,10);
+  return dateKey(d);
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
@@ -993,7 +1013,7 @@ function badges() {
   document.getElementById('b-tasks').textContent=D.tasks.filter(t=>!t.done).length;
   document.getElementById('b-thoughts').textContent=D.thoughts.length;
   document.getElementById('b-snippets').textContent=D.snippets.length;
-  const todayStr=new Date().toISOString().slice(0,10);
+  const todayStr=dateKey();
   document.getElementById('b-heute').textContent=D.tasks.filter(t=>!t.done&&(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr).length;
 }
 
@@ -1087,7 +1107,7 @@ async function processDump() {
    - title: Kurzer Titel
    - context: Ausführlicher Kontext — Warum, Wie, Details, Deadline wenn erwähnt
    - priority: "hoch", "mittel" oder "niedrig"
-   - dueDate: Datum als "YYYY-MM-DD" falls erwähnt, sonst null. Heute ist ${new Date().toISOString().slice(0,10)}.
+   - dueDate: Datum als "YYYY-MM-DD" falls erwähnt, sonst null. Heute ist ${dateKey()}.
    - estimatedTime: Geschätzte Dauer als String (z.B. "30min", "2h", "1h 30min") falls erwähnbar oder schätzbar, sonst null.
 
 2. THOUGHTS: Ideen/Gedanken die KEINE Aufgaben sind.
@@ -1519,6 +1539,12 @@ function renderTaskCategoryInputs() {
     taskSelect.value = [...taskSelect.options].some(o=>o.value===current) ? current : 'auto';
     taskSelect.onchange=()=>updateSubkatSuggestions('t-kat','subkat-sugg-form');
     updateSubkatSuggestions('t-kat','subkat-sugg-form');
+  }
+  const quickSelect = document.getElementById('heute-kat');
+  if(quickSelect) {
+    const current = quickSelect.value || 'auto';
+    quickSelect.innerHTML = renderTaskCategoryOptions(current, true);
+    quickSelect.value = [...quickSelect.options].some(o=>o.value===current) ? current : 'auto';
   }
   const modalSelect = document.getElementById('m-kat');
   if(modalSelect) {
@@ -2307,6 +2333,44 @@ function openEditTask(id){
 let heuteDragId = null;
 let touchDragId = null, touchClone = null, touchDragEl = null, touchDragMoved = false;
 
+async function addHeuteQuickTask(){
+  const titleEl=document.getElementById('heute-title');
+  const prioEl=document.getElementById('heute-prio');
+  const katEl=document.getElementById('heute-kat');
+  const estEl=document.getElementById('heute-est');
+  const title=titleEl?.value.trim()||'';
+  if(!title){ toast('Bitte Task eingeben','err'); titleEl?.focus(); return; }
+  const est=estEl?.value.trim()||null;
+  const katVal=katEl?.value||'auto';
+  const todayStr=dateKey();
+  const todayItems=D.tasks.filter(t=>(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr);
+  const maxOrder=todayItems.reduce((max,t)=>Math.max(max, t.heuteOrder ?? -10), -10);
+  await fsAdd('tasks',{
+    id:uid(),
+    title,
+    context:'',
+    priority:prioEl?.value||'mittel',
+    kategorie:katVal==='auto'?autoKategorie(title,''):katVal,
+    subkategorie:null,
+    dueDate:null,
+    estimatedTime:est,
+    recurrence:null,
+    tags:[],
+    forToday:true,
+    heuteOrder:maxOrder+10,
+    done:false,
+    createdAt:Date.now()
+  });
+  titleEl.value='';
+  if(estEl) estEl.value='';
+  if(prioEl) prioEl.value='mittel';
+  if(katEl) katEl.value='auto';
+  renderHeute();
+  badges();
+  titleEl.focus();
+  toast('Heute-Task gespeichert');
+}
+
 function heuteDragStart(e, id) {
   heuteDragId = id;
   e.dataTransfer.effectAllowed = 'move';
@@ -2314,7 +2378,7 @@ function heuteDragStart(e, id) {
 }
 
 async function reorderHeuteTasks(dragId, targetId) {
-  const todayStr = new Date().toISOString().slice(0,10);
+  const todayStr = dateKey();
   const sorted = D.tasks.filter(t=>(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr)
     .sort((a,b)=>(a.heuteOrder??9999)-(b.heuteOrder??9999));
   const origIdx = sorted.findIndex(t=>t.id===dragId);
@@ -2380,7 +2444,7 @@ async function heuteTouchEnd(e) {
 }
 
 function renderHeute() {
-  const todayStr = new Date().toISOString().slice(0,10);
+  const todayStr = dateKey();
   const list = D.tasks.filter(t => (t.forToday || t.dueDate === todayStr) && t.hideFromHeute !== todayStr)
     .sort((a,b) => {
       if(a.done!==b.done) return a.done?1:-1;
@@ -2439,7 +2503,7 @@ async function dropHeute(e) {
 async function removeFromHeute(id) {
   const t = D.tasks.find(x => x.id === id);
   if(!t) return;
-  const todayStr = new Date().toISOString().slice(0,10);
+  const todayStr = dateKey();
   if(t.forToday) t.forToday = false;
   if(t.dueDate === todayStr) t.hideFromHeute = todayStr;
   await fsUpdate('tasks', t);
@@ -2449,7 +2513,7 @@ async function removeFromHeute(id) {
 
 async function clearHeute() {
   if(!confirm('Heute-Liste leeren? (Tasks bleiben erhalten)')) return;
-  const todayStr = new Date().toISOString().slice(0,10);
+  const todayStr = dateKey();
   const ps = D.tasks.filter(t => t.forToday).map(t => { t.forToday=false; return fsUpdate('tasks',t); });
   await Promise.all(ps);
   renderHeute();
@@ -2464,7 +2528,7 @@ function getWeekDays() {
   monday.setDate(today.getDate()-(dow===0?6:dow-1)+weekOffset*7);
   return Array.from({length:7},(_,i)=>{ const d=new Date(monday); d.setDate(monday.getDate()+i); return d; });
 }
-function dateStr(d) { return d.toISOString().slice(0,10); }
+function dateStr(d) { return dateKey(d); }
 function getKW(d) { const jan4=new Date(d.getFullYear(),0,4); return Math.ceil(((d-jan4)/86400000+jan4.getDay()+1)/7); }
 
 function parseEstMins(est) {
@@ -2615,10 +2679,14 @@ function renderWeek() {
       return (a.dayOrder??a.createdAt??0)-(b.dayOrder??b.createdAt??0);
     });
 
-    html+=`<div class="ap-day-col ${isToday?'today-col':''}" style="height:${gridH}px"
+    html+=`<div class="ap-day-col ${isToday?'today-col':''}" style="height:${gridH}px" data-date="${ds}"
       ondragover="event.preventDefault();this.classList.add('drag-over')"
       ondragleave="this.classList.remove('drag-over')"
-      ondrop="dropTask(event,'${ds}');this.classList.remove('drag-over')">`;
+      ondrop="dropTask(event,'${ds}');this.classList.remove('drag-over')"
+      onclick="calColClick(event,'${ds}')"
+      ontouchstart="calColTouchStart(event,'${ds}')"
+      ontouchmove="calColTouchMove(event)"
+      ontouchend="calColTouchEnd(event)">`;
 
     // Hour lines
     for(let h=0;h<(END_H-START_H);h++){
@@ -2649,6 +2717,9 @@ function renderWeek() {
         ondragleave="this.classList.remove('reorder-target')"
         ondrop="this.classList.remove('reorder-target');reorderTask(event,'${t.id}','${ds}')"
         onclick="openCalEvent(event,'${t.id}')"
+        ontouchstart="calEventTouchStart(event,'${t.id}')"
+        ontouchmove="calEventTouchMove(event,'${t.id}')"
+        ontouchend="calEventTouchEnd(event)"
         title="${esc(t.title)}${timeLabel?' ('+timeLabel+')':''}">
         <div class="ap-event-title">${timeLabel?`<span style="opacity:.6;font-size:10px">${timeLabel}</span> `:''}${esc(t.title.length>22?t.title.slice(0,22)+'…':t.title)}</div>
         ${t.estimatedTime&&h>28?`<div class="ap-event-dur">${t.estimatedTime}</div>`:''}
@@ -2690,6 +2761,110 @@ function addCalTask(ds) {
   document.getElementById('add-task-form').style.display='block';
   document.getElementById('t-date').value=ds;
   setTimeout(()=>document.getElementById('t-title').focus(),100);
+}
+
+// ── CALENDAR TOUCH DRAG ──────────────────────────────────────
+let calTouchId=null, calTouchClone=null, calTouchMoved=false;
+
+function calEventTouchStart(e, id) {
+  e.stopPropagation(); // prevent column long-press
+  calTouchId=id; calTouchMoved=false;
+}
+
+function calEventTouchMove(e, id) {
+  if(!calTouchId) return;
+  e.preventDefault();
+  calTouchMoved=true;
+  const touch=e.touches[0];
+  if(!calTouchClone) {
+    const el=e.target.closest('.ap-event');
+    if(!el) return;
+    calTouchClone=el.cloneNode(true);
+    const rect=el.getBoundingClientRect();
+    Object.assign(calTouchClone.style,{position:'fixed',width:rect.width+'px',opacity:'.8',pointerEvents:'none',zIndex:'9999',boxShadow:'0 8px 24px rgba(0,0,0,.5)',borderRadius:'6px',transform:'scale(1.03)'});
+    document.body.appendChild(calTouchClone);
+  }
+  calTouchClone.style.left=(touch.clientX-40)+'px';
+  calTouchClone.style.top=(touch.clientY-20)+'px';
+  document.querySelectorAll('.ap-day-col').forEach(c=>c.classList.remove('drag-over'));
+  const under=document.elementFromPoint(touch.clientX,touch.clientY);
+  const col=under?.closest('.ap-day-col');
+  if(col) col.classList.add('drag-over');
+}
+
+async function calEventTouchEnd(e) {
+  if(!calTouchId) return;
+  if(calTouchClone){calTouchClone.remove();calTouchClone=null;}
+  document.querySelectorAll('.ap-day-col').forEach(c=>c.classList.remove('drag-over'));
+  if(!calTouchMoved){calTouchId=null;return;} // was a tap, not a drag
+  const touch=e.changedTouches[0];
+  const under=document.elementFromPoint(touch.clientX,touch.clientY);
+  const col=under?.closest('.ap-day-col');
+  if(col&&col.dataset.date) {
+    const t=D.tasks.find(x=>x.id===calTouchId);
+    if(t) {
+      t.calStartTime=yToTime(touch.clientY,col);
+      t.dueDate=col.dataset.date;
+      await fsUpdate('tasks',t);
+      renderWeek();
+    }
+  }
+  calTouchId=null;
+}
+
+function yToTime(clientY, col) {
+  const rect=col.getBoundingClientRect();
+  const y=clientY-rect.top;
+  let mins=Math.round((CAL_START_H*60+y/CAL_PX_PER_MIN)/15)*15;
+  mins=Math.max(CAL_START_H*60,Math.min(mins,CAL_END_H*60-15));
+  return String(Math.floor(mins/60)).padStart(2,'0')+':'+String(mins%60).padStart(2,'0');
+}
+
+// ── CALENDAR LONG-PRESS / CLICK TO ADD ───────────────────────
+let calLPTimer=null;
+
+function calColTouchStart(e, ds) {
+  if(e.target.closest('.ap-event')||e.target.closest('.ap-add-btn')) return;
+  const touch=e.touches[0];
+  const col=e.currentTarget;
+  calLPTimer=setTimeout(()=>{
+    calLPTimer=null;
+    const time=yToTime(touch.clientY,col);
+    openQuickAddCal(ds,time);
+  },500);
+}
+function calColTouchMove(){if(calLPTimer){clearTimeout(calLPTimer);calLPTimer=null;}}
+function calColTouchEnd(){if(calLPTimer){clearTimeout(calLPTimer);calLPTimer=null;}}
+
+function calColClick(e, ds) {
+  if(e.target.closest('.ap-event')||e.target.closest('.ap-add-btn')) return;
+  const col=e.currentTarget;
+  const time=yToTime(e.clientY,col);
+  openQuickAddCal(ds,time);
+}
+
+function openQuickAddCal(ds, time) {
+  modalMode={type:'cal-quick-add',date:ds,time:time};
+  document.getElementById('modal-title').textContent='Neuer Task';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><input type="text" id="m-qa-title" placeholder="Was steht an?" /></div>
+    <div class="form-row">
+      <label style="font-size:12px;color:var(--sub);min-width:50px">Zeit:</label>
+      <input type="time" id="m-qa-time" value="${time}" style="max-width:130px" />
+      <label style="font-size:12px;color:var(--sub);min-width:50px;margin-left:8px">Dauer:</label>
+      <input type="text" id="m-qa-est" value="1h" placeholder="z.B. 30min, 2h" style="max-width:130px" />
+    </div>
+    <div class="form-row">
+      <select id="m-qa-prio" style="max-width:130px">
+        <option value="hoch">🔴 Hoch</option>
+        <option value="mittel" selected>🟡 Mittel</option>
+        <option value="niedrig">🟢 Niedrig</option>
+      </select>
+      <select id="m-qa-kat" style="max-width:160px">${renderTaskCategoryOptions('sonstiges')}</select>
+      <input type="date" id="m-qa-date" value="${ds}" style="max-width:160px" />
+    </div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-qa-title').focus(),100);
 }
 
 // ── THOUGHTS ─────────────────────────────────────────────────
@@ -3082,6 +3257,17 @@ async function saveModal(){
     t.priority=document.getElementById('m-cal-prio').value;
     t.dueDate=document.getElementById('m-cal-date').value||null;
     await fsUpdate('tasks',t); closeModal(); toast('Event aktualisiert!');
+  } else if(modalMode.type==='cal-quick-add'){
+    const title=document.getElementById('m-qa-title').value.trim();
+    if(!title){toast('Titel eingeben','err');return;}
+    const task={id:uid(),title,context:'',priority:document.getElementById('m-qa-prio').value,
+      kategorie:document.getElementById('m-qa-kat').value,subkategorie:null,
+      dueDate:document.getElementById('m-qa-date').value||modalMode.date,
+      calStartTime:document.getElementById('m-qa-time').value||modalMode.time,
+      estimatedTime:document.getElementById('m-qa-est').value.trim()||'1h',
+      done:false,createdAt:Date.now(),tags:[],recurrence:null};
+    D.tasks.push(task); await fsUpdate('tasks',task);
+    closeModal(); toast('Task erstellt!');
   }
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
@@ -3102,7 +3288,7 @@ function exportData(){
     thoughtCategoryLabels:S.thoughtCategoryLabels||{}
   }},null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download='minddump-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url);
+  const a=document.createElement('a'); a.href=url; a.download='minddump-'+dateKey()+'.json'; a.click(); URL.revokeObjectURL(url);
 }
 function importTrigger(){ document.getElementById('import-file').click(); }
 function importData(e){
@@ -3415,7 +3601,7 @@ function updateGCalBtn(){
   else { btn.textContent='Mit Google Calendar verbinden'; btn.style.background=''; btn.style.borderColor=''; btn.style.color=''; btn.onclick=connectGCal; }
 }
 
-function gcalNextDay(ds){ const d=new Date(ds); d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); }
+function gcalNextDay(ds){ const d=new Date(ds+'T12:00:00'); d.setDate(d.getDate()+1); return dateKey(d); }
 function gcalColor(p){ return p==='hoch'?'11':p==='niedrig'?'10':'9'; }
 
 async function gcalCreate(task){
@@ -3434,7 +3620,7 @@ async function gcalUpdate(task){
   await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.gcalEventId}`,{
     method:'PUT', headers:{'Authorization':'Bearer '+gcalToken,'Content-Type':'application/json'},
     body:JSON.stringify({ summary:task.title, description:task.context||'', colorId:gcalColor(task.priority),
-      start:{date:task.dueDate||new Date().toISOString().slice(0,10)}, end:{date:gcalNextDay(task.dueDate||new Date().toISOString().slice(0,10))} })
+      start:{date:task.dueDate||dateKey()}, end:{date:gcalNextDay(task.dueDate||dateKey())} })
   });
 }
 
