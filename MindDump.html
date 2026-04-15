@@ -1499,115 +1499,101 @@ function getExistingTopics() {
 
 function renderDumpResult(p) {
   const tasks=p.tasks||[], thoughts=p.thoughts||[], habits=p.habits||[];
+  // Merge all items into one flat list with type
+  const allItems=[];
+  tasks.forEach(t=> allItems.push({...t, _type:'task'}));
+  thoughts.forEach(t=> allItems.push({...t, _type:'note'}));
+  habits.forEach(h=> allItems.push({...h, _type:'habit'}));
+  pendingResult._allItems = allItems;
 
   let html='<div class="result-block">';
+  html+=`<div class="section-label" style="margin-top:24px">${allItems.length} Ergebnis${allItems.length>1?'se':''} — Typ wählen, bearbeiten & speichern</div>`;
 
-  if(tasks.length){
-    html+=`<div class="section-label" style="margin-top:24px">✓ ${tasks.length} Task${tasks.length>1?'s':''} — bearbeiten & auswählen</div>`;
-    tasks.forEach((t,i)=>{
-      const autoKat=autoKategorie(t.title||'', t.context||'');
-      html+=`<div class="dump-check">
-        <input type="checkbox" id="dt-${i}" checked onchange="updateSelCount()">
-        <div class="task-card" style="flex:1;margin-bottom:0">
-          <div class="task-body" style="width:100%">
-            <div class="form-row" style="margin-bottom:6px">
-              <input type="text" id="dt-title-${i}" value="${esc(t.title)}" placeholder="Titel" style="font-weight:500" />
-            </div>
-            <div class="form-row" style="margin-bottom:6px">
-              <textarea class="form-ta" id="dt-ctx-${i}" placeholder="Kontext / Details" style="min-height:50px;font-size:13px">${esc(t.context||'')}</textarea>
-            </div>
+  allItems.forEach((item,i)=>{
+    const isTask = item._type==='task';
+    const autoKat = isTask ? autoKategorie(item.title||'',item.context||'') : 'sonstiges';
+    html+=`<div class="dump-check" id="di-wrap-${i}">
+      <input type="checkbox" id="di-${i}" checked onchange="updateSelCount()">
+      <div class="task-card" style="flex:1;margin-bottom:0">
+        <div class="task-body" style="width:100%">
+          <div class="form-row" style="margin-bottom:8px">
+            <select class="topic-inp-sm" id="di-type-${i}" onchange="toggleDumpItemType(${i})" style="min-width:100px;font-weight:600;background:${item._type==='task'?'rgba(124,58,237,.15)':item._type==='habit'?'rgba(245,158,11,.15)':'rgba(16,185,129,.15)'};border-color:${item._type==='task'?'rgba(124,58,237,.3)':item._type==='habit'?'rgba(245,158,11,.3)':'rgba(16,185,129,.3)'}">
+              <option value="task" ${item._type==='task'?'selected':''}>✓ Task</option>
+              <option value="note" ${item._type==='note'?'selected':''}>📝 Notiz</option>
+              <option value="habit" ${item._type==='habit'?'selected':''}>🔄 Habit</option>
+            </select>
+          </div>
+          <div class="form-row" style="margin-bottom:6px">
+            <input type="text" id="di-title-${i}" value="${esc(isTask ? item.title : (item.content||'').split('\\n')[0].slice(0,80))}" placeholder="Titel" style="font-weight:500" />
+          </div>
+          <div class="form-row" style="margin-bottom:6px">
+            <textarea class="form-ta" id="di-text-${i}" placeholder="Inhalt / Kontext" style="min-height:50px;font-size:13px">${esc(isTask ? (item.context||'') : (item.content||''))}</textarea>
+          </div>
+          <div id="di-task-fields-${i}" style="${item._type==='task'?'':'display:none'}">
             <div class="dump-task-routing">
-              <select class="topic-inp-sm" id="dt-prio-${i}" style="min-width:110px">
-                <option value="hoch" ${(t.priority||'mittel')==='hoch'?'selected':''}>🔴 Hoch</option>
-                <option value="mittel" ${(t.priority||'mittel')==='mittel'?'selected':''}>🟡 Mittel</option>
-                <option value="niedrig" ${(t.priority||'mittel')==='niedrig'?'selected':''}>🟢 Niedrig</option>
+              <select class="topic-inp-sm" id="di-prio-${i}" style="min-width:110px">
+                <option value="hoch" ${(item.priority||'mittel')==='hoch'?'selected':''}>🔴 Hoch</option>
+                <option value="mittel" ${(item.priority||'mittel')==='mittel'?'selected':''}>🟡 Mittel</option>
+                <option value="niedrig" ${(item.priority||'mittel')==='niedrig'?'selected':''}>🟢 Niedrig</option>
               </select>
-              <select class="topic-inp-sm" id="dt-kat-${i}" onchange="updateDumpTaskSubkatSuggestions(${i})" style="min-width:150px">${renderTaskCategoryOptions(autoKat)}</select>
-              <input class="topic-inp-sm" id="dt-subkat-${i}" list="dt-subkat-list-${i}" placeholder="Sub (optional)" style="min-width:130px" />
-              <datalist id="dt-subkat-list-${i}"></datalist>
+              <select class="topic-inp-sm" id="di-kat-${i}" onchange="updateDumpItemSubkat(${i})" style="min-width:150px">${renderTaskCategoryOptions(autoKat)}</select>
+              <input class="topic-inp-sm" id="di-subkat-${i}" list="di-subkat-list-${i}" placeholder="Sub (optional)" style="min-width:130px" />
+              <datalist id="di-subkat-list-${i}"></datalist>
             </div>
             <div class="dump-task-routing" style="margin-top:4px">
-              <input type="date" class="topic-inp-sm" id="dt-date-${i}" value="${t.dueDate&&t.dueDate!=='null'?t.dueDate:''}" style="min-width:140px" />
-              <input type="text" class="topic-inp-sm" id="dt-est-${i}" value="${esc(t.estimatedTime&&t.estimatedTime!=='null'?t.estimatedTime:'')}" placeholder="Geschätzte Zeit" style="min-width:130px" />
+              <input type="date" class="topic-inp-sm" id="di-date-${i}" value="${item.dueDate&&item.dueDate!=='null'?item.dueDate:''}" style="min-width:140px" />
+              <input type="text" class="topic-inp-sm" id="di-est-${i}" value="${esc(item.estimatedTime&&item.estimatedTime!=='null'?item.estimatedTime:'')}" placeholder="Geschätzte Zeit" style="min-width:130px" />
+            </div>
+          </div>
+          <div id="di-habit-fields-${i}" style="${item._type==='habit'?'':'display:none'}">
+            <div class="form-row" style="margin-bottom:4px"><input type="text" id="di-hstatement-${i}" value="${esc(item.statement||'')}" placeholder="Ich mache [Aktion] [Frequenz]" /></div>
+            <div class="dump-task-routing">
+              <input type="number" class="topic-inp-sm" id="di-hfreq-${i}" min="1" max="14" value="${item.frequencyCount||3}" style="max-width:80px" title="Ziel/Woche" />
+              <input type="text" class="topic-inp-sm" id="di-hcue-${i}" value="${esc(item.cue||'')}" placeholder="Trigger/Cue" style="min-width:120px" />
+              <input type="text" class="topic-inp-sm" id="di-hreward-${i}" value="${esc(item.reward||'')}" placeholder="Belohnung" style="min-width:120px" />
             </div>
           </div>
         </div>
-      </div><div style="margin-bottom:8px"></div>`;
-    });
-  }
+      </div>
+    </div><div style="margin-bottom:8px"></div>`;
+  });
 
-  if(thoughts.length){
-    html+=`<div class="section-label" style="margin-top:20px">📝 ${thoughts.length} Notiz${thoughts.length>1?'en':''} — bearbeiten</div>`;
-    thoughts.forEach((t,i)=>{
-      html+=`<div class="dump-check">
-        <input type="checkbox" id="dth-${i}" checked onchange="updateSelCount()">
-        <div style="flex:1">
-          <div class="form-row" style="margin-bottom:6px">
-            <textarea class="form-ta" id="dth-text-${i}" style="min-height:50px;font-size:13px">${esc(t.content)}</textarea>
-          </div>
-        </div>
-      </div><div style="margin-bottom:10px"></div>`;
-    });
-  }
-
-  if(habits.length){
-    html+=`<div class="section-label" style="margin-top:20px">HP ${habits.length} Habit${habits.length>1?'s':''} — bearbeiten & auswählen</div>`;
-    habits.forEach((h,i)=>{
-      html+=`<div class="dump-check">
-        <input type="checkbox" id="dh-${i}" checked onchange="updateSelCount()">
-        <div class="habit-card" style="flex:1;margin-bottom:0">
-          <div class="form-row" style="margin-bottom:6px">
-            <input type="text" id="dh-name-${i}" value="${esc(h.name||'')}" placeholder="Name" style="font-weight:500" />
-            <input type="number" id="dh-frequency-${i}" min="1" max="14" value="${esc(h.frequencyCount||3)}" style="max-width:120px" title="Ziel pro Woche" />
-          </div>
-          <div class="form-row" style="margin-bottom:6px">
-            <input type="text" id="dh-statement-${i}" value="${esc(h.statement||'')}" placeholder="Ich mache [Aktion] [Frequenz]" />
-          </div>
-          <div class="form-row" style="margin-bottom:6px">
-            <input type="text" id="dh-end-${i}" value="${esc(h.endGoal||'')}" placeholder="Endziel" />
-          </div>
-          <div class="form-row" style="margin-bottom:6px">
-            <input type="text" id="dh-identity-${i}" value="${esc(h.identityGoal||'')}" placeholder="Identität: Ich bin jemand, der ..." />
-          </div>
-          <div class="form-row" style="margin-bottom:6px">
-            <input type="text" id="dh-cue-${i}" value="${esc(h.cue||'')}" placeholder="Trigger/Cue" />
-            <input type="text" id="dh-reward-${i}" value="${esc(h.reward||'')}" placeholder="Belohnung" />
-          </div>
-          <div class="form-row" style="margin-bottom:6px">
-            <input type="text" id="dh-minimum-${i}" value="${esc(h.minimumVersion||'2 Minuten Minimalversion')}" placeholder="Minimalversion" />
-          </div>
-          <div class="form-row" style="margin-bottom:0">
-            <input type="number" id="dh-warn-${i}" min="1" max="60" value="${esc(h.decayWarnDays||7)}" style="max-width:145px" title="Warnung nach Tagen ohne Check-in" />
-            <input type="number" id="dh-danger-${i}" min="2" max="120" value="${esc(h.decayDangerDays||21)}" style="max-width:145px" title="Hoher Decay nach Tagen ohne Check-in" />
-            <input type="text" id="dh-why-${i}" value="${esc(h.why||'')}" placeholder="Warum?" />
-          </div>
-        </div>
-      </div><div style="margin-bottom:10px"></div>`;
-    });
-  }
-
-  const total=tasks.length+thoughts.length+habits.length;
-  if(total>0){
+  if(allItems.length>0){
     html+=`<div class="save-sel-row">
-      <button class="btn btn-primary" id="save-sel-btn" onclick="saveSelected()">✓ Ausgewählte speichern (<span id="sel-count">${total}</span>)</button>
+      <button class="btn btn-primary" id="save-sel-btn" onclick="saveSelected()">✓ Ausgewählte speichern (<span id="sel-count">${allItems.length}</span>)</button>
       <button class="btn btn-ghost" onclick="document.getElementById('dump-result').innerHTML='';pendingResult=null">Verwerfen</button>
     </div>`;
   }
   html+='</div>';
   document.getElementById('dump-result').innerHTML=html;
-  tasks.forEach((t,i)=>{
-    updateDumpTaskSubkatSuggestions(i);
-  });
+  allItems.forEach((item,i)=>{ if(item._type==='task') updateDumpItemSubkat(i); });
+}
+
+function toggleDumpItemType(i) {
+  const sel=document.getElementById('di-type-'+i);
+  const taskFields=document.getElementById('di-task-fields-'+i);
+  const habitFields=document.getElementById('di-habit-fields-'+i);
+  if(!sel) return;
+  const v=sel.value;
+  if(taskFields) taskFields.style.display=v==='task'?'':'none';
+  if(habitFields) habitFields.style.display=v==='habit'?'':'none';
+  const colors={task:['rgba(124,58,237,.15)','rgba(124,58,237,.3)'],note:['rgba(16,185,129,.15)','rgba(16,185,129,.3)'],habit:['rgba(245,158,11,.15)','rgba(245,158,11,.3)']};
+  sel.style.background=colors[v][0]; sel.style.borderColor=colors[v][1];
+}
+
+function updateDumpItemSubkat(i) {
+  const sel=document.getElementById('di-kat-'+i);
+  const dl=document.getElementById('di-subkat-list-'+i);
+  if(!sel||!dl) return;
+  const kat=sel.value;
+  const existing=[...getExistingSubcategories(kat),...getChildCategoryKeys(kat).map(k=>getTaskCategoryLabel(k))];
+  dl.innerHTML=[...new Set(existing)].sort().map(name=>`<option value="${esc(name)}">`).join('');
 }
 
 function updateSelCount() {
-  const tasks=(pendingResult?.tasks||[]).length;
-  const thoughts=(pendingResult?.thoughts||[]).length;
-  const habits=(pendingResult?.habits||[]).length;
+  const items=pendingResult?._allItems||[];
   let count=0;
-  for(let i=0;i<tasks;i++) if(document.getElementById('dt-'+i)?.checked) count++;
-  for(let i=0;i<thoughts;i++) if(document.getElementById('dth-'+i)?.checked) count++;
-  for(let i=0;i<habits;i++) if(document.getElementById('dh-'+i)?.checked) count++;
+  for(let i=0;i<items.length;i++) if(document.getElementById('di-'+i)?.checked) count++;
   const el=document.getElementById('sel-count');
   if(el) el.textContent=count;
 }
@@ -1631,60 +1617,54 @@ function updateDumpThoughtSubtopic(i) {
 }
 
 async function saveSelected() {
-  if(!pendingResult) return;
+  if(!pendingResult?._allItems) return;
   const ps=[];
-  let nt=0, nth=0, nh=0;
-  (pendingResult.tasks||[]).forEach((t,i)=>{
-    if(document.getElementById('dt-'+i)?.checked){
-      const title=document.getElementById('dt-title-'+i)?.value.trim()||t.title;
-      const context=document.getElementById('dt-ctx-'+i)?.value.trim()||'';
-      const priority=document.getElementById('dt-prio-'+i)?.value||'mittel';
-      const kategorie=document.getElementById('dt-kat-'+i)?.value||autoKategorie(title,context);
-      const subkategorie=document.getElementById('dt-subkat-'+i)?.value.trim()||null;
-      const dueDate=document.getElementById('dt-date-'+i)?.value||null;
-      const estimatedTime=document.getElementById('dt-est-'+i)?.value.trim()||null;
+  let nt=0, nn=0, nh=0;
+  pendingResult._allItems.forEach((item,i)=>{
+    if(!document.getElementById('di-'+i)?.checked) return;
+    const type=document.getElementById('di-type-'+i)?.value||item._type;
+    const title=document.getElementById('di-title-'+i)?.value.trim()||'Ohne Titel';
+    const text=document.getElementById('di-text-'+i)?.value.trim()||'';
+
+    if(type==='task') {
+      const priority=document.getElementById('di-prio-'+i)?.value||'mittel';
+      const kategorie=document.getElementById('di-kat-'+i)?.value||autoKategorie(title,text);
+      const subkategorie=document.getElementById('di-subkat-'+i)?.value.trim()||null;
+      const dueDate=document.getElementById('di-date-'+i)?.value||null;
+      const estimatedTime=document.getElementById('di-est-'+i)?.value.trim()||null;
       if(subkategorie) ensureTaskSubcategory(kategorie, subkategorie);
-      ps.push(fsAdd('tasks',{id:uid(),title,context,priority,kategorie,subkategorie,dueDate,estimatedTime,done:false,createdAt:Date.now()}));
+      ps.push(fsAdd('tasks',{id:uid(),title,context:text,priority,kategorie,subkategorie,dueDate,estimatedTime,done:false,createdAt:Date.now()}));
       nt++;
-    }
-  });
-  (pendingResult.thoughts||[]).forEach((t,i)=>{
-    if(document.getElementById('dth-'+i)?.checked){
-      const content=document.getElementById('dth-text-'+i)?.value.trim()||t.content;
-      const title=content.split('\n')[0].trim().slice(0,80)||'Notiz';
-      ps.push(fsAdd('notes',{id:uid(),title,html:'<p>'+esc(content).replace(/\n/g,'</p><p>')+'</p>',canvasData:null,created:new Date().toISOString(),updated:new Date().toISOString()}));
-      nth++;
-    }
-  });
-  (pendingResult.habits||[]).forEach((h,i)=>{
-    if(document.getElementById('dh-'+i)?.checked){
-      const name=document.getElementById('dh-name-'+i)?.value.trim()||h.name||'Neue Gewohnheit';
+    } else if(type==='habit') {
       ps.push(fsAdd('habits',{
-        id:uid(),
-        name,
-        statement:document.getElementById('dh-statement-'+i)?.value.trim()||h.statement||name,
-        endGoal:document.getElementById('dh-end-'+i)?.value.trim()||h.endGoal||'',
-        identityGoal:document.getElementById('dh-identity-'+i)?.value.trim()||h.identityGoal||'',
-        why:document.getElementById('dh-why-'+i)?.value.trim()||h.why||'',
-        cue:document.getElementById('dh-cue-'+i)?.value.trim()||h.cue||'',
-        reward:document.getElementById('dh-reward-'+i)?.value.trim()||h.reward||'',
-        minimumVersion:document.getElementById('dh-minimum-'+i)?.value.trim()||h.minimumVersion||'2 Minuten Minimalversion',
-        frequencyCount:Math.max(1, Number(document.getElementById('dh-frequency-'+i)?.value)||Number(h.frequencyCount)||3),
+        id:uid(), name:title,
+        statement:document.getElementById('di-hstatement-'+i)?.value.trim()||item.statement||title,
+        endGoal:item.endGoal||'', identityGoal:item.identityGoal||'',
+        why:item.why||'',
+        cue:document.getElementById('di-hcue-'+i)?.value.trim()||item.cue||'',
+        reward:document.getElementById('di-hreward-'+i)?.value.trim()||item.reward||'',
+        minimumVersion:item.minimumVersion||'2 Minuten Minimalversion',
+        frequencyCount:Math.max(1, Number(document.getElementById('di-hfreq-'+i)?.value)||Number(item.frequencyCount)||3),
         frequencyPeriod:'week',
-        decayWarnDays:Math.max(1, Number(document.getElementById('dh-warn-'+i)?.value)||Number(h.decayWarnDays)||7),
-        decayDangerDays:Math.max(2, Number(document.getElementById('dh-danger-'+i)?.value)||Number(h.decayDangerDays)||21),
-        checkins:[],
-        archived:false,
-        createdAt:Date.now()
+        decayWarnDays:Number(item.decayWarnDays)||7,
+        decayDangerDays:Number(item.decayDangerDays)||21,
+        checkins:[], archived:false, createdAt:Date.now()
       }));
       nh++;
+    } else {
+      ps.push(fsAdd('notes',{id:uid(),title,html:'<p>'+esc(text).replace(/\n/g,'</p><p>')+'</p>',canvasData:null,created:new Date().toISOString(),updated:new Date().toISOString()}));
+      nn++;
     }
   });
   await Promise.all(ps);
   pendingResult=null;
   document.getElementById('dump-result').innerHTML='';
   document.getElementById('dump-input').value='';
-  toast(`Gespeichert: ${nt} Task${nt!==1?'s':''}, ${nth} Notiz${nth!==1?'en':''}, ${nh} Habit${nh!==1?'s':''}`);
+  const parts=[];
+  if(nt) parts.push(`${nt} Task${nt!==1?'s':''}`);
+  if(nn) parts.push(`${nn} Notiz${nn!==1?'en':''}`);
+  if(nh) parts.push(`${nh} Habit${nh!==1?'s':''}`);
+  toast('Gespeichert: '+parts.join(', '));
 }
 
 // ── TASKS ─────────────────────────────────────────────────────
