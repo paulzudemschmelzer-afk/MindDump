@@ -2952,7 +2952,17 @@ function switchCalTab(tab) {
 
 function filterCalAssign() {
   const q=(document.getElementById('cal-assign-search')?.value||'').toLowerCase();
-  const list=D.tasks.filter(t=>!t.done&&t.title.toLowerCase().includes(q)).slice(0,20);
+  const todayStr=dateKey();
+  const isToday=modalMode&&modalMode.date===todayStr;
+  const list=D.tasks.filter(t=>!t.done&&t.title.toLowerCase().includes(q))
+    .sort((a,b)=>{
+      if(isToday){
+        const aH=a.forToday||a.dueDate===todayStr?1:0;
+        const bH=b.forToday||b.dueDate===todayStr?1:0;
+        if(aH!==bH) return bH-aH;
+      }
+      return 0;
+    }).slice(0,20);
   const el=document.getElementById('cal-assign-list');
   if(!list.length){el.innerHTML='<div style="padding:12px;color:var(--sub);font-size:13px">Keine Tasks gefunden</div>';return;}
   const prioIcon={hoch:'🔴',mittel:'🟡',niedrig:'🟢'};
