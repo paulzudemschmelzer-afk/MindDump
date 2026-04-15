@@ -499,8 +499,10 @@ select option { background:#1c1c1c; }
         <button class="btn btn-ghost btn-sm" onclick="openNewTaskCategoryPrompt('t-kat')">+ Kategorie</button>
       </div>
       <div class="form-row">
-        <input type="text" id="t-subkat" placeholder="Subkategorie (optional, z.B. MindDump)" list="subkat-sugg-form" style="max-width:260px" />
-        <datalist id="subkat-sugg-form"></datalist>
+        <select id="t-subkat" onchange="onSubkatSelectChange('t-subkat','t-subkat-new')">
+          <option value="">— Keine Subkategorie —</option>
+        </select>
+        <input type="text" id="t-subkat-new" placeholder="Neue Subkategorie..." style="display:none;max-width:200px" />
       </div>
       <div class="form-row">
         <input type="date" id="t-date" style="max-width:175px" title="Fälligkeitsdatum (optional)" />
@@ -1540,12 +1542,33 @@ function renderTaskCategoryOptions(selected='sonstiges', includeAuto=false) {
   return options.join('');
 }
 
-function updateSubkatSuggestions(selectId, datalistId) {
-  const sel=document.getElementById(selectId);
-  const dl=document.getElementById(datalistId);
-  if(!sel||!dl) return;
-  const kat=sel.value==='auto'?'':sel.value;
-  dl.innerHTML=kat?getExistingSubcategories(kat).map(s=>`<option value="${esc(s)}">`).join(''):'';
+function onSubkatSelectChange(selId, newInputId) {
+  const sel=document.getElementById(selId);
+  const ni=document.getElementById(newInputId);
+  if(!sel||!ni) return;
+  if(sel.value==='__new__') { ni.style.display=''; ni.focus(); }
+  else { ni.style.display='none'; ni.value=''; }
+}
+
+function updateSubkatSuggestions(katSelectId, subkatId) {
+  const katSel=document.getElementById(katSelectId);
+  const subkEl=document.getElementById(subkatId);
+  if(!katSel||!subkEl) return;
+  const kat=katSel.value==='auto'?'':katSel.value;
+  const subs=kat?getExistingSubcategories(kat):[];
+  if(subkEl.tagName==='SELECT') {
+    const cur=subkEl.value;
+    subkEl.innerHTML=`<option value="">— Keine Subkategorie —</option>`
+      +subs.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')
+      +`<option value="__new__">+ Neue eingeben…</option>`;
+    subkEl.value=subs.includes(cur)?cur:'';
+    // Reset the new-input when kat changes
+    const newId=subkEl.id.replace('t-subkat','t-subkat-new').replace('m-subkat','m-subkat-new');
+    const ni=document.getElementById(newId);
+    if(ni){ni.style.display='none';ni.value='';}
+  } else {
+    subkEl.innerHTML=subs.map(s=>`<option value="${esc(s)}">`).join('');
+  }
 }
 
 function renderTaskCategoryInputs() {
@@ -1554,8 +1577,8 @@ function renderTaskCategoryInputs() {
     const current = taskSelect.value || 'auto';
     taskSelect.innerHTML = renderTaskCategoryOptions(current, true);
     taskSelect.value = [...taskSelect.options].some(o=>o.value===current) ? current : 'auto';
-    taskSelect.onchange=()=>updateSubkatSuggestions('t-kat','subkat-sugg-form');
-    updateSubkatSuggestions('t-kat','subkat-sugg-form');
+    taskSelect.onchange=()=>updateSubkatSuggestions('t-kat','t-subkat');
+    updateSubkatSuggestions('t-kat','t-subkat');
   }
   const quickSelect = document.getElementById('heute-kat');
   if(quickSelect) {
@@ -1568,7 +1591,7 @@ function renderTaskCategoryInputs() {
     const current = modalSelect.value || 'sonstiges';
     modalSelect.innerHTML = renderTaskCategoryOptions(current, false);
     modalSelect.value = [...modalSelect.options].some(o=>o.value===current) ? current : 'sonstiges';
-    modalSelect.onchange=()=>updateSubkatSuggestions('m-kat','subkat-sugg-modal');
+    modalSelect.onchange=()=>updateSubkatSuggestions('m-kat','m-subkat');
   }
 }
 
@@ -2292,9 +2315,10 @@ async function addTaskManual(){
   const recurVal=document.getElementById('t-recur').value;
   const katVal=document.getElementById('t-kat').value;
   const recurrence=recurVal?{type:recurVal}:null;
-  const subkatVal=document.getElementById('t-subkat').value.trim()||null;
+  const subkatSel=document.getElementById('t-subkat');
+  const subkatVal=subkatSel.value==='__new__'?(document.getElementById('t-subkat-new').value.trim()||null):(subkatSel.value||null);
   await fsAdd('tasks',{id:uid(),title,context:ctx,priority:document.getElementById('t-prio').value,kategorie:katVal==='auto'?autoKategorie(title,ctx):katVal,subkategorie:subkatVal,dueDate:document.getElementById('t-date').value||null,estimatedTime:document.getElementById('t-est').value.trim()||null,recurrence,tags:[...editingTags],done:false,createdAt:Date.now()});
-  document.getElementById('t-title').value=''; document.getElementById('t-ctx').value=''; document.getElementById('t-date').value=''; document.getElementById('t-est').value=''; document.getElementById('t-recur').value=''; document.getElementById('t-kat').value='auto'; document.getElementById('t-subkat').value='';
+  document.getElementById('t-title').value=''; document.getElementById('t-ctx').value=''; document.getElementById('t-date').value=''; document.getElementById('t-est').value=''; document.getElementById('t-recur').value=''; document.getElementById('t-kat').value='auto'; document.getElementById('t-subkat').value=''; document.getElementById('t-subkat-new').value=''; document.getElementById('t-subkat-new').style.display='none';
   editingTags=[]; syncTagWrap('form-tag-wrap');
   toggleForm('add-task-form'); toast('Task gespeichert!');
 }
@@ -2318,8 +2342,10 @@ function openEditTask(id){
       <button class="btn btn-ghost btn-sm" onclick="openNewTaskCategoryPrompt('m-kat')">+ Kategorie</button>
     </div>
     <div class="form-row">
-      <input type="text" id="m-subkat" value="${esc(t.subkategorie||'')}" placeholder="Subkategorie (optional)" list="subkat-sugg-modal" style="max-width:260px" />
-      <datalist id="subkat-sugg-modal">${getExistingSubcategories(t.kategorie||'sonstiges').map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
+      <select id="m-subkat" onchange="onSubkatSelectChange('m-subkat','m-subkat-new')">
+        ${(()=>{const subs=getExistingSubcategories(t.kategorie||'sonstiges');const cur=t.subkategorie||'';const isNew=cur&&!subs.includes(cur);return`<option value="">— Keine Subkategorie —</option>`+subs.map(s=>`<option value="${esc(s)}"${s===cur?' selected':''}>` +esc(s)+`</option>`).join('')+`<option value="__new__"${isNew?' selected':''}>+ Neue eingeben…</option>`;})()}
+      </select>
+      <input type="text" id="m-subkat-new" placeholder="Neue Subkategorie..." value="${(()=>{const subs=getExistingSubcategories(t.kategorie||'sonstiges');const cur=t.subkategorie||'';return(cur&&!subs.includes(cur))?esc(cur):'';})()}" style="${(()=>{const subs=getExistingSubcategories(t.kategorie||'sonstiges');const cur=t.subkategorie||'';return(cur&&!subs.includes(cur))?'':'display:none;';})()}max-width:200px" />
     </div>
     <div class="form-row">
       <input type="date" id="m-date" value="${t.dueDate||''}" style="max-width:180px" />
@@ -3405,7 +3431,8 @@ async function saveModal(){
     if(!title){toast('Titel darf nicht leer sein','err');return;}
     t.title=title; t.priority=document.getElementById('m-prio').value;
     t.kategorie=document.getElementById('m-kat').value;
-    t.subkategorie=document.getElementById('m-subkat').value.trim()||null;
+    const mSubkatSel=document.getElementById('m-subkat');
+    t.subkategorie=mSubkatSel.value==='__new__'?(document.getElementById('m-subkat-new').value.trim()||null):(mSubkatSel.value||null);
     t.context=document.getElementById('m-ctx').value.trim();
     t.dueDate=document.getElementById('m-date').value||null;
     t.estimatedTime=document.getElementById('m-est').value.trim()||null;
