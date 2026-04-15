@@ -886,8 +886,8 @@ select option { background:#1c1c1c; }
         <label class="field">
           <span class="field-label">Brain-Dump KI-Modus</span>
           <select id="brain-ai-mode">
-            <option value="auto">Auto: OpenClaw lokal, sonst Groq direkt</option>
             <option value="taurus">Nur OpenClaw/Taurus lokal</option>
+            <option value="auto">Auto: OpenClaw lokal, sonst Groq direkt</option>
             <option value="groq-direct">Nur Groq direkt</option>
             <option value="groq-proxy">Groq ueber oeffentlichen Proxy</option>
           </select>
@@ -994,7 +994,7 @@ select option { background:#1c1c1c; }
 <script>
 // ── STATE ─────────────────────────────────────────────────────
 let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[] };
-let S = { groqKey:'', fbConfig:'', brainAiMode:'auto', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{} };
+let S = { groqKey:'', fbConfig:'', brainAiMode:'taurus', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{} };
 let pendingResult = null;
 let taskFilter = 'all';
 let taskTagFilter = null;
@@ -1053,6 +1053,7 @@ function loadLocal() {
     saveLocal();
   }
   try { const s=localStorage.getItem('md_settings'); if(s) S=JSON.parse(s); } catch(e){}
+  if(!S.brainAiMode || S.brainAiMode==='auto' || S.brainAiMode==='groq-direct') S.brainAiMode='taurus';
   D.tasks = Array.isArray(D.tasks) ? D.tasks : [];
   D.thoughts = Array.isArray(D.thoughts) ? D.thoughts : [];
   D.snippets = Array.isArray(D.snippets) ? D.snippets : [];
@@ -1386,7 +1387,7 @@ function parseAIJson(raw) {
 }
 
 function brainAiMode() {
-  return S.brainAiMode || 'auto';
+  return S.brainAiMode || 'taurus';
 }
 
 async function callGroqBrainDump(prompt, usePublicProxy=false) {
@@ -1441,8 +1442,13 @@ function enableGroqProxyAndRetry() {
 
 function renderBrainAiError(err) {
   const canOfferProxy = (brainAiMode()==='auto' || brainAiMode()==='groq-direct') && S.groqKey;
+  const needsTaurus = brainAiMode()==='taurus' && /Taurus|OpenClaw|Token|HTTP|Failed|Network/i.test(err.message);
   document.getElementById('dump-result').innerHTML=`<div style="color:var(--red);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:14px;margin-top:16px;font-size:13px;line-height:1.6">
     <b>Fehler:</b> ${esc(err.message)}
+    ${needsTaurus?`<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="go('settings')">Taurus/OpenClaw Settings öffnen</button>
+    </div>
+    <div style="margin-top:8px;color:#fbbf24;font-size:12px">Brain Dump nutzt jetzt Taurus. Bitte Taurus URL und Gateway Token eintragen und Verbindung testen.</div>`:''}
     ${canOfferProxy?`<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary btn-sm" onclick="enableGroqProxyAndRetry()">Proxy bewusst aktivieren & nochmal versuchen</button>
       <button class="btn btn-ghost btn-sm" onclick="go('settings')">KI-Modus in Settings öffnen</button>
@@ -4191,7 +4197,7 @@ function saveBrainAiSettings(){
 }
 function loadBrainAiSettings(){
   const mode=document.getElementById('brain-ai-mode');
-  if(mode) mode.value=S.brainAiMode||'auto';
+  if(mode) mode.value=S.brainAiMode||'taurus';
 }
 function exportData(){
   const blob=new Blob([JSON.stringify({...D,meta:{
