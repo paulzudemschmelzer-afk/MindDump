@@ -231,15 +231,24 @@ textarea::placeholder { color:#7c8aa2; }
 .ftab.active { background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(139,92,246,.20)); color:var(--text); border-color:rgba(255,255,255,.16); box-shadow:inset 0 1px 0 rgba(255,255,255,.1); }
 
 /* TASK INSIGHTS */
-.task-insights { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-bottom:14px; }
-.insight-card { background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(139,92,246,.05) 28%, rgba(255,255,255,.015)), var(--surface-content-soft); border:1px solid rgba(255,255,255,.09); border-radius:18px; padding:12px 13px; box-shadow:0 10px 24px rgba(2,1,8,.24), inset 0 1px 0 rgba(255,255,255,.04); }
-.insight-label { font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:.6px; }
-.insight-value { font-size:21px; font-weight:700; margin-top:4px; line-height:1; }
-.insight-note { font-size:11px; color:#666; margin-top:5px; }
-.task-progress { background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(139,92,246,.05) 28%, rgba(255,255,255,.015)), var(--surface-content-soft); border:1px solid rgba(255,255,255,.09); border-radius:18px; padding:12px 13px; margin-bottom:18px; box-shadow:0 10px 24px rgba(2,1,8,.24), inset 0 1px 0 rgba(255,255,255,.04); }
+.task-console { background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(139,92,246,.05) 28%, rgba(255,255,255,.015)), var(--surface-content-soft); border:1px solid rgba(255,255,255,.09); border-radius:22px; padding:14px; margin-bottom:16px; box-shadow:0 10px 24px rgba(2,1,8,.24), inset 0 1px 0 rgba(255,255,255,.04); }
+.task-console-top { display:flex; justify-content:space-between; gap:14px; align-items:flex-end; margin-bottom:12px; flex-wrap:wrap; }
+.task-console-title { font-size:15px; font-weight:700; letter-spacing:-0.02em; }
+.task-console-meta { font-size:12px; color:var(--sub); margin-top:4px; }
+.task-insights { display:flex; flex-wrap:wrap; gap:8px; }
+.insight-card { min-width:0; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:999px; padding:7px 11px; box-shadow:inset 0 1px 0 rgba(255,255,255,.04); display:flex; align-items:center; gap:8px; }
+.insight-label { font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:.55px; }
+.insight-value { font-size:14px; font-weight:700; line-height:1; }
+.insight-note { display:none; }
+.task-progress { margin-top:2px; }
 .task-progress-row { display:flex; justify-content:space-between; gap:10px; font-size:12px; color:var(--sub); margin-bottom:8px; }
-.task-progress-bar { height:8px; border-radius:999px; background:rgba(6,10,18,.64); border:1px solid rgba(255,255,255,.08); overflow:hidden; }
+.task-progress-bar { height:7px; border-radius:999px; background:rgba(6,10,18,.64); border:1px solid rgba(255,255,255,.08); overflow:hidden; }
 .task-progress-fill { height:100%; background:linear-gradient(90deg,#a78bfa,#8b5cf6,#c4b5fd); }
+.task-filter-stack { display:grid; gap:8px; margin-bottom:14px; }
+.task-filter-group { display:flex; align-items:flex-start; gap:12px; padding:10px 12px; border:1px solid rgba(255,255,255,.08); border-radius:18px; background:rgba(255,255,255,.03); }
+.task-filter-label { width:82px; min-width:82px; padding-top:7px; font-size:11px; text-transform:uppercase; letter-spacing:.65px; color:var(--sub); }
+.task-filter-group .ftabs { flex:1; margin-bottom:0; }
+.task-filter-group.category-group .task-filter-label { padding-top:8px; }
 
 /* HABITS */
 .habit-grid { display:grid; gap:12px; }
@@ -513,6 +522,13 @@ select option { background:#122030; }
   .ftabs { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   .ftabs::-webkit-scrollbar { display:none; }
   .ftab { white-space:nowrap; flex-shrink:0; padding:5px 11px; font-size:12px; }
+  .task-console { padding:12px; border-radius:18px; margin-bottom:12px; }
+  .task-console-top { gap:10px; margin-bottom:10px; }
+  .task-console-title { font-size:14px; }
+  .task-console-meta { font-size:11px; }
+  .task-filter-stack { gap:6px; margin-bottom:12px; }
+  .task-filter-group { display:block; padding:10px; border-radius:16px; }
+  .task-filter-label { width:auto; min-width:0; padding-top:0; margin-bottom:8px; display:block; }
 
   /* Task Cards */
   .task-card { position:relative; padding:10px 76px 10px 10px; gap:8px; align-items:flex-start; }
@@ -663,9 +679,20 @@ select option { background:#122030; }
       <button class="ftab" onclick="setTaskFilter('done',this)">Erledigt</button>
     </div>
     <div id="task-insights"></div>
-    <div class="ftabs" id="task-sort-tabs"></div>
-    <div class="ftabs" id="task-due-tabs"></div>
-    <div class="ftabs" id="kat-ftabs"></div>
+    <div class="task-filter-stack">
+      <div class="task-filter-group">
+        <div class="task-filter-label">Sortieren</div>
+        <div class="ftabs" id="task-sort-tabs"></div>
+      </div>
+      <div class="task-filter-group">
+        <div class="task-filter-label">Fälligkeit</div>
+        <div class="ftabs" id="task-due-tabs"></div>
+      </div>
+      <div class="task-filter-group category-group">
+        <div class="task-filter-label">Kategorie</div>
+        <div class="ftabs" id="kat-ftabs"></div>
+      </div>
+    </div>
     <div id="tag-filter-row" style="display:none;flex-wrap:wrap;gap:5px;margin-bottom:12px;align-items:center"></div>
     <div id="tasks-list"></div>
   </div>
@@ -1845,15 +1872,23 @@ function renderTaskInsights(allTasks){
   const forToday=open.filter(t=>t.forToday).length;
   const total=(allTasks||[]).length;
   const pct=total?Math.round((done/total)*100):0;
-  host.innerHTML = `<div class="task-insights">
-      <div class="insight-card"><div class="insight-label">Offen</div><div class="insight-value">${open.length}</div><div class="insight-note">Aktive Aufgaben</div></div>
-      <div class="insight-card"><div class="insight-label">Überfällig</div><div class="insight-value" style="color:#f87171">${overdue}</div><div class="insight-note">Vor heute fällig</div></div>
-      <div class="insight-card"><div class="insight-label">Heute fällig</div><div class="insight-value" style="color:#fbbf24">${dueToday}</div><div class="insight-note">Deadline heute</div></div>
-      <div class="insight-card"><div class="insight-label">Heute markiert</div><div class="insight-value" style="color:#a78bfa">${forToday}</div><div class="insight-note">☀ Fokusliste</div></div>
-    </div>
-    <div class="task-progress">
-      <div class="task-progress-row"><span>Abschlussquote</span><span>${done}/${total} erledigt (${pct}%)</span></div>
-      <div class="task-progress-bar"><div class="task-progress-fill" style="width:${pct}%"></div></div>
+  host.innerHTML = `<div class="task-console">
+      <div class="task-console-top">
+        <div>
+          <div class="task-console-title">Task Übersicht</div>
+          <div class="task-console-meta">${total} gesamt · ${open.length} offen · ${done} erledigt</div>
+        </div>
+        <div class="task-insights">
+          <div class="insight-card"><div class="insight-label">Offen</div><div class="insight-value">${open.length}</div></div>
+          <div class="insight-card"><div class="insight-label">Überfällig</div><div class="insight-value" style="color:#f87171">${overdue}</div></div>
+          <div class="insight-card"><div class="insight-label">Heute</div><div class="insight-value" style="color:#fbbf24">${dueToday}</div></div>
+          <div class="insight-card"><div class="insight-label">Fokus</div><div class="insight-value" style="color:#c4b5fd">${forToday}</div></div>
+        </div>
+      </div>
+      <div class="task-progress">
+        <div class="task-progress-row"><span>Abschlussquote</span><span>${done}/${total} erledigt (${pct}%)</span></div>
+        <div class="task-progress-bar"><div class="task-progress-fill" style="width:${pct}%"></div></div>
+      </div>
     </div>`;
 }
 
