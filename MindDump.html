@@ -1525,8 +1525,12 @@ function saveDumpAsOneTask() {
             <option value="niedrig">🟢 Niedrig</option>
           </select>
           <select class="topic-inp-sm" id="dump-one-kat" onchange="updateDumpOneSubkat()" style="min-width:150px">${renderTaskCategoryOptions(autoKat)}</select>
-          <input class="topic-inp-sm" id="dump-one-subkat" placeholder="Sub (optional)" list="dump-one-subkat-list" style="min-width:130px" />
-          <datalist id="dump-one-subkat-list">${getExistingSubcategories(autoKat).map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
+          <select class="topic-inp-sm" id="dump-one-subkat" onchange="onDumpOneSubkatChange()" style="min-width:130px">
+            <option value="">— Keine Sub —</option>
+            ${getExistingSubcategories(autoKat).map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')}
+            <option value="__new__">+ Neue eingeben…</option>
+          </select>
+          <input type="text" class="topic-inp-sm" id="dump-one-subkat-new" placeholder="Neue Subkategorie..." style="min-width:130px;display:none" />
         </div>
         <div class="dump-task-routing" style="margin-top:4px">
           <input type="date" class="topic-inp-sm" id="dump-one-date" style="min-width:140px" />
@@ -1543,15 +1547,31 @@ function saveDumpAsOneTask() {
 
 function updateDumpOneSubkat() {
   const kat=document.getElementById('dump-one-kat')?.value;
-  const dl=document.getElementById('dump-one-subkat-list');
-  if(kat&&dl) dl.innerHTML=getExistingSubcategories(kat).map(s=>`<option value="${esc(s)}">`).join('');
+  const subSel=document.getElementById('dump-one-subkat');
+  const newIn=document.getElementById('dump-one-subkat-new');
+  if(!kat||!subSel) return;
+  const subs=[...new Set([...getExistingSubcategories(kat),...getChildCategoryKeys(kat).map(k=>getTaskCategoryLabel(k))])].sort();
+  subSel.innerHTML=`<option value="">— Keine Sub —</option>`
+    +subs.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')
+    +`<option value="__new__">+ Neue eingeben…</option>`;
+  subSel.value='';
+  if(newIn){newIn.style.display='none';newIn.value='';}
+}
+
+function onDumpOneSubkatChange() {
+  const subSel=document.getElementById('dump-one-subkat');
+  const newIn=document.getElementById('dump-one-subkat-new');
+  if(!subSel||!newIn) return;
+  if(subSel.value==='__new__'){newIn.style.display='';newIn.focus();}
+  else{newIn.style.display='none';newIn.value='';}
 }
 
 async function saveDumpOneConfirm() {
   const title=document.getElementById('dump-one-title').value.trim();
   if(!title){ toast('Bitte Titel eingeben','err'); return; }
   const kategorie=document.getElementById('dump-one-kat').value;
-  const subkategorie=document.getElementById('dump-one-subkat').value.trim()||null;
+  const subkatSel=document.getElementById('dump-one-subkat')?.value||'';
+  const subkategorie=subkatSel==='__new__'?(document.getElementById('dump-one-subkat-new')?.value.trim()||null):(subkatSel||null);
   if(subkategorie) ensureTaskSubcategory(kategorie, subkategorie);
   await fsAdd('tasks',{
     id:uid(), title,
@@ -1612,8 +1632,11 @@ function renderDumpResult(p) {
                 <option value="niedrig" ${(item.priority||'mittel')==='niedrig'?'selected':''}>🟢 Niedrig</option>
               </select>
               <select class="topic-inp-sm" id="di-kat-${i}" onchange="updateDumpItemSubkat(${i})" style="min-width:150px">${renderTaskCategoryOptions(autoKat)}</select>
-              <input class="topic-inp-sm" id="di-subkat-${i}" list="di-subkat-list-${i}" placeholder="Sub (optional)" style="min-width:130px" />
-              <datalist id="di-subkat-list-${i}"></datalist>
+              <select class="topic-inp-sm" id="di-subkat-${i}" onchange="onDumpSubkatChange(${i})" style="min-width:130px">
+                <option value="">— Keine Sub —</option>
+                <option value="__new__">+ Neue eingeben…</option>
+              </select>
+              <input type="text" class="topic-inp-sm" id="di-subkat-new-${i}" placeholder="Neue Subkategorie..." style="min-width:130px;display:none" />
             </div>
             <div class="dump-task-routing" style="margin-top:4px">
               <input type="date" class="topic-inp-sm" id="di-date-${i}" value="${item.dueDate&&item.dueDate!=='null'?item.dueDate:''}" style="min-width:140px" />
@@ -1657,12 +1680,26 @@ function toggleDumpItemType(i) {
 }
 
 function updateDumpItemSubkat(i) {
-  const sel=document.getElementById('di-kat-'+i);
-  const dl=document.getElementById('di-subkat-list-'+i);
-  if(!sel||!dl) return;
-  const kat=sel.value;
-  const existing=[...getExistingSubcategories(kat),...getChildCategoryKeys(kat).map(k=>getTaskCategoryLabel(k))];
-  dl.innerHTML=[...new Set(existing)].sort().map(name=>`<option value="${esc(name)}">`).join('');
+  const katSel=document.getElementById('di-kat-'+i);
+  const subSel=document.getElementById('di-subkat-'+i);
+  const newIn=document.getElementById('di-subkat-new-'+i);
+  if(!katSel||!subSel) return;
+  const kat=katSel.value;
+  const existing=[...new Set([...getExistingSubcategories(kat),...getChildCategoryKeys(kat).map(k=>getTaskCategoryLabel(k))])].sort();
+  const cur=subSel.value;
+  subSel.innerHTML=`<option value="">— Keine Sub —</option>`
+    +existing.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')
+    +`<option value="__new__">+ Neue eingeben…</option>`;
+  subSel.value=existing.includes(cur)?cur:'';
+  if(newIn){newIn.style.display='none';newIn.value='';}
+}
+
+function onDumpSubkatChange(i) {
+  const subSel=document.getElementById('di-subkat-'+i);
+  const newIn=document.getElementById('di-subkat-new-'+i);
+  if(!subSel||!newIn) return;
+  if(subSel.value==='__new__'){newIn.style.display='';newIn.focus();}
+  else{newIn.style.display='none';newIn.value='';}
 }
 
 function updateSelCount() {
@@ -1704,7 +1741,8 @@ async function saveSelected() {
     if(type==='task') {
       const priority=document.getElementById('di-prio-'+i)?.value||'mittel';
       const kategorie=document.getElementById('di-kat-'+i)?.value||autoKategorie(title,text);
-      const subkategorie=document.getElementById('di-subkat-'+i)?.value.trim()||null;
+      const subkatSel=document.getElementById('di-subkat-'+i)?.value||'';
+      const subkategorie=subkatSel==='__new__'?(document.getElementById('di-subkat-new-'+i)?.value.trim()||null):(subkatSel||null);
       const dueDate=document.getElementById('di-date-'+i)?.value||null;
       const estimatedTime=document.getElementById('di-est-'+i)?.value.trim()||null;
       if(subkategorie) ensureTaskSubcategory(kategorie, subkategorie);
@@ -2824,6 +2862,9 @@ function openEditTask(id){
       </div>
     </div>`;
   document.getElementById('modal').style.display='flex';
+  // Attach onchange handler for category → subcategory update
+  const mKatSel=document.getElementById('m-kat');
+  if(mKatSel) mKatSel.onchange=()=>updateSubkatSuggestions('m-kat','m-subkat');
   setTimeout(()=>document.getElementById('m-title').focus(),50);
 }
 
