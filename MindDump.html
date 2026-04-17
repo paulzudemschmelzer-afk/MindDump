@@ -662,7 +662,7 @@ select option { background:#1c1c1c; }
     </div>
     <div class="heute-quick-add">
       <input type="text" id="heute-title" placeholder="Heute-Task schnell erfassen" onkeydown="if(event.key==='Enter')addHeuteQuickTask()" />
-      <select id="heute-prio" title="Prioritaet">
+      <select id="heute-prio" title="Priorität">
         <option value="mittel">Mittel</option>
         <option value="hoch">Hoch</option>
         <option value="niedrig">Niedrig</option>
@@ -687,7 +687,7 @@ select option { background:#1c1c1c; }
     </div>
     <div class="add-form" id="add-habit-form" style="display:none">
       <div class="form-row">
-        <label class="field"><span class="field-label">Name</span><input type="text" id="h-name" placeholder="z.B. Fuss- und Kniestabilitaet" /></label>
+        <label class="field"><span class="field-label">Name</span><input type="text" id="h-name" placeholder="z.B. Fuss- und Kniestabilität" /></label>
         <label class="field" style="max-width:140px"><span class="field-label">Ziel / Woche</span><input type="number" id="h-frequency" min="1" max="14" value="3" title="Ziel pro Woche" /></label>
       </div>
       <div class="form-row">
@@ -697,10 +697,10 @@ select option { background:#1c1c1c; }
         <label class="field"><span class="field-label">Endziel</span><input type="text" id="h-end-goal" placeholder="z.B. langfristig weniger Fuss- und Knieschmerzen" /></label>
       </div>
       <div class="form-row">
-        <label class="field"><span class="field-label">Identitaet</span><input type="text" id="h-identity" placeholder="Ich bin jemand, der ..." /></label>
+        <label class="field"><span class="field-label">Identität</span><input type="text" id="h-identity" placeholder="Ich bin jemand, der ..." /></label>
       </div>
       <div class="form-row">
-        <label class="field"><span class="field-label">Trigger</span><input type="text" id="h-cue" placeholder="z.B. nach dem Zaehneputzen" /></label>
+        <label class="field"><span class="field-label">Trigger</span><input type="text" id="h-cue" placeholder="z.B. nach dem Zähneputzen" /></label>
         <label class="field"><span class="field-label">Belohnung</span><input type="text" id="h-reward" placeholder="z.B. kurzer Check-in + Haken" /></label>
       </div>
       <div class="form-row">
@@ -1465,7 +1465,7 @@ async function processDump() {
    - why: kurze Motivation
    - cue: Trigger/Kontext, sonst leer
    - reward: direkte kleine Belohnung, sonst leer
-   - minimumVersion: 2-Minuten-/Minimalversion fuer schlechte Tage
+   - minimumVersion: 2-Minuten-/Minimalversion für schlechte Tage
    - frequencyCount: Zahl pro Woche, wenn erkennbar, sonst 3
    - decayWarnDays: Warnbereich nach Tagen ohne Check-in, sonst 7
    - decayDangerDays: hoher Decay nach Tagen ohne Check-in, sonst 21
@@ -2067,7 +2067,7 @@ function removeStoredTaskCategory(key) {
 }
 
 function openNewTaskCategoryPrompt(selectId='') {
-  const name = prompt('Neue Kategorie hinzufuegen:', '');
+  const name = prompt('Neue Kategorie hinzufügen:', '');
   if(!name) return;
   const key = registerTaskCategory(name);
   if(!key) { toast('Kategorie konnte nicht angelegt werden','err'); return; }
@@ -2078,7 +2078,7 @@ function openNewTaskCategoryPrompt(selectId='') {
     taskKatFilter = key;
   }
   renderTasks();
-  toast(`Kategorie hinzugefuegt: ${getTaskCategoryLabel(key)}`);
+  toast(`Kategorie hinzugefügt: ${getTaskCategoryLabel(key)}`);
 }
 
 function renderTaskCategoryTabs(katCounts = {}) {
@@ -2106,9 +2106,9 @@ function renderTaskSortTabs() {
   const tabs = document.getElementById('task-sort-tabs');
   if(!tabs) return;
   const sorts = [
-    { id:'priority', label:'Prioritaet' },
+    { id:'priority', label:'Priorität' },
     { id:'newest', label:'Neueste' },
-    { id:'oldest', label:'Aelteste' }
+    { id:'oldest', label:'Älteste' }
   ];
   tabs.innerHTML = sorts.map(sort =>
     `<button class="ftab ${taskSortMode===sort.id?'active':''}" onclick="setTaskSort('${sort.id}',this)">${sort.label}</button>`
@@ -2119,7 +2119,7 @@ function editKat(k){
   const neu=prompt('Kategorie umbenennen:',getTaskCategoryLabel(k));
   if(!neu||neu===k) return;
   const slug=normalizeCategoryKey(neu);
-  if(!slug) { toast('Ungueltiger Kategoriename','err'); return; }
+  if(!slug) { toast('Ungültiger Kategoriename','err'); return; }
   D.tasks.filter(t=>(t.kategorie||'sonstiges')===k).forEach(t=>{ t.kategorie=slug; });
   registerTaskCategory(neu, slug);
   if(slug!==k) removeStoredTaskCategory(k);
@@ -2542,12 +2542,12 @@ async function taskTouchEndInKat(e){
 
 function deleteKat(k){
   const count=D.tasks.filter(t=>(t.kategorie||'sonstiges')===k&&!t.done).length;
-  if(!confirm(`${getTaskCategoryLabel(k)} loeschen? ${count} Task${count!==1?'s':''} wandern zu Sonstiges.`)) return;
+  if(!confirm(`${getTaskCategoryLabel(k)} löschen? ${count} Task${count!==1?'s':''} wandern zu Sonstiges.`)) return;
   D.tasks.filter(t=>(t.kategorie||'sonstiges')===k).forEach(t=>{ t.kategorie='sonstiges'; });
   removeStoredTaskCategory(k);
   if(taskKatFilter===k) taskKatFilter='alle';
   if(currentUser&&db) D.tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
-  toast(`${getTaskCategoryLabel(k)} geloescht - Tasks zu Sonstiges verschoben`);
+  toast(`${getTaskCategoryLabel(k)} gelöscht - Tasks zu Sonstiges verschoben`);
   renderTasks();
 }
 
@@ -2611,7 +2611,7 @@ function renderSubcategoryGroup(k, sk, subItems, childKey='') {
       <span class="subkat-actions">
         <button class="kat-edit-link" onclick="event.stopPropagation();renameSubcategoryFromEl(this.parentElement.parentElement)" title="Umbenennen">Bearbeiten</button>
         <button class="kat-edit-link" onclick="event.stopPropagation();restoreSubToKatFromEl(this.parentElement.parentElement)" title="Als eigene Kategorie wiederherstellen">↑ Raus</button>
-        <button class="icon-btn del" onclick="event.stopPropagation();deleteSubcategoryFromEl(this.parentElement.parentElement)" title="Aufloesen">×</button>
+        <button class="icon-btn del" onclick="event.stopPropagation();deleteSubcategoryFromEl(this.parentElement.parentElement)" title="Auflösen">×</button>
       </span>
     </div>`;
   if(!skCollapsed){
@@ -2691,7 +2691,7 @@ function renderTasks() {
         <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
         <span class="kat-actions">
           <button class="kat-edit-link" onclick="event.stopPropagation();renameTaskCategory('${k}')" title="Kategorie umbenennen">Bearbeiten</button>
-          <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Loeschen">×</button>
+          <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Löschen">×</button>
         </span>
       </div>`;
     const noSub=items.filter(t=>!t.subkategorie);
@@ -2942,12 +2942,12 @@ async function addHabitCheckin(id,mode='full'){
   h.checkins=habitCheckins(h).filter(c=>!(c.date===checkin.date && c.mode===mode));
   h.checkins.push(checkin);
   await fsUpdate('habits',h);
-  toast(mode==='minimal' ? 'Minimalversion zaehlt. Hauptsache zurueck.' : 'Check-in gespeichert');
+  toast(mode==='minimal' ? 'Minimalversion zählt. Hauptsache zurück.' : 'Check-in gespeichert');
 }
 async function deleteHabit(id){
-  if(!confirm('Habit wirklich loeschen?')) return;
+  if(!confirm('Habit wirklich löschen?')) return;
   await fsDel('habits',id);
-  toast('Habit geloescht');
+  toast('Habit gelöscht');
 }
 function openEditHabit(id){
   const h=D.habits.find(x=>x.id===id); if(!h) return;
@@ -2957,7 +2957,7 @@ function openEditHabit(id){
     <div class="form-row"><input type="text" id="m-h-name" value="${esc(h.name)}" placeholder="Name" /></div>
     <div class="form-row"><input type="text" id="m-h-statement" value="${esc(h.statement)}" placeholder="Habit Statement" /></div>
     <div class="form-row"><input type="text" id="m-h-end-goal" value="${esc(h.endGoal)}" placeholder="Endziel" /></div>
-    <div class="form-row"><input type="text" id="m-h-identity" value="${esc(h.identityGoal)}" placeholder="Identitaetsziel" /></div>
+    <div class="form-row"><input type="text" id="m-h-identity" value="${esc(h.identityGoal)}" placeholder="Identitätsziel" /></div>
     <div class="form-row">
       <input type="text" id="m-h-cue" value="${esc(h.cue)}" placeholder="Trigger/Cue" />
       <input type="text" id="m-h-reward" value="${esc(h.reward)}" placeholder="Belohnung" />
@@ -2991,11 +2991,11 @@ function renderHabitCard(h){
       </div>
       <div class="card-actions">
         <button class="icon-btn edit-btn" onclick="openEditHabit('${h.id}')" title="Bearbeiten">✏</button>
-        <button class="icon-btn del" onclick="deleteHabit('${h.id}')" title="Loeschen">×</button>
+        <button class="icon-btn del" onclick="deleteHabit('${h.id}')" title="Löschen">×</button>
       </div>
     </div>
     ${h.endGoal?`<div class="task-ctx"><b>Endziel:</b> ${esc(h.endGoal)}</div>`:''}
-    ${h.identityGoal?`<div class="task-ctx"><b>Identitaet:</b> ${esc(h.identityGoal)}</div>`:''}
+    ${h.identityGoal?`<div class="task-ctx"><b>Identität:</b> ${esc(h.identityGoal)}</div>`:''}
     <div class="habit-bars">
       ${habitMeter('Consistency HP',score.hp,'hp')}
       ${habitMeter('Habit Strength',score.strength,'strength')}
@@ -3008,7 +3008,7 @@ function renderHabitCard(h){
       <label class="field"><span class="field-label">Dauer min</span><input type="number" id="hc-duration-${h.id}" placeholder="0" min="0" /></label>
       <label class="field"><span class="field-label">Schmerz vorher</span><input type="number" id="hc-painBefore-${h.id}" placeholder="0-10" min="0" max="10" /></label>
       <label class="field"><span class="field-label">Schmerz nachher</span><input type="number" id="hc-painAfter-${h.id}" placeholder="0-10" min="0" max="10" /></label>
-      <label class="field"><span class="field-label">Stabilitaet</span><input type="number" id="hc-stability-${h.id}" placeholder="0-10" min="0" max="10" /></label>
+      <label class="field"><span class="field-label">Stabilität</span><input type="number" id="hc-stability-${h.id}" placeholder="0-10" min="0" max="10" /></label>
       <label class="field"><span class="field-label">Energie</span><input type="number" id="hc-energy-${h.id}" placeholder="0-10" min="0" max="10" /></label>
       <label class="field wide"><span class="field-label">Notiz</span><input type="text" id="hc-note-${h.id}" placeholder="Was war auffaellig?" /></label>
       <button class="btn btn-primary btn-sm" onclick="addHabitCheckin('${h.id}','full')">Erledigt</button>
@@ -3028,7 +3028,7 @@ function renderHabits(){
   if(!el) return;
   const habits=(D.habits||[]).filter(h=>!h.archived).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   if(!habits.length){
-    el.innerHTML='<div class="habit-empty"><h3>Noch keine Habit Quest</h3><p>Formuliere eine Gewohnheit, ihr Endziel und eine Minimalversion fuer schlechte Tage.</p></div>';
+    el.innerHTML='<div class="habit-empty"><h3>Noch keine Habit Quest</h3><p>Formuliere eine Gewohnheit, ihr Endziel und eine Minimalversion für schlechte Tage.</p></div>';
     return;
   }
   el.innerHTML=habits.map(renderHabitCard).join('');
