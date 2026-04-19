@@ -3398,7 +3398,47 @@ function getCurrentWeekGoal() {
   const key=weekKeyForDate(new Date());
   return (D.weeklyGoals||[]).find(x=>x.weekKey===key) || null;
 }
+function weeklyRangeForGoal(goal) {
+  const start=goal?.startDate || dateKey(startOfWeek(new Date()));
+  const end=goal?.endDate || dateKey(endOfWeek(new Date()));
+  return { start, end };
+}
+function weeklyGoalLinkOptions() {
+  const habitOpts = habitDefinitions().map(h=>({ value:`habit:${h.id}`, label:`Habit: ${h.name}` }));
+  const trainingTypes = ['Gym','Thai-Boxen','Spaziergang','Laufen','Anderes'].map(t=>({ value:`training:${t}`, label:`Training: ${t}` }));
+  return [...habitOpts, ...trainingTypes];
+}
+function countHabitInRange(habitId, start, end) {
+  const builtInLogs=(D.habitLogs||[]).filter(x=>x.habitId===habitId && x.done && x.date>=start && x.date<=end).length;
+  const customHabit=(D.habits||[]).find(h=>h.id===habitId);
+  if(customHabit) {
+    const customLogs=(habitCheckins(customHabit)||[]).filter(c=>c.date>=start && c.date<=end).length;
+    return Math.max(builtInLogs, customLogs);
+  }
+  return builtInLogs;
+}
+function countTrainingInRange(type, start, end) {
+  return (D.trainingLogs||[]).filter(x=>x.date>=start && x.date<=end && (!type || x.type===type)).length;
+}
+function weekGoalLinkedProgress(goal) {
+  if(!goal?.linkedRef) return null;
+  const { start, end } = weeklyRangeForGoal(goal);
+  const target=Math.max(1, Number(goal.targetCount)||1);
+  const [kind, ref] = String(goal.linkedRef).split(':');
+  if(kind==='habit') {
+    const def=habitDefinitions().find(h=>h.id===ref);
+    const done=countHabitInRange(ref, start, end);
+    return { done, total:target, percent:Math.min(100, Math.round((done/target)*100)), label:def ? def.name : 'Habit', mode:'linked-habit' };
+  }
+  if(kind==='training') {
+    const done=countTrainingInRange(ref, start, end);
+    return { done, total:target, percent:Math.min(100, Math.round((done/target)*100)), label:ref || 'Training', mode:'linked-training' };
+  }
+  return null;
+}
 function weekGoalProgress(goal) {
+  const linked=weekGoalLinkedProgress(goal);
+  if(linked) return linked;
   const total=(goal?.milestones||[]).length;
   const done=(goal?.milestones||[]).filter(x=>x.done).length;
   return { done, total, percent: total ? Math.round((done/total)*100) : 0 };
@@ -3414,23 +3454,36 @@ async function saveWeeklyGoal() {
   const title=document.getElementById('wg-title')?.value.trim() || '';
   if(!title) { toast('Bitte ein Wochenziel eingeben','err'); return; }
   const desc=document.getElementById('wg-desc')?.value.trim() || '';
+  const linkedRef=document.getElementById('wg-linked-ref')?.value || '';
+  const targetCount=Math.max(1, Number(document.getElementById('wg-target-count')?.value)||1);
   const current=getCurrentWeekGoal();
   const start=dateKey(startOfWeek(new Date()));
   const end=dateKey(endOfWeek(new Date()));
-  const milestones=parseMilestonesText(document.getElementById('wg-milestones')?.value || '', current?.milestones || []);
+  const milestones=linkedRef ? [] : parseMilestonesText(document.getElementById('wg-milestones')?.value || '', current?.milestones || []);
   if(current) {
     current.title=title;
     current.description=desc;
     current.startDate=start;
     current.endDate=end;
     current.milestones=milestones;
+    current.linkedRef=linkedRef || null;
+    current.targetCount=targetCount;
     current.updatedAt=Date.now();
     await fsUpdate('weeklyGoals', current);
     toast('Wochenziel aktualisiert');
   } else {
-    await fsAdd('weeklyGoals', { id:uid(), weekKey:weekKeyForDate(new Date()), title, description:desc, startDate:start, endDate:end, milestones, createdAt:Date.now(), updatedAt:Date.now() });
+    await fsAdd('weeklyGoals', { id:uid(), weekKey:weekKeyForDate(new Date()), title, description:desc, startDate:start, endDate:end, milestones, linkedRef:linkedRef || null, targetCount, createdAt:Date.now(), updatedAt:Date.now() });
     toast('Wochenziel gespeichert');
   }
+}
+function updateWeeklyGoalForm() {
+  const linked=document.getElementById('wg-linked-ref');
+  const milestones=document.getElementById('wg-milestones');
+  if(!linked || !milestones) return;
+  const useLinked=!!linked.value;
+  milestones.disabled=useLinked;
+  milestones.style.opacity=useLinked ? '.55' : '1';
+  milestones.placeholder=useLinked ? 'Bei verknuepften Zielen kommt der Fortschritt direkt aus Habit oder Training.' : 'Montag trainieren\nMittwoch trainieren\nSamstag Spaziergang';
 }
 async function toggleWeeklyMilestone(goalId, milestoneId) {
   const goal=(D.weeklyGoals||[]).find(x=>x.id===goalId);
@@ -3691,16 +3744,19 @@ function renderHomeStats() {
   const sleepAvg=avgSleepHours(14);
   const energy=lastEnergyEntry();
   const habitRate=habitCompletionRate(14);
+  const weight=weightTrend(14);
   return `<div class="stats-grid">
-    <div class="stat-card"><div class="stat-label">Wochenziel</div><div class="stat-value">${goal ? `${progress.done}/${progress.total || 0}` : '0/0'}</div><div class="stat-sub">${goal ? esc(goal.title) : 'Noch kein Ziel gesetzt'}</div></div>
-    <div class="stat-card"><div class="stat-label">Schlaf 14T</div><div class="stat-value">${sleepAvg!==null ? `${round1(sleepAvg)}h` : '–'}</div><div class="stat-sub">Durchschnittliche Schlafdauer</div></div>
+    <div class="stat-card"><div class="stat-label">Wochenziel</div><div class="stat-value">${goal ? `${progress.done}/${progress.total || 0}` : '–'}</div><div class="stat-sub">${goal ? esc(goal.title) : 'Noch kein Fokus gesetzt'}</div></div>
+    <div class="stat-card"><div class="stat-label">Training</div><div class="stat-value">${weeklyTrainingCount()}</div><div class="stat-sub">Einheiten diese Woche</div></div>
     <div class="stat-card"><div class="stat-label">Letzte Energie</div><div class="stat-value">${energy ? energyLabel(energy.energy) : '–'}</div><div class="stat-sub">${energy ? `${esc(energy.time)} · ${energy.energy}/10` : 'Noch kein Eintrag heute'}</div></div>
-    <div class="stat-card"><div class="stat-label">Training Woche</div><div class="stat-value">${weeklyTrainingCount()}</div><div class="stat-sub">${habitRate!==null ? `Habit Completion ${habitRate}%` : 'Noch wenig Habit-Daten'}</div></div>
+    <div class="stat-card"><div class="stat-label">Schlaf / Habit</div><div class="stat-value">${sleepAvg!==null ? `${round1(sleepAvg)}h` : '–'}</div><div class="stat-sub">${habitRate!==null ? `${habitRate}% Habit-Rate` : (weight!==null ? `${weight>0?'+':''}${weight} kg / 14T` : 'Noch wenig Daten')}</div></div>
   </div>`;
 }
 function renderWeeklyGoalCard() {
   const goal=getCurrentWeekGoal();
   const progress=weekGoalProgress(goal);
+  const linkedOptions=weeklyGoalLinkOptions();
+  const linkedLabel=progress.label ? `${progress.label} · ${progress.done}/${progress.total}` : null;
   const history=[...(D.weeklyGoals||[])].filter(x=>x.weekKey!==weekKeyForDate(new Date())).sort((a,b)=>String(b.startDate).localeCompare(String(a.startDate))).slice(0,5);
   return `<div class="dashboard-card home-anchor" id="home-weekly-goal">
     <div class="dashboard-head">
@@ -3713,11 +3769,12 @@ function renderWeeklyGoalCard() {
     ${goal ? `
       <div class="goal-title" style="font-size:18px">${esc(goal.title)}</div>
       ${goal.description ? `<div class="helper-text">${esc(goal.description)}</div>` : ''}
+      ${linkedLabel ? `<div class="helper-text" style="margin-top:8px"><strong>Verknuepft:</strong> ${esc(linkedLabel)}</div>` : ''}
       <div class="progress-shell">
         <div class="progress-head"><span>Fortschritt</span><span>${progress.done}/${progress.total || 0}</span></div>
         <div class="task-progress-bar"><div class="task-progress-fill" style="width:${progress.percent}%"></div></div>
       </div>
-      <div class="goal-list" style="margin-top:12px">
+      ${!goal.linkedRef ? `<div class="goal-list" style="margin-top:12px">
         ${(goal.milestones||[]).length ? goal.milestones.map(item=>`
           <div class="goal-row ${item.done?'done':''}">
             <button class="goal-toggle" onclick="toggleWeeklyMilestone('${goal.id}','${item.id}')">${item.done?'✓':''}</button>
@@ -3727,7 +3784,7 @@ function renderWeeklyGoalCard() {
             </div>
             <button class="link-btn" onclick="createTaskFromMilestone('${goal.id}','${item.id}')">${item.linkedTaskId ? 'Zu Task' : 'Als Task'}</button>
           </div>`).join('') : `<div class="mini-empty">Noch keine Milestones hinterlegt.</div>`}
-      </div>
+      </div>` : `<div class="mini-empty" style="margin-top:12px">Dieses Wochenziel zieht seinen Fortschritt direkt aus deiner verknuepften Habit- oder Trainingserfassung.</div>`}
       <div class="mini-actions">
         <button class="link-btn danger-link" onclick="deleteWeeklyGoal('${goal.id}')">Wochenziel loeschen</button>
       </div>
@@ -3735,6 +3792,19 @@ function renderWeeklyGoalCard() {
     <div class="add-form" id="weekly-goal-form" style="display:${goal?'none':'block'};margin-top:14px">
       <div class="form-row"><input type="text" id="wg-title" placeholder="Diese Woche wieder in Sportroutine kommen" value="${esc(goal?.title || '')}" /></div>
       <div class="form-row"><input type="text" id="wg-desc" placeholder="Optional: warum diese Woche wichtig ist" value="${esc(goal?.description || '')}" /></div>
+      <div class="form-row">
+        <label class="field">
+          <span class="field-label">Mit Habit oder Training verknuepfen</span>
+          <select id="wg-linked-ref" onchange="updateWeeklyGoalForm()">
+            <option value="">Manuelle Milestones</option>
+            ${linkedOptions.map(opt=>`<option value="${esc(opt.value)}" ${(goal?.linkedRef||'')===opt.value?'selected':''}>${esc(opt.label)}</option>`).join('')}
+          </select>
+        </label>
+        <label class="field" style="max-width:170px">
+          <span class="field-label">Ziel diese Woche</span>
+          <input type="number" id="wg-target-count" min="1" max="14" value="${esc(goal?.targetCount || 5)}" />
+        </label>
+      </div>
       <div class="form-row"><textarea class="form-ta" id="wg-milestones" placeholder="Montag trainieren&#10;Mittwoch trainieren&#10;Samstag Spaziergang">${esc((goal?.milestones||[]).map(x=>x.title).join('\n'))}</textarea></div>
       <div class="form-row">
         <button class="btn btn-primary btn-sm" onclick="saveWeeklyGoal()">Speichern</button>
@@ -3897,6 +3967,64 @@ function renderAnalyticsCard() {
     </div>
   </div>`;
 }
+function renderTodayOverviewCard() {
+  const s=homeStatusData();
+  const quickHabits=habitDefinitions().slice(0,6);
+  const lastEnergy=s.energyToday[0];
+  return `<div class="dashboard-card">
+    <div class="dashboard-head">
+      <div>
+        <div class="dashboard-title">Heute auf einen Blick</div>
+        <div class="dashboard-sub">Die wichtigsten Dinge fuer heute, ohne dass du durch mehrere Bereiche springen musst.</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="go('heute')">Details</button>
+    </div>
+    <div class="metric-stack">
+      <div class="metric-row"><span>Morgen / Abendroutine</span><strong>${s.daily.morningRoutineDone ? '✓' : '–'} / ${s.daily.eveningRoutineDone ? '✓' : '–'}</strong></div>
+      <div class="metric-row"><span>Schlaf / Aufstehen</span><strong>${s.sleep.bedTime || '–'} / ${s.sleep.wakeTime || '–'}</strong></div>
+      <div class="metric-row"><span>Letzte Energie</span><strong>${lastEnergy ? `${energyLabel(lastEnergy.energy)} · ${lastEnergy.time}` : 'Noch offen'}</strong></div>
+      <div class="metric-row"><span>Training heute</span><strong>${s.trainingToday.length ? `${s.trainingToday.length} geloggt` : 'noch offen'}</strong></div>
+    </div>
+    <div class="check-row" style="margin-top:12px">
+      <button class="toggle-chip ${s.daily.morningRoutineDone?'active':''}" onclick="toggleRoutine('morningRoutineDone')">Morgenroutine</button>
+      <button class="toggle-chip ${s.daily.eveningRoutineDone?'active':''}" onclick="toggleRoutine('eveningRoutineDone')">Abendroutine</button>
+      <button class="toggle-chip ${s.sleep.wakeTime?'active':''}" onclick="quickWakeNow()">Aufstehen</button>
+      <button class="toggle-chip ${s.sleep.bedTime?'active':''}" onclick="quickBedNow()">Schlafen</button>
+    </div>
+    <div class="quick-pill-row" style="margin-top:12px">
+      ${[9,7,5,3,1].map(v=>`<button class="pill-value" onclick="saveEnergyEntry(${v})">${energyLabel(v)}</button>`).join('')}
+    </div>
+    <div class="check-row" style="margin-top:12px">
+      ${quickHabits.map(def=>`<button class="toggle-chip ${findHabitLog(def.id)?.done ? 'active' : ''}" onclick="toggleHabitLog('${def.id}')">${esc(def.name)}</button>`).join('')}
+    </div>
+    <div class="mini-actions">
+      <button class="btn btn-ghost btn-sm" onclick="saveTrainingEntry('Gym')">Gym loggen</button>
+      <button class="btn btn-ghost btn-sm" onclick="saveTrainingEntry('Thai-Boxen')">Thai-Boxen loggen</button>
+      <button class="btn btn-ghost btn-sm" onclick="go('habits')">Mehr Habits</button>
+    </div>
+  </div>`;
+}
+function renderProgressSummaryCard() {
+  const insights=analyticsInsights();
+  return `<div class="dashboard-card">
+    <div class="dashboard-head">
+      <div>
+        <div class="dashboard-title">Progress und Stats</div>
+        <div class="dashboard-sub">Direkter Fortschritt fuer Woche, Routinen, Gewicht und Energie ohne Analytics-Overload.</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="go('week')">Woche</button>
+    </div>
+    <div class="analytics-grid">
+      <div class="analytics-mini"><div class="stat-label">Morgenroutine</div><div class="stat-value">${routineCompletionRate('morningRoutineDone',14) ?? '–'}%</div><div class="stat-sub">letzte 14 Tage</div></div>
+      <div class="analytics-mini"><div class="stat-label">Abendroutine</div><div class="stat-value">${routineCompletionRate('eveningRoutineDone',14) ?? '–'}%</div><div class="stat-sub">letzte 14 Tage</div></div>
+      <div class="analytics-mini"><div class="stat-label">Gewichtstrend</div><div class="stat-value">${weightTrend(14)===null ? '–' : `${weightTrend(14)>0?'+':''}${weightTrend(14)}kg`}</div><div class="stat-sub">letzte 14 Tage</div></div>
+      <div class="analytics-mini"><div class="stat-label">Habit Rate</div><div class="stat-value">${habitCompletionRate(14) ?? '–'}%</div><div class="stat-sub">letzte 14 Tage</div></div>
+    </div>
+    <div class="insight-list" style="margin-top:12px">
+      ${insights.slice(0,3).map(text=>`<div class="insight-item"><div class="goal-body"><div class="goal-title">Kurzfazit</div><div class="goal-meta">${esc(text)}</div></div></div>`).join('')}
+    </div>
+  </div>`;
+}
 function renderHome() {
   const el=document.getElementById('home-content');
   if(!el) return;
@@ -3906,16 +4034,14 @@ function renderHome() {
     <div class="home-split">
       <div class="dashboard-stack">
         ${renderWeeklyGoalCard()}
-        ${renderRoutineCard()}
-        ${renderAnalyticsCard()}
+        ${renderProgressSummaryCard()}
       </div>
       <div class="dashboard-stack">
-        ${renderEnergyCard()}
-        ${renderTrainingCard()}
-        ${renderHabitsWeightCard()}
+        ${renderTodayOverviewCard()}
       </div>
     </div>
   </div>`;
+  setTimeout(updateWeeklyGoalForm, 0);
 }
 function renderHeuteLifeSummary() {
   const el=document.getElementById('heute-life-summary');
