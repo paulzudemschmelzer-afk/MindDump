@@ -249,6 +249,9 @@ textarea::placeholder { color:#7c8aa2; }
 .task-filter-label { width:82px; min-width:82px; padding-top:7px; font-size:11px; text-transform:uppercase; letter-spacing:.65px; color:var(--sub); }
 .task-filter-group .ftabs { flex:1; margin-bottom:0; }
 .task-filter-group.category-group .task-filter-label { padding-top:8px; }
+#task-sort-tabs,#task-due-tabs,#kat-ftabs { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+#task-sort-tabs::-webkit-scrollbar,#task-due-tabs::-webkit-scrollbar,#kat-ftabs::-webkit-scrollbar { display:none; }
+#task-sort-tabs .ftab,#task-due-tabs .ftab,#kat-ftabs .ftab { white-space:nowrap; flex:0 0 auto; }
 
 /* HABITS */
 .habit-grid { display:grid; gap:12px; }
@@ -332,6 +335,17 @@ textarea::placeholder { color:#7c8aa2; }
 .analytics-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:12px; }
 .analytics-mini { padding:12px; border-radius:18px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03); }
 .analytics-mini .stat-value { font-size:20px; }
+.finance-layout { display:grid; gap:14px; }
+.finance-grid { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr); gap:12px; align-items:start; }
+.finance-period-tabs { display:flex; gap:8px; flex-wrap:wrap; }
+.finance-summary-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:12px; }
+.finance-summary-bar { position:sticky; bottom:12px; z-index:5; }
+.finance-meta { color:var(--sub); font-size:12px; line-height:1.45; margin-top:4px; }
+.finance-amount.income { color:#34d399; }
+.finance-amount.expense { color:#f87171; }
+.finance-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.sub-pill { display:inline-flex; align-items:center; gap:6px; padding:5px 9px; border-radius:999px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); font-size:12px; color:var(--sub); }
+.sub-pill.active { color:var(--text); border-color:rgba(52,211,153,.22); background:rgba(52,211,153,.10); }
 .link-btn { background:none; border:none; color:var(--accent2); cursor:pointer; font:inherit; font-size:12px; padding:0; }
 .link-btn:hover { text-decoration:underline; }
 .danger-link { color:#fca5a5; }
@@ -591,7 +605,7 @@ select option { background:#122030; }
   .task-filter-stack { gap:6px; margin-bottom:12px; }
   .task-filter-group { display:block; padding:10px; border-radius:16px; }
   .task-filter-label { width:auto; min-width:0; padding-top:0; margin-bottom:8px; display:block; }
-  .stats-grid, .analytics-grid, .section-grid, .home-split { grid-template-columns:1fr; }
+  .stats-grid, .analytics-grid, .section-grid, .home-split, .finance-grid, .finance-summary-grid { grid-template-columns:1fr; }
   .context-copy { font-size:17px; }
 
   /* Task Cards */
@@ -650,6 +664,7 @@ select option { background:#122030; }
     <button class="nav-btn" onclick="go('heute')"><span class="nav-icon">☀</span>Heute<span class="badge" id="b-heute" style="background:#f59e0b">0</span></button>
     <button class="nav-btn" onclick="go('habits')"><span class="nav-icon">HP</span>Habits<span class="badge" id="b-habits" style="background:#10b981">0</span></button>
     <button class="nav-btn" onclick="go('week')"><span class="nav-icon">📅</span>Woche</button>
+    <button class="nav-btn" onclick="go('finance')"><span class="nav-icon">€</span>Finanzen</button>
     <button class="nav-btn" onclick="go('snippets')"><span class="nav-icon">⌨</span>Snippets<span class="badge" id="b-snippets">0</span></button>
     <button class="nav-btn" onclick="go('notes')"><span class="nav-icon">📝</span>Notizen<span class="badge" id="b-notes">0</span></button>
     <button class="nav-btn" onclick="go('settings')" style="margin-top:auto"><span class="nav-icon">⚙</span>Settings</button>
@@ -853,6 +868,14 @@ select option { background:#122030; }
     </div>
     <div class="week-grid" id="week-grid"></div>
     <div id="unscheduled-area"></div>
+  </div>
+
+  <!-- FINANCE -->
+  <div class="tab-panel" id="tab-finance">
+    <div class="page-header header-row">
+      <div><h1>Finanzen</h1><p>Einnahmen, Ausgaben und Abos kurz nebenbei sauber tracken.</p></div>
+    </div>
+    <div id="finance-content"></div>
   </div>
 
   <!-- THOUGHTS (migriert zu Notizen) -->
@@ -1112,7 +1135,7 @@ select option { background:#122030; }
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────
-let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[], weeklyGoals:[], dailyLogs:[], energyLogs:[], sleepLogs:[], trainingLogs:[], habitLogs:[], weightLogs:[], checkinState:[] };
+let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[], weeklyGoals:[], dailyLogs:[], energyLogs:[], sleepLogs:[], trainingLogs:[], habitLogs:[], weightLogs:[], checkinState:[], financeEntries:[], subscriptions:[] };
 let S = { groqKey:'', fbConfig:'', brainAiMode:'taurus', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{}, reminderPrefs:{ enabled:true, morning:'08:00', midday:'12:00', afternoon:'17:00', evening:'21:00' } };
 let pendingResult = null;
 let taskFilter = 'all';
@@ -1122,6 +1145,7 @@ let snipFilter = 'Alle';
 let weekOffset = 0;
 let modalMode = null;
 let currentTab = 'home';
+let financeRange = 'month';
 let db = null, auth = null, currentUser = null;
 let unsubListeners = [];
 
@@ -1160,6 +1184,8 @@ function loadLocal() {
   if(!D.habitLogs) D.habitLogs=[];
   if(!D.weightLogs) D.weightLogs=[];
   if(!D.checkinState) D.checkinState=[];
+  if(!D.financeEntries) D.financeEntries=[];
+  if(!D.subscriptions) D.subscriptions=[];
   // Migration: Thoughts → Notizen
   if(D.thoughts && D.thoughts.length) {
     D.thoughts.forEach(t=>{
@@ -1193,6 +1219,8 @@ function loadLocal() {
   D.habitLogs = Array.isArray(D.habitLogs) ? D.habitLogs : [];
   D.weightLogs = Array.isArray(D.weightLogs) ? D.weightLogs : [];
   D.checkinState = Array.isArray(D.checkinState) ? D.checkinState : [];
+  D.financeEntries = Array.isArray(D.financeEntries) ? D.financeEntries : [];
+  D.subscriptions = Array.isArray(D.subscriptions) ? D.subscriptions : [];
   if(!S.reminderPrefs || typeof S.reminderPrefs!=='object') S.reminderPrefs={ enabled:true, morning:'08:00', midday:'12:00', afternoon:'17:00', evening:'21:00' };
   else S.reminderPrefs = { enabled:true, morning:'08:00', midday:'12:00', afternoon:'17:00', evening:'21:00', ...S.reminderPrefs };
   ensureTaskCategorySettings();
@@ -1229,7 +1257,8 @@ function rerender(colName) {
   if(colName==='thoughts') renderThoughts();
   if(colName==='snippets') renderSnips();
   if(colName==='notes') renderNotes();
-  if(['weeklyGoals','dailyLogs','energyLogs','sleepLogs','trainingLogs','habitLogs','weightLogs','checkinState'].includes(colName) || currentTab==='home') renderHome();
+  if(colName==='financeEntries' || colName==='subscriptions') renderFinance();
+  if(['weeklyGoals','dailyLogs','energyLogs','sleepLogs','trainingLogs','habitLogs','weightLogs','checkinState','financeEntries','subscriptions'].includes(colName) || currentTab==='home') renderHome();
 }
 
 // ── FIREBASE ──────────────────────────────────────────────────
@@ -1251,7 +1280,7 @@ function connectFirebase() {
       currentUser = user;
       renderUserArea();
       if(user) { subscribeFS(); }
-      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; D={tasks:[],thoughts:[],snippets:[],notes:[],habits:[],weeklyGoals:[],dailyLogs:[],energyLogs:[],sleepLogs:[],trainingLogs:[],habitLogs:[],weightLogs:[],checkinState:[]}; badges(); renderHome(); }
+      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; D={tasks:[],thoughts:[],snippets:[],notes:[],habits:[],weeklyGoals:[],dailyLogs:[],energyLogs:[],sleepLogs:[],trainingLogs:[],habitLogs:[],weightLogs:[],checkinState:[],financeEntries:[],subscriptions:[]}; badges(); renderHome(); renderFinance(); }
     });
 
     S.fbConfig = configStr;
@@ -1266,7 +1295,7 @@ function connectFirebase() {
 function subscribeFS() {
   unsubListeners.forEach(u=>u());
   unsubListeners=[];
-  ['tasks','thoughts','snippets','notes','habits','weeklyGoals','dailyLogs','energyLogs','sleepLogs','trainingLogs','habitLogs','weightLogs','checkinState'].forEach(name=>{
+  ['tasks','thoughts','snippets','notes','habits','weeklyGoals','dailyLogs','energyLogs','sleepLogs','trainingLogs','habitLogs','weightLogs','checkinState','financeEntries','subscriptions'].forEach(name=>{
     unsubListeners.push(
       col(name).onSnapshot(snap=>{
         D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1406,11 +1435,12 @@ function nextDueDate(dueDate, recurrence) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
-const TAB_TITLES = {home:'Start',braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',habits:'Habits',week:'Woche',snippets:'Snippets',notes:'Notizen',settings:'Settings'};
+const TAB_TITLES = {home:'Start',braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',habits:'Habits',week:'Woche',finance:'Finanzen',snippets:'Snippets',notes:'Notizen',settings:'Settings'};
 const TAB_ACTIONS = {
   tasks:    `<button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">+ Hinzufügen</button>`,
   heute:    `<button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>`,
   habits:   `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-habit-form')">+ Gewohnheit</button>`,
+  finance:  `<button class="btn btn-ghost btn-sm" onclick="document.getElementById('finance-amount')?.focus()">+ Eintrag</button>`,
   snippets: `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-snippet-form')">+ Hinzufügen</button>`,
   notes:    `<button class="btn btn-ghost btn-sm" onclick="createNote()">+ Neue Notiz</button>`,
 };
@@ -1430,6 +1460,7 @@ function go(tab) {
   if(tab==='tasks') renderTasks();
   if(tab==='heute') renderHeute();
   if(tab==='habits') renderHabits();
+  if(tab==='finance') renderFinance();
   if(tab==='thoughts') renderThoughts();
   if(tab==='snippets') renderSnips();
   if(tab==='week') renderWeek();
@@ -3037,9 +3068,13 @@ function daysBetweenISO(a,b){
   return Math.floor((db-da)/86400000);
 }
 function habitCheckins(h){ return Array.isArray(h.checkins) ? h.checkins : []; }
-function habitWeighted(c){ return c.mode==='minimal' ? 0.55 : 1; }
+function habitSuccessCheckins(h){ return habitCheckins(h).filter(c=>c.mode!=='miss'); }
+function habitWeighted(c){
+  if(c.mode==='miss') return 0;
+  return c.mode==='minimal' ? 0.55 : 1;
+}
 function habitSinceDays(h){
-  const last=habitCheckins(h).map(c=>c.date).sort().pop();
+  const last=habitSuccessCheckins(h).map(c=>c.date).sort().pop();
   return last ? daysBetweenISO(last,todayISO()) : 999;
 }
 function habitWeekKey(date){
@@ -3049,27 +3084,31 @@ function habitWeekKey(date){
 }
 function habitScore(h){
   const checkins=habitCheckins(h);
+  const success=habitSuccessCheckins(h);
   const target=Math.max(1, Number(h.frequencyCount)||3);
   const now=todayISO();
-  const recent=checkins.filter(c=>daysBetweenISO(c.date,now)<=6);
+  const recent=success.filter(c=>daysBetweenISO(c.date,now)<=6);
   const recentWeight=recent.reduce((sum,c)=>sum+habitWeighted(c),0);
-  const totalWeight=checkins.reduce((sum,c)=>sum+habitWeighted(c),0);
+  const totalWeight=success.reduce((sum,c)=>sum+habitWeighted(c),0);
+  const recentMisses=checkins.filter(c=>c.mode==='miss' && daysBetweenISO(c.date,now)<=6).length;
   const warnDays=Math.max(1, Number(h.decayWarnDays)||7);
   const dangerDays=Math.max(warnDays+1, Number(h.decayDangerDays)||21);
   const since=habitSinceDays(h);
-  if(!checkins.length) return {hp:0, strength:0, goal:0, risk:20, since, recentWeight:0, totalWeight:0, solidWeeks:0, recovery:false, fresh:true};
+  if(!checkins.length) return {hp:0, strength:0, goal:0, risk:20, since, recentWeight:0, totalWeight:0, solidWeeks:0, recovery:false, fresh:true, recentMisses:0};
 
   let hp=clamp((recentWeight/target)*100);
+  hp=Math.max(0, hp-(recentMisses*22));
   if(since>=warnDays) hp=Math.min(hp,70);
   if(since>=dangerDays) hp=Math.min(hp,30);
 
   const strengthTarget=Math.max(18,target*12);
   let strength=clamp((1-Math.exp(-totalWeight/strengthTarget))*100);
+  strength=Math.max(0, strength-(recentMisses*4));
   if(since>=warnDays) strength=Math.max(0,strength-12);
   if(since>=dangerDays) strength=Math.max(0,strength-28);
 
-  const withPain=checkins.filter(c=>Number.isFinite(Number(c.painAfter)));
-  const withStability=checkins.filter(c=>Number.isFinite(Number(c.stability)));
+  const withPain=success.filter(c=>Number.isFinite(Number(c.painAfter)));
+  const withStability=success.filter(c=>Number.isFinite(Number(c.stability)));
   let outcome=strength*0.65;
   if(withPain.length>=3){
     const first=withPain.slice(0,3).reduce((s,c)=>s+Number(c.painAfter),0)/Math.min(3,withPain.length);
@@ -3085,16 +3124,17 @@ function habitScore(h){
 
   let risk=15;
   if(recentWeight<target) risk+=Math.round((1-(recentWeight/target))*35);
+  if(recentMisses) risk+=recentMisses*18;
   if(since>=warnDays) risk+=25;
   if(since>=dangerDays) risk+=35;
   risk=clamp(risk);
 
   const weekScores={};
-  checkins.forEach(c=>{ const k=habitWeekKey(c.date); weekScores[k]=(weekScores[k]||0)+habitWeighted(c); });
+  success.forEach(c=>{ const k=habitWeekKey(c.date); weekScores[k]=(weekScores[k]||0)+habitWeighted(c); });
   const solidWeeks=Object.values(weekScores).filter(v=>v>=target).length;
   const plannedGap=Math.ceil(7/target);
-  const recovery=checkins.length && (since>plannedGap*2 || hp<50);
-  return {hp, strength, goal, risk, since, recentWeight, totalWeight, solidWeeks, recovery};
+  const recovery=checkins.length && (since>plannedGap*2 || hp<50 || recentMisses>0);
+  return {hp, strength, goal, risk, since, recentWeight, totalWeight, solidWeeks, recovery, recentMisses};
 }
 function habitStatus(score){
   if(score.fresh) return {cls:'warn', text:'Startbereit'};
@@ -3156,10 +3196,11 @@ async function addHabitCheckin(id,mode='full'){
     note:habitField(id,'note')?.value.trim()||'',
     createdAt:Date.now()
   };
-  h.checkins=habitCheckins(h).filter(c=>!(c.date===checkin.date && c.mode===mode));
+  h.checkins=habitCheckins(h).filter(c=>c.date!==checkin.date);
   h.checkins.push(checkin);
   await fsUpdate('habits',h);
-  toast(mode==='minimal' ? 'Minimalversion zählt. Hauptsache zurück.' : 'Check-in gespeichert');
+  if(mode==='miss') toast('Heute als nicht gemacht markiert');
+  else toast(mode==='minimal' ? 'Minimalversion zählt. Hauptsache zurück.' : 'Check-in gespeichert');
 }
 async function deleteHabit(id){
   if(!confirm('Habit wirklich löschen?')) return;
@@ -3193,7 +3234,7 @@ function renderHabitCard(h){
   const status=habitStatus(score);
   const milestones=habitMilestones(score);
   const target=Math.max(1, Number(h.frequencyCount)||3);
-  const last=habitCheckins(h).map(c=>c.date).sort().pop();
+  const last=habitSuccessCheckins(h).map(c=>c.date).sort().pop();
   return `<div class="habit-card ${score.recovery?'recovery':''}">
     <div class="habit-top">
       <div>
@@ -3203,6 +3244,7 @@ function renderHabitCard(h){
           <span class="habit-chip ${status.cls}">${status.text}</span>
           <span class="habit-chip">${target}x pro Woche</span>
           <span class="habit-chip">Letzter Check-in: ${last?esc(last):'noch keiner'}</span>
+          ${score.recentMisses?`<span class="habit-chip warn">${score.recentMisses}x ausgelassen</span>`:''}
           ${h.cue?`<span class="habit-chip">Cue: ${esc(h.cue)}</span>`:''}
         </div>
       </div>
@@ -3230,6 +3272,7 @@ function renderHabitCard(h){
       <label class="field wide"><span class="field-label">Notiz</span><input type="text" id="hc-note-${h.id}" placeholder="Was war auffaellig?" /></label>
       <button class="btn btn-primary btn-sm" onclick="addHabitCheckin('${h.id}','full')">Erledigt</button>
       <button class="btn btn-ghost btn-sm" onclick="addHabitCheckin('${h.id}','minimal')">Minimalversion</button>
+      <button class="btn btn-ghost btn-sm" onclick="addHabitCheckin('${h.id}','miss')">Nicht gemacht</button>
     </div>
   </div>`;
 }
@@ -3278,6 +3321,10 @@ function formatTimeFromMinutes(total) {
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
 }
 function round1(n) { return Math.round((Number(n)||0)*10)/10; }
+function fmtCurrency(amount) {
+  const value=Number(amount)||0;
+  return new Intl.NumberFormat('de-DE',{ style:'currency', currency:'EUR' }).format(value);
+}
 function average(arr) {
   const vals = arr.map(Number).filter(n=>Number.isFinite(n));
   return vals.length ? vals.reduce((a,b)=>a+b,0) / vals.length : null;
@@ -3412,7 +3459,7 @@ function countHabitInRange(habitId, start, end) {
   const builtInLogs=(D.habitLogs||[]).filter(x=>x.habitId===habitId && x.done && x.date>=start && x.date<=end).length;
   const customHabit=(D.habits||[]).find(h=>h.id===habitId);
   if(customHabit) {
-    const customLogs=(habitCheckins(customHabit)||[]).filter(c=>c.date>=start && c.date<=end).length;
+    const customLogs=(habitSuccessCheckins(customHabit)||[]).filter(c=>c.date>=start && c.date<=end).length;
     return Math.max(builtInLogs, customLogs);
   }
   return builtInLogs;
@@ -3561,6 +3608,287 @@ async function saveWeightEntry() {
   if(!value) { toast('Bitte Gewicht eingeben','err'); return; }
   await upsertDateEntry('weightLogs', todayISO(), { weightKg:null, note:'' }, { weightKg:round1(value), note:document.getElementById('weight-note')?.value.trim() || '' });
   toast('Gewicht gespeichert');
+}
+function financeRangeMeta(range=financeRange, now=new Date()) {
+  const end=dateKey(now);
+  if(range==='7d') {
+    const start=new Date(now);
+    start.setDate(start.getDate()-6);
+    return { start:dateKey(start), end, label:'letzte 7 Tage' };
+  }
+  if(range==='30d') {
+    const start=new Date(now);
+    start.setDate(start.getDate()-29);
+    return { start:dateKey(start), end, label:'letzte 30 Tage' };
+  }
+  if(range==='all') return { start:null, end:null, label:'gesamte Zeit' };
+  const monthStart=new Date(now.getFullYear(), now.getMonth(), 1, 12, 0, 0, 0);
+  const monthEnd=new Date(now.getFullYear(), now.getMonth()+1, 0, 12, 0, 0, 0);
+  return { start:dateKey(monthStart), end:dateKey(monthEnd), label:'dieser Monat' };
+}
+function inFinanceRange(ds, range=financeRange) {
+  const { start, end } = financeRangeMeta(range);
+  if(!ds) return false;
+  if(start && ds < start) return false;
+  if(end && ds > end) return false;
+  return true;
+}
+function transactionAmount(value) {
+  return Math.round((Number(value)||0) * 100) / 100;
+}
+function financeEntriesForRange(range=financeRange) {
+  return [...(D.financeEntries||[])]
+    .filter(x=>inFinanceRange(x.date, range))
+    .sort((a,b)=>`${b.date} ${b.createdAt||0}`.localeCompare(`${a.date} ${a.createdAt||0}`));
+}
+function activeSubscriptions() {
+  return [...(D.subscriptions||[])]
+    .filter(x=>x.active!==false)
+    .sort((a,b)=>String(a.nextDueDate||'9999-12-31').localeCompare(String(b.nextDueDate||'9999-12-31')) || String(a.name||'').localeCompare(String(b.name||'')));
+}
+function subscriptionMonthlyCost(sub) {
+  const amount=Number(sub?.amount)||0;
+  const cycle=sub?.billingCycle || 'monthly';
+  if(cycle==='yearly') return amount/12;
+  if(cycle==='weekly') return amount*52/12;
+  return amount;
+}
+function financeSummary(range=financeRange) {
+  const items=financeEntriesForRange(range);
+  const income=items.filter(x=>x.kind==='income').reduce((sum,x)=>sum+(Number(x.amount)||0),0);
+  const expense=items.filter(x=>x.kind!=='income').reduce((sum,x)=>sum+(Number(x.amount)||0),0);
+  const recurring=activeSubscriptions().reduce((sum,x)=>sum+subscriptionMonthlyCost(x),0);
+  return {
+    income:transactionAmount(income),
+    expense:transactionAmount(expense),
+    net:transactionAmount(income-expense),
+    recurring:transactionAmount(recurring),
+    label:financeRangeMeta(range).label,
+    count:items.length
+  };
+}
+async function saveFinanceEntry() {
+  const amount=transactionAmount(document.getElementById('finance-amount')?.value);
+  if(!amount) { toast('Bitte Betrag eingeben','err'); return; }
+  const kind=document.getElementById('finance-kind')?.value || 'expense';
+  const date=document.getElementById('finance-date')?.value || todayISO();
+  const category=document.getElementById('finance-category')?.value.trim() || (kind==='income' ? 'Einnahme' : 'Ausgabe');
+  const note=document.getElementById('finance-note')?.value.trim() || '';
+  await fsAdd('financeEntries', { id:uid(), kind, amount, date, category, note, createdAt:Date.now(), updatedAt:Date.now() });
+  ['finance-amount','finance-category','finance-note'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const kindEl=document.getElementById('finance-kind');
+  if(kindEl) kindEl.value='expense';
+  const dateEl=document.getElementById('finance-date');
+  if(dateEl) dateEl.value=todayISO();
+  toast(kind==='income' ? 'Einnahme gespeichert' : 'Ausgabe gespeichert');
+}
+async function saveSubscription() {
+  const name=document.getElementById('sub-name')?.value.trim() || '';
+  const amount=transactionAmount(document.getElementById('sub-amount')?.value);
+  if(!name || !amount) { toast('Bitte Abo und Betrag eingeben','err'); return; }
+  const billingCycle=document.getElementById('sub-cycle')?.value || 'monthly';
+  const nextDueDate=document.getElementById('sub-next-date')?.value || null;
+  const category=document.getElementById('sub-category')?.value.trim() || 'Abo';
+  const note=document.getElementById('sub-note')?.value.trim() || '';
+  await fsAdd('subscriptions', { id:uid(), name, amount, billingCycle, nextDueDate, category, note, active:true, createdAt:Date.now(), updatedAt:Date.now() });
+  ['sub-name','sub-amount','sub-category','sub-note'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const nextEl=document.getElementById('sub-next-date');
+  if(nextEl) nextEl.value='';
+  const cycleEl=document.getElementById('sub-cycle');
+  if(cycleEl) cycleEl.value='monthly';
+  toast('Abo gespeichert');
+}
+function setFinanceRange(range) {
+  financeRange=range;
+  renderFinance();
+}
+async function toggleSubscriptionActive(id) {
+  const sub=(D.subscriptions||[]).find(x=>x.id===id);
+  if(!sub) return;
+  sub.active=sub.active===false;
+  sub.updatedAt=Date.now();
+  await fsUpdate('subscriptions', sub);
+  toast(sub.active===false ? 'Abo pausiert' : 'Abo aktiviert');
+}
+function openEditFinanceEntry(id) {
+  const item=(D.financeEntries||[]).find(x=>x.id===id);
+  if(!item) return;
+  modalMode={type:'finance-entry',id};
+  document.getElementById('modal-title').textContent='Finanzeintrag bearbeiten';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row">
+      <select id="m-fin-kind" style="max-width:170px">
+        <option value="expense" ${item.kind!=='income'?'selected':''}>Ausgabe</option>
+        <option value="income" ${item.kind==='income'?'selected':''}>Einnahme</option>
+      </select>
+      <input type="number" id="m-fin-amount" min="0" step="0.01" value="${esc(item.amount)}" placeholder="Betrag" />
+      <input type="date" id="m-fin-date" value="${esc(item.date || todayISO())}" style="max-width:180px" />
+    </div>
+    <div class="form-row">
+      <input type="text" id="m-fin-category" value="${esc(item.category || '')}" placeholder="Kategorie" />
+      <input type="text" id="m-fin-note" value="${esc(item.note || '')}" placeholder="Notiz" />
+    </div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-fin-amount')?.focus(),50);
+}
+function openEditSubscription(id) {
+  const sub=(D.subscriptions||[]).find(x=>x.id===id);
+  if(!sub) return;
+  modalMode={type:'subscription',id};
+  document.getElementById('modal-title').textContent='Abo bearbeiten';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row">
+      <input type="text" id="m-sub-name" value="${esc(sub.name || '')}" placeholder="Abo" />
+      <input type="number" id="m-sub-amount" min="0" step="0.01" value="${esc(sub.amount)}" placeholder="Betrag" style="max-width:170px" />
+      <select id="m-sub-cycle" style="max-width:170px">
+        <option value="monthly" ${sub.billingCycle==='monthly'?'selected':''}>Monatlich</option>
+        <option value="yearly" ${sub.billingCycle==='yearly'?'selected':''}>Jaehrlich</option>
+        <option value="weekly" ${sub.billingCycle==='weekly'?'selected':''}>Woechentlich</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <input type="date" id="m-sub-next-date" value="${esc(sub.nextDueDate || '')}" style="max-width:180px" />
+      <input type="text" id="m-sub-category" value="${esc(sub.category || '')}" placeholder="Kategorie" />
+    </div>
+    <div class="form-row">
+      <input type="text" id="m-sub-note" value="${esc(sub.note || '')}" placeholder="Notiz" />
+      <select id="m-sub-active" style="max-width:170px">
+        <option value="yes" ${sub.active!==false?'selected':''}>Aktiv</option>
+        <option value="no" ${sub.active===false?'selected':''}>Pausiert</option>
+      </select>
+    </div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-sub-name')?.focus(),50);
+}
+function renderFinanceOverviewCard() {
+  const month=financeSummary('month');
+  const subs=activeSubscriptions();
+  return `<div class="dashboard-card">
+    <div class="dashboard-head">
+      <div>
+        <div class="dashboard-title">Finanzen</div>
+        <div class="dashboard-sub">Kurzblick fuer Einnahmen, Ausgaben und laufende Abos.</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="go('finance')">Finanzen</button>
+    </div>
+    <div class="metric-stack">
+      <div class="metric-row"><span>Einnahmen diesen Monat</span><strong class="finance-amount income">${fmtCurrency(month.income)}</strong></div>
+      <div class="metric-row"><span>Ausgaben diesen Monat</span><strong class="finance-amount expense">${fmtCurrency(month.expense)}</strong></div>
+      <div class="metric-row"><span>Summe diesen Monat</span><strong>${fmtCurrency(month.net)}</strong></div>
+      <div class="metric-row"><span>Monatliche Abos</span><strong>${fmtCurrency(month.recurring)}</strong></div>
+    </div>
+    <div class="helper-text" style="margin-top:10px">${subs.length ? `${subs.length} aktive Abos hinterlegt.` : 'Noch keine Abos hinterlegt.'}</div>
+  </div>`;
+}
+function renderFinance() {
+  const el=document.getElementById('finance-content');
+  if(!el) return;
+  const summary=financeSummary(financeRange);
+  const entries=financeEntriesForRange(financeRange).slice(0,24);
+  const subs=[...(D.subscriptions||[])].sort((a,b)=>(a.active===false)-(b.active===false) || String(a.nextDueDate||'9999-12-31').localeCompare(String(b.nextDueDate||'9999-12-31')));
+  el.innerHTML=`<div class="finance-layout">
+    <div class="dashboard-card">
+      <div class="dashboard-head">
+        <div>
+          <div class="dashboard-title">Zeitraum</div>
+          <div class="dashboard-sub">Unten bleibt die Summenzeile fuer den gewaehlten Zeitraum direkt sichtbar.</div>
+        </div>
+        <span class="habit-chip">${esc(summary.label)}</span>
+      </div>
+      <div class="finance-period-tabs">
+        <button class="ftab ${financeRange==='7d'?'active':''}" onclick="setFinanceRange('7d')">7 Tage</button>
+        <button class="ftab ${financeRange==='30d'?'active':''}" onclick="setFinanceRange('30d')">30 Tage</button>
+        <button class="ftab ${financeRange==='month'?'active':''}" onclick="setFinanceRange('month')">Monat</button>
+        <button class="ftab ${financeRange==='all'?'active':''}" onclick="setFinanceRange('all')">Alle</button>
+      </div>
+      <div class="finance-summary-grid">
+        <div class="analytics-mini"><div class="stat-label">Einnahmen</div><div class="stat-value finance-amount income">${fmtCurrency(summary.income)}</div><div class="stat-sub">${summary.count} Eintraege</div></div>
+        <div class="analytics-mini"><div class="stat-label">Ausgaben</div><div class="stat-value finance-amount expense">${fmtCurrency(summary.expense)}</div><div class="stat-sub">${esc(summary.label)}</div></div>
+        <div class="analytics-mini"><div class="stat-label">Netto</div><div class="stat-value">${fmtCurrency(summary.net)}</div><div class="stat-sub">Aktive Abos: ${fmtCurrency(summary.recurring)}/Monat</div></div>
+      </div>
+    </div>
+    <div class="finance-grid">
+      <div class="dashboard-stack">
+        <div class="dashboard-card">
+          <div class="dashboard-head">
+            <div>
+              <div class="dashboard-title">Eintrag erfassen</div>
+              <div class="dashboard-sub">Einnahme oder Ausgabe in ein paar Sekunden speichern.</div>
+            </div>
+          </div>
+          <div class="form-row">
+            <select id="finance-kind" style="max-width:170px">
+              <option value="expense">Ausgabe</option>
+              <option value="income">Einnahme</option>
+            </select>
+            <input type="number" id="finance-amount" min="0" step="0.01" placeholder="Betrag in EUR" onkeydown="if(event.key==='Enter')saveFinanceEntry()" />
+            <input type="date" id="finance-date" value="${todayISO()}" style="max-width:180px" />
+          </div>
+          <div class="form-row">
+            <input type="text" id="finance-category" placeholder="Kategorie, z. B. Essen oder Uni" onkeydown="if(event.key==='Enter')saveFinanceEntry()" />
+            <input type="text" id="finance-note" placeholder="Notiz" onkeydown="if(event.key==='Enter')saveFinanceEntry()" />
+            <button class="btn btn-primary btn-sm" onclick="saveFinanceEntry()">Speichern</button>
+          </div>
+        </div>
+        <div class="dashboard-card">
+          <div class="dashboard-head">
+            <div>
+              <div class="dashboard-title">Eintraege im Zeitraum</div>
+              <div class="dashboard-sub">Sauber getrennt nach Einnahme und Ausgabe.</div>
+            </div>
+          </div>
+          <div class="timeline-list finance-list">
+            ${entries.length ? entries.map(item=>`<div class="timeline-item"><div class="timeline-body"><div class="timeline-title"><span>${esc(item.category || (item.kind==='income' ? 'Einnahme' : 'Ausgabe'))}</span><strong class="finance-amount ${item.kind==='income'?'income':'expense'}">${item.kind==='income' ? '+' : '-'}${fmtCurrency(item.amount)}</strong></div><div class="timeline-meta">${fmtDue(item.date)}${item.note ? ` · ${esc(item.note)}` : ''}</div></div><div class="finance-actions"><button class="link-btn" onclick="openEditFinanceEntry('${item.id}')">Bearbeiten</button><button class="link-btn danger-link" onclick="deleteLifeEntry('financeEntries','${item.id}','Finanzeintrag geloescht')">Entfernen</button></div></div>`).join('') : `<div class="mini-empty">Noch keine Eintraege fuer ${esc(summary.label)}.</div>`}
+          </div>
+        </div>
+      </div>
+      <div class="dashboard-stack">
+        <div class="dashboard-card">
+          <div class="dashboard-head">
+            <div>
+              <div class="dashboard-title">Abos</div>
+              <div class="dashboard-sub">Laufende Kosten behalten wir separat im Blick.</div>
+            </div>
+            <span class="habit-chip">${fmtCurrency(summary.recurring)}/Monat</span>
+          </div>
+          <div class="form-row">
+            <input type="text" id="sub-name" placeholder="z. B. Spotify" onkeydown="if(event.key==='Enter')saveSubscription()" />
+            <input type="number" id="sub-amount" min="0" step="0.01" placeholder="Betrag" style="max-width:150px" onkeydown="if(event.key==='Enter')saveSubscription()" />
+            <select id="sub-cycle" style="max-width:170px">
+              <option value="monthly">Monatlich</option>
+              <option value="yearly">Jaehrlich</option>
+              <option value="weekly">Woechentlich</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <input type="date" id="sub-next-date" style="max-width:180px" />
+            <input type="text" id="sub-category" placeholder="Kategorie" onkeydown="if(event.key==='Enter')saveSubscription()" />
+          </div>
+          <div class="form-row">
+            <input type="text" id="sub-note" placeholder="Notiz" onkeydown="if(event.key==='Enter')saveSubscription()" />
+            <button class="btn btn-primary btn-sm" onclick="saveSubscription()">Abo speichern</button>
+          </div>
+          <div class="timeline-list finance-list" style="margin-top:12px">
+            ${subs.length ? subs.map(sub=>`<div class="timeline-item"><div class="timeline-body"><div class="timeline-title"><span>${esc(sub.name)}</span><strong class="finance-amount expense">${fmtCurrency(sub.amount)}</strong></div><div class="finance-meta">${esc(sub.category || 'Abo')} · ${sub.billingCycle==='yearly'?'jaehrlich':sub.billingCycle==='weekly'?'woechentlich':'monatlich'}${sub.nextDueDate ? ` · naechste Faelligkeit ${fmtDue(sub.nextDueDate)}` : ''}${sub.note ? ` · ${esc(sub.note)}` : ''}</div><div class="finance-meta">Monatlich umgerechnet: ${fmtCurrency(subscriptionMonthlyCost(sub))}</div></div><div class="finance-actions"><span class="sub-pill ${sub.active!==false?'active':''}">${sub.active!==false?'aktiv':'pausiert'}</span><button class="link-btn" onclick="openEditSubscription('${sub.id}')">Bearbeiten</button><button class="link-btn" onclick="toggleSubscriptionActive('${sub.id}')">${sub.active===false?'Aktivieren':'Pausieren'}</button><button class="link-btn danger-link" onclick="deleteLifeEntry('subscriptions','${sub.id}','Abo geloescht')">Entfernen</button></div></div>`).join('') : `<div class="mini-empty">Noch keine Abos hinterlegt.</div>`}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dashboard-card finance-summary-bar">
+      <div class="dashboard-head">
+        <div>
+          <div class="dashboard-title">Summenzeile</div>
+          <div class="dashboard-sub">Immer fuer den gerade gewaehlten Zeitraum.</div>
+        </div>
+        <span class="habit-chip">${esc(summary.label)}</span>
+      </div>
+      <div class="metric-stack">
+        <div class="metric-row"><span>Ausgaben</span><strong class="finance-amount expense">${fmtCurrency(summary.expense)}</strong></div>
+        <div class="metric-row"><span>Einnahmen</span><strong class="finance-amount income">${fmtCurrency(summary.income)}</strong></div>
+        <div class="metric-row"><span>Summe</span><strong>${fmtCurrency(summary.net)}</strong></div>
+      </div>
+    </div>
+  </div>`;
 }
 function saveReminderPrefs() {
   S.reminderPrefs = {
@@ -4038,6 +4366,7 @@ function renderHome() {
       </div>
       <div class="dashboard-stack">
         ${renderTodayOverviewCard()}
+        ${renderFinanceOverviewCard()}
       </div>
     </div>
   </div>`;
@@ -5176,6 +5505,31 @@ async function saveModal(){
     h.decayDangerDays=Math.max(h.decayWarnDays+1, Number(document.getElementById('m-h-danger-days').value)||21);
     h.why=document.getElementById('m-h-why').value.trim();
     await fsUpdate('habits',h); closeModal(); toast('Habit aktualisiert!');
+  } else if(modalMode.type==='finance-entry'){
+    const item=D.financeEntries.find(x=>x.id===modalMode.id); if(!item) return;
+    const amount=transactionAmount(document.getElementById('m-fin-amount').value);
+    if(!amount){toast('Bitte Betrag eingeben','err');return;}
+    item.kind=document.getElementById('m-fin-kind').value||'expense';
+    item.amount=amount;
+    item.date=document.getElementById('m-fin-date').value||todayISO();
+    item.category=document.getElementById('m-fin-category').value.trim()||'Eintrag';
+    item.note=document.getElementById('m-fin-note').value.trim()||'';
+    item.updatedAt=Date.now();
+    await fsUpdate('financeEntries',item); closeModal(); toast('Finanzeintrag aktualisiert!');
+  } else if(modalMode.type==='subscription'){
+    const sub=D.subscriptions.find(x=>x.id===modalMode.id); if(!sub) return;
+    const name=document.getElementById('m-sub-name').value.trim();
+    const amount=transactionAmount(document.getElementById('m-sub-amount').value);
+    if(!name || !amount){toast('Bitte Abo und Betrag eingeben','err');return;}
+    sub.name=name;
+    sub.amount=amount;
+    sub.billingCycle=document.getElementById('m-sub-cycle').value||'monthly';
+    sub.nextDueDate=document.getElementById('m-sub-next-date').value||null;
+    sub.category=document.getElementById('m-sub-category').value.trim()||'Abo';
+    sub.note=document.getElementById('m-sub-note').value.trim()||'';
+    sub.active=(document.getElementById('m-sub-active').value||'yes')==='yes';
+    sub.updatedAt=Date.now();
+    await fsUpdate('subscriptions',sub); closeModal(); toast('Abo aktualisiert!');
   } else if(modalMode.type==='thought'){
     const t=D.thoughts.find(x=>x.id===modalMode.id); if(!t) return;
     const c=document.getElementById('m-content').value.trim();
@@ -5269,9 +5623,11 @@ function importData(e){
       imp.habitLogs = Array.isArray(imp.habitLogs) ? imp.habitLogs : [];
       imp.weightLogs = Array.isArray(imp.weightLogs) ? imp.weightLogs : [];
       imp.checkinState = Array.isArray(imp.checkinState) ? imp.checkinState : [];
+      imp.financeEntries = Array.isArray(imp.financeEntries) ? imp.financeEntries : [];
+      imp.subscriptions = Array.isArray(imp.subscriptions) ? imp.subscriptions : [];
       if(currentUser && db) {
         toast('Lade zu Firebase hoch...');
-        for(const name of ['tasks','thoughts','snippets','notes','habits','weeklyGoals','dailyLogs','energyLogs','sleepLogs','trainingLogs','habitLogs','weightLogs','checkinState']) {
+        for(const name of ['tasks','thoughts','snippets','notes','habits','weeklyGoals','dailyLogs','energyLogs','sleepLogs','trainingLogs','habitLogs','weightLogs','checkinState','financeEntries','subscriptions']) {
           for(const item of imp[name]) {
             const {id,...data}=item;
             await col(name).doc(id).set(data);
@@ -5295,9 +5651,10 @@ function importData(e){
         renderHabits();
         renderNotes();
         renderHome();
-        toast(`Zu Firebase hochgeladen: ${imp.tasks.length} Tasks, ${imp.snippets.length} Snippets, ${imp.notes.length} Notizen, ${imp.habits.length} Habits`);
+        renderFinance();
+        toast(`Zu Firebase hochgeladen: ${imp.tasks.length} Tasks, ${imp.snippets.length} Snippets, ${imp.notes.length} Notizen, ${imp.habits.length} Habits, ${imp.financeEntries.length} Finanzeintraege`);
       } else {
-        D={tasks:imp.tasks,thoughts:imp.thoughts,snippets:imp.snippets,notes:imp.notes,habits:imp.habits,weeklyGoals:imp.weeklyGoals,dailyLogs:imp.dailyLogs,energyLogs:imp.energyLogs,sleepLogs:imp.sleepLogs,trainingLogs:imp.trainingLogs,habitLogs:imp.habitLogs,weightLogs:imp.weightLogs,checkinState:imp.checkinState}; saveLocal();
+        D={tasks:imp.tasks,thoughts:imp.thoughts,snippets:imp.snippets,notes:imp.notes,habits:imp.habits,weeklyGoals:imp.weeklyGoals,dailyLogs:imp.dailyLogs,energyLogs:imp.energyLogs,sleepLogs:imp.sleepLogs,trainingLogs:imp.trainingLogs,habitLogs:imp.habitLogs,weightLogs:imp.weightLogs,checkinState:imp.checkinState,financeEntries:imp.financeEntries,subscriptions:imp.subscriptions}; saveLocal();
         if(Array.isArray(imp.meta?.taskCategories)) S.taskCategories = imp.meta.taskCategories;
         if(imp.meta?.taskCategoryLabels && typeof imp.meta.taskCategoryLabels === 'object') S.taskCategoryLabels = imp.meta.taskCategoryLabels;
         if(Array.isArray(imp.meta?.taskCategoryOrder)) S.taskCategoryOrder = imp.meta.taskCategoryOrder;
@@ -5314,7 +5671,8 @@ function importData(e){
         renderHabits();
         renderNotes();
         renderHome();
-        toast(`Importiert: ${D.tasks.length} Tasks, ${D.snippets.length} Snippets, ${D.notes.length} Notizen, ${D.habits.length} Habits`);
+        renderFinance();
+        toast(`Importiert: ${D.tasks.length} Tasks, ${D.snippets.length} Snippets, ${D.notes.length} Notizen, ${D.habits.length} Habits, ${D.financeEntries.length} Finanzeintraege`);
       }
     } catch(err){ toast('Import fehlgeschlagen: '+err.message,'err'); }
   };
@@ -5322,8 +5680,8 @@ function importData(e){
 }
 function clearAll(){
   if(confirm('Wirklich ALLE Daten löschen?')){
-    D={tasks:[],thoughts:[],snippets:[],notes:[],habits:[],weeklyGoals:[],dailyLogs:[],energyLogs:[],sleepLogs:[],trainingLogs:[],habitLogs:[],weightLogs:[],checkinState:[]}; saveLocal();
-    renderTasks();renderThoughts();renderSnips();renderNotes();renderHabits();renderHome();
+    D={tasks:[],thoughts:[],snippets:[],notes:[],habits:[],weeklyGoals:[],dailyLogs:[],energyLogs:[],sleepLogs:[],trainingLogs:[],habitLogs:[],weightLogs:[],checkinState:[],financeEntries:[],subscriptions:[]}; saveLocal();
+    renderTasks();renderThoughts();renderSnips();renderNotes();renderHabits();renderHome();renderFinance();
     toast('Alle Daten gelöscht');
   }
 }
@@ -5856,6 +6214,7 @@ function init() {
   badges();
   renderUserArea();
   renderHome();
+  renderFinance();
   go('home');
   // Sidebar auf Mobile geschlossen starten
   if(window.innerWidth <= 600) document.querySelector('.sidebar').classList.add('collapsed');
@@ -5881,7 +6240,7 @@ function init() {
       currentUser=user;
       renderUserArea();
       if(user){ subscribeFS(); }
-      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; renderHome(); }
+      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; renderHome(); renderFinance(); }
     });
     updateFBStatus(true);
   } catch(e) { console.warn('Firebase auto-init failed:', e.message); }
