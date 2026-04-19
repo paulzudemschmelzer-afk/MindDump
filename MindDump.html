@@ -282,6 +282,67 @@ textarea::placeholder { color:#7c8aa2; }
 .field { flex:1; display:flex; flex-direction:column; gap:5px; min-width:0; }
 .field-label { font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:.5px; }
 .field input,.field select,.field textarea { width:100%; }
+
+/* LIFE OS */
+.home-layout { display:grid; gap:14px; }
+.dashboard-card { background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(139,92,246,.05) 30%, rgba(255,255,255,.015)), var(--surface-content-soft); border:1px solid rgba(255,255,255,.10); border-radius:24px; padding:18px; box-shadow:0 12px 30px rgba(2,1,8,.26), inset 0 1px 0 rgba(255,255,255,.05); min-width:0; }
+.dashboard-card.hero { padding:22px; background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(139,92,246,.08) 36%, rgba(255,255,255,.02)), var(--card-strong); }
+.dashboard-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.dashboard-title { font-size:16px; font-weight:700; letter-spacing:-0.02em; }
+.dashboard-sub { color:var(--sub); font-size:12px; line-height:1.55; margin-top:4px; }
+.context-copy { font-size:19px; line-height:1.35; font-weight:650; letter-spacing:-0.03em; margin-bottom:8px; }
+.context-note { color:var(--sub); font-size:13px; line-height:1.6; max-width:720px; }
+.action-cluster { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.micro-btn { padding:9px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:var(--text); cursor:pointer; font-size:12px; font-weight:600; font-family:inherit; transition:all .16s ease; }
+.micro-btn:hover { transform:translateY(-1px); background:rgba(255,255,255,.09); border-color:rgba(255,255,255,.20); }
+.micro-btn.primary { background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(139,92,246,.26)); }
+.micro-btn.good { color:#34d399; border-color:rgba(16,185,129,.20); background:rgba(16,185,129,.10); }
+.micro-btn.warn { color:#fbbf24; border-color:rgba(245,158,11,.20); background:rgba(245,158,11,.10); }
+.micro-btn.bad { color:#f87171; border-color:rgba(239,68,68,.20); background:rgba(239,68,68,.10); }
+.micro-btn.active { color:var(--text); border-color:rgba(139,92,246,.36); background:rgba(139,92,246,.16); box-shadow:inset 0 1px 0 rgba(255,255,255,.07); }
+.stats-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.stat-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:14px; min-width:0; }
+.stat-label { font-size:11px; text-transform:uppercase; letter-spacing:.65px; color:var(--sub); margin-bottom:8px; }
+.stat-value { font-size:24px; font-weight:700; letter-spacing:-0.04em; }
+.stat-sub { color:var(--sub); font-size:12px; margin-top:5px; line-height:1.5; }
+.home-split { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(320px,.95fr); gap:12px; align-items:start; }
+.dashboard-stack { display:grid; gap:12px; min-width:0; }
+.section-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.metric-stack { display:grid; gap:8px; }
+.metric-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid rgba(255,255,255,.08); border-radius:16px; background:rgba(255,255,255,.03); font-size:13px; }
+.metric-row strong { font-size:14px; }
+.goal-list,.timeline-list,.insight-list,.archive-list { display:grid; gap:8px; }
+.goal-row,.timeline-item,.insight-item,.archive-item { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border:1px solid rgba(255,255,255,.08); border-radius:16px; background:rgba(255,255,255,.03); }
+.goal-row.done { opacity:.7; }
+.goal-toggle { width:20px; height:20px; min-width:20px; border-radius:7px; border:1.5px solid rgba(255,255,255,.18); background:rgba(255,255,255,.04); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; margin-top:1px; }
+.goal-row.done .goal-toggle { background:var(--accent); border-color:var(--accent); }
+.goal-body,.timeline-body { flex:1; min-width:0; }
+.goal-title,.timeline-title,.archive-title { font-size:14px; font-weight:600; margin-bottom:3px; }
+.goal-row.done .goal-title { text-decoration:line-through; }
+.goal-meta,.timeline-meta { color:var(--sub); font-size:12px; line-height:1.5; }
+.progress-shell { margin-top:12px; }
+.progress-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:7px; font-size:12px; color:var(--sub); }
+.quick-list { display:grid; gap:8px; margin-top:10px; }
+.quick-pill-row { display:flex; flex-wrap:wrap; gap:7px; }
+.mini-empty { color:var(--sub); font-size:13px; padding:10px 0 2px; }
+.helper-text { color:var(--sub); font-size:12px; line-height:1.55; }
+.helper-text strong { color:var(--text); }
+.tiny { font-size:11px; color:var(--sub); }
+.timeline-time { min-width:48px; font-size:12px; color:var(--sub); }
+.analytics-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:12px; }
+.analytics-mini { padding:12px; border-radius:18px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03); }
+.analytics-mini .stat-value { font-size:20px; }
+.link-btn { background:none; border:none; color:var(--accent2); cursor:pointer; font:inherit; font-size:12px; padding:0; }
+.link-btn:hover { text-decoration:underline; }
+.danger-link { color:#fca5a5; }
+.check-row { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
+.toggle-chip { padding:8px 11px; border-radius:999px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.04); color:var(--sub); cursor:pointer; font-size:12px; font-weight:600; font-family:inherit; transition:all .15s; }
+.toggle-chip.active { color:var(--text); background:rgba(139,92,246,.16); border-color:rgba(139,92,246,.34); }
+.pill-value { display:inline-flex; align-items:center; justify-content:center; min-width:28px; height:28px; padding:0 10px; border-radius:999px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.04); color:var(--sub); cursor:pointer; font-size:12px; font-weight:700; font-family:inherit; }
+.pill-value:hover,.toggle-chip:hover { color:var(--text); border-color:rgba(255,255,255,.18); background:rgba(255,255,255,.08); }
+.pill-value.active { color:#fff; border-color:rgba(139,92,246,.38); background:linear-gradient(180deg, rgba(255,255,255,.20), rgba(139,92,246,.26)); }
+.mini-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.home-anchor { scroll-margin-top:96px; }
 /* SEARCH */
 .search-row { display:flex; gap:8px; margin-bottom:16px; }
 .search-input { flex:1; padding:10px 14px; background:rgba(8,14,24,.58); border:1px solid rgba(255,255,255,.10); border-radius:16px; color:var(--text); font-size:13px; outline:none; font-family:inherit; backdrop-filter:blur(14px) saturate(150%); -webkit-backdrop-filter:blur(14px) saturate(150%); }
@@ -291,13 +352,14 @@ textarea::placeholder { color:#7c8aa2; }
 .add-form { background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)), var(--card); border:1px solid var(--border); border-radius:24px; padding:20px; margin-bottom:18px; backdrop-filter:blur(20px) saturate(160%); -webkit-backdrop-filter:blur(20px) saturate(160%); box-shadow:var(--shadow-lg); }
 .form-row { display:flex; gap:8px; margin-bottom:10px; }
 .form-row:last-child { margin-bottom:0; }
-input[type=text],input[type=password],input[type=date],input[type=number],select,.form-ta {
+input[type=text],input[type=password],input[type=date],input[type=time],input[type=number],select,.form-ta {
   flex:1; padding:10px 14px; background:rgba(7,13,22,.62); border:1px solid rgba(255,255,255,.10); border-radius:16px;
   color:var(--text); font-size:13px; outline:none; transition:border-color .15s, box-shadow .15s, background .15s; font-family:inherit;
   backdrop-filter:blur(14px) saturate(150%); -webkit-backdrop-filter:blur(14px) saturate(150%);
 }
 input:focus,select:focus,.form-ta:focus { border-color:rgba(139,92,246,.45); box-shadow:0 0 0 1px rgba(139,92,246,.16); background:rgba(15,11,24,.72); }
 input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.5); }
+input[type=time]::-webkit-calendar-picker-indicator { filter:invert(.5); }
 select option { background:#122030; }
 .form-ta { resize:vertical; min-height:75px; line-height:1.55; }
 
@@ -529,6 +591,8 @@ select option { background:#122030; }
   .task-filter-stack { gap:6px; margin-bottom:12px; }
   .task-filter-group { display:block; padding:10px; border-radius:16px; }
   .task-filter-label { width:auto; min-width:0; padding-top:0; margin-bottom:8px; display:block; }
+  .stats-grid, .analytics-grid, .section-grid, .home-split { grid-template-columns:1fr; }
+  .context-copy { font-size:17px; }
 
   /* Task Cards */
   .task-card { position:relative; padding:10px 76px 10px 10px; gap:8px; align-items:flex-start; }
@@ -580,6 +644,7 @@ select option { background:#122030; }
     <button id="sidebar-close-btn" onclick="toggleSidebar()" style="display:none;background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
   </div>
   <nav>
+    <button class="nav-btn" onclick="go('home')"><span class="nav-icon">OS</span>Start<span class="badge" id="b-home" style="background:#0ea5e9">0</span></button>
     <button class="nav-btn active" onclick="go('braindump')"><span class="nav-icon">⚡</span>Brain Dump</button>
     <button class="nav-btn" onclick="go('tasks')"><span class="nav-icon">✓</span>Tasks<span class="badge" id="b-tasks">0</span></button>
     <button class="nav-btn" onclick="go('heute')"><span class="nav-icon">☀</span>Heute<span class="badge" id="b-heute" style="background:#f59e0b">0</span></button>
@@ -604,6 +669,14 @@ select option { background:#122030; }
 </div>
 
 <main class="main">
+
+  <!-- HOME -->
+  <div class="tab-panel" id="tab-home">
+    <div class="page-header header-row">
+      <div><h1>Start</h1><p>Weekly Goal, Check-ins, Energie, Routinen und Muster auf einen Blick.</p></div>
+    </div>
+    <div id="home-content"></div>
+  </div>
 
   <!-- BRAIN DUMP -->
   <div class="tab-panel active" id="tab-braindump">
@@ -703,6 +776,7 @@ select option { background:#122030; }
       <div><h1>Heute</h1><p>Dein Fokus für heute — Tasks reinziehen oder per ☀ markieren.</p></div>
       <button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>
     </div>
+    <div id="heute-life-summary" style="margin-bottom:14px"></div>
     <div class="heute-quick-add">
       <input type="text" id="heute-title" placeholder="Heute-Task schnell erfassen" onkeydown="if(event.key==='Enter')addHeuteQuickTask()" />
       <select id="heute-prio" title="Priorität">
@@ -765,6 +839,7 @@ select option { background:#122030; }
   <!-- WEEK CALENDAR -->
   <div class="tab-panel" id="tab-week">
     <div class="page-header"><h1>Wochenplan</h1><p>Aufgaben nach Datum organisiert.</p></div>
+    <div id="week-life-summary" style="margin-bottom:14px"></div>
     <div class="week-nav">
       <button class="btn btn-ghost btn-sm" onclick="weekOffset--;renderWeek()">← Zurück</button>
       <span class="week-label" id="week-label">–</span>
@@ -958,6 +1033,27 @@ select option { background:#122030; }
       </div>
     </div>
 
+    <div class="set-card">
+      <h3>Check-in Reminder Vorbereitung</h3>
+      <p>Diese Zeiten steuern die Startseiten-Logik und bereiten spaetere Notifications vor. Es werden noch keine echten Push-Nachrichten verschickt.</p>
+      <div class="form-row">
+        <label class="field"><span class="field-label">Morgen</span><input type="time" id="reminder-morning" /></label>
+        <label class="field"><span class="field-label">Mittag</span><input type="time" id="reminder-midday" /></label>
+        <label class="field"><span class="field-label">Nachmittag</span><input type="time" id="reminder-afternoon" /></label>
+        <label class="field"><span class="field-label">Abend</span><input type="time" id="reminder-evening" /></label>
+      </div>
+      <div class="form-row">
+        <label class="field" style="max-width:180px">
+          <span class="field-label">Status</span>
+          <select id="reminder-enabled">
+            <option value="yes">Aktiv</option>
+            <option value="no">Pausiert</option>
+          </select>
+        </label>
+        <button class="btn btn-primary" onclick="saveReminderPrefs()" style="flex:0;white-space:nowrap">Speichern</button>
+      </div>
+    </div>
+
     <!-- ADVANCED -->
     <details class="set-card">
       <summary style="cursor:pointer;font-weight:600">Erweitert: Groq, Firebase Setup, GitHub Pages</summary>
@@ -1016,8 +1112,8 @@ select option { background:#122030; }
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────
-let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[] };
-let S = { groqKey:'', fbConfig:'', brainAiMode:'taurus', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{} };
+let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[], weeklyGoals:[], dailyLogs:[], energyLogs:[], sleepLogs:[], trainingLogs:[], habitLogs:[], weightLogs:[], checkinState:[] };
+let S = { groqKey:'', fbConfig:'', brainAiMode:'taurus', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{}, reminderPrefs:{ enabled:true, morning:'08:00', midday:'12:00', afternoon:'17:00', evening:'21:00' } };
 let pendingResult = null;
 let taskFilter = 'all';
 let taskTagFilter = null;
@@ -1025,7 +1121,7 @@ let editingTags = [];
 let snipFilter = 'Alle';
 let weekOffset = 0;
 let modalMode = null;
-let currentTab = 'braindump';
+let currentTab = 'home';
 let db = null, auth = null, currentUser = null;
 let unsubListeners = [];
 
@@ -1056,6 +1152,14 @@ function loadLocal() {
   try { const d=localStorage.getItem('md_data'); if(d) D=JSON.parse(d); } catch(e){}
   if(!D.notes) D.notes=[];
   if(!D.habits) D.habits=[];
+  if(!D.weeklyGoals) D.weeklyGoals=[];
+  if(!D.dailyLogs) D.dailyLogs=[];
+  if(!D.energyLogs) D.energyLogs=[];
+  if(!D.sleepLogs) D.sleepLogs=[];
+  if(!D.trainingLogs) D.trainingLogs=[];
+  if(!D.habitLogs) D.habitLogs=[];
+  if(!D.weightLogs) D.weightLogs=[];
+  if(!D.checkinState) D.checkinState=[];
   // Migration: Thoughts → Notizen
   if(D.thoughts && D.thoughts.length) {
     D.thoughts.forEach(t=>{
@@ -1081,6 +1185,16 @@ function loadLocal() {
   D.thoughts = Array.isArray(D.thoughts) ? D.thoughts : [];
   D.snippets = Array.isArray(D.snippets) ? D.snippets : [];
   D.habits = Array.isArray(D.habits) ? D.habits : [];
+  D.weeklyGoals = Array.isArray(D.weeklyGoals) ? D.weeklyGoals : [];
+  D.dailyLogs = Array.isArray(D.dailyLogs) ? D.dailyLogs : [];
+  D.energyLogs = Array.isArray(D.energyLogs) ? D.energyLogs : [];
+  D.sleepLogs = Array.isArray(D.sleepLogs) ? D.sleepLogs : [];
+  D.trainingLogs = Array.isArray(D.trainingLogs) ? D.trainingLogs : [];
+  D.habitLogs = Array.isArray(D.habitLogs) ? D.habitLogs : [];
+  D.weightLogs = Array.isArray(D.weightLogs) ? D.weightLogs : [];
+  D.checkinState = Array.isArray(D.checkinState) ? D.checkinState : [];
+  if(!S.reminderPrefs || typeof S.reminderPrefs!=='object') S.reminderPrefs={ enabled:true, morning:'08:00', midday:'12:00', afternoon:'17:00', evening:'21:00' };
+  else S.reminderPrefs = { enabled:true, morning:'08:00', midday:'12:00', afternoon:'17:00', evening:'21:00', ...S.reminderPrefs };
   ensureTaskCategorySettings();
 }
 function saveLocal() { localStorage.setItem('md_data',JSON.stringify(D)); badges(); }
@@ -1115,6 +1229,7 @@ function rerender(colName) {
   if(colName==='thoughts') renderThoughts();
   if(colName==='snippets') renderSnips();
   if(colName==='notes') renderNotes();
+  if(['weeklyGoals','dailyLogs','energyLogs','sleepLogs','trainingLogs','habitLogs','weightLogs','checkinState'].includes(colName) || currentTab==='home') renderHome();
 }
 
 // ── FIREBASE ──────────────────────────────────────────────────
@@ -1136,7 +1251,7 @@ function connectFirebase() {
       currentUser = user;
       renderUserArea();
       if(user) { subscribeFS(); }
-      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; D={tasks:[],thoughts:[],snippets:[],notes:[],habits:[]}; badges(); }
+      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; D={tasks:[],thoughts:[],snippets:[],notes:[],habits:[],weeklyGoals:[],dailyLogs:[],energyLogs:[],sleepLogs:[],trainingLogs:[],habitLogs:[],weightLogs:[],checkinState:[]}; badges(); renderHome(); }
     });
 
     S.fbConfig = configStr;
@@ -1151,7 +1266,7 @@ function connectFirebase() {
 function subscribeFS() {
   unsubListeners.forEach(u=>u());
   unsubListeners=[];
-  ['tasks','thoughts','snippets','notes','habits'].forEach(name=>{
+  ['tasks','thoughts','snippets','notes','habits','weeklyGoals','dailyLogs','energyLogs','sleepLogs','trainingLogs','habitLogs','weightLogs','checkinState'].forEach(name=>{
     unsubListeners.push(
       col(name).onSnapshot(snap=>{
         D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1176,11 +1291,18 @@ function subscribeFS() {
     if(doc.exists && doc.data().taskCategoryParents && typeof doc.data().taskCategoryParents === 'object') S.taskCategoryParents = doc.data().taskCategoryParents;
     if(doc.exists && Array.isArray(doc.data().thoughtCategories)) S.thoughtCategories = doc.data().thoughtCategories;
     if(doc.exists && doc.data().thoughtCategoryLabels && typeof doc.data().thoughtCategoryLabels === 'object') S.thoughtCategoryLabels = doc.data().thoughtCategoryLabels;
+    if(doc.exists && doc.data().reminderPrefs && typeof doc.data().reminderPrefs === 'object') S.reminderPrefs = { enabled:true, morning:'08:00', midday:'12:00', afternoon:'17:00', evening:'21:00', ...doc.data().reminderPrefs };
     ensureTaskCategorySettings();
     ensureThoughtCategorySettings();
     saveSettings();
+    if(document.getElementById('reminder-morning')) document.getElementById('reminder-morning').value=S.reminderPrefs?.morning || '08:00';
+    if(document.getElementById('reminder-midday')) document.getElementById('reminder-midday').value=S.reminderPrefs?.midday || '12:00';
+    if(document.getElementById('reminder-afternoon')) document.getElementById('reminder-afternoon').value=S.reminderPrefs?.afternoon || '17:00';
+    if(document.getElementById('reminder-evening')) document.getElementById('reminder-evening').value=S.reminderPrefs?.evening || '21:00';
+    if(document.getElementById('reminder-enabled')) document.getElementById('reminder-enabled').value=S.reminderPrefs?.enabled===false ? 'no' : 'yes';
     renderTaskCategoryInputs();
     renderTasks();
+    renderHome();
   });
 }
 
@@ -1284,7 +1406,7 @@ function nextDueDate(dueDate, recurrence) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
-const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',habits:'Habits',week:'Woche',snippets:'Snippets',notes:'Notizen',settings:'Settings'};
+const TAB_TITLES = {home:'Start',braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',habits:'Habits',week:'Woche',snippets:'Snippets',notes:'Notizen',settings:'Settings'};
 const TAB_ACTIONS = {
   tasks:    `<button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">+ Hinzufügen</button>`,
   heute:    `<button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>`,
@@ -1304,6 +1426,7 @@ function go(tab) {
   if(actEl) actEl.innerHTML=TAB_ACTIONS[tab]||'';
   // Auto-close sidebar on mobile after navigation
   if(window.innerWidth<=600){const sb=document.querySelector('.sidebar');if(sb&&!sb.classList.contains('collapsed')){sb.classList.add('collapsed');const bd=document.getElementById('sidebar-backdrop');if(bd)bd.style.display='none';}}
+  if(tab==='home') renderHome();
   if(tab==='tasks') renderTasks();
   if(tab==='heute') renderHeute();
   if(tab==='habits') renderHabits();
@@ -1315,6 +1438,8 @@ function go(tab) {
 }
 
 function badges() {
+  const homeBadge=document.getElementById('b-home');
+  if(homeBadge) homeBadge.textContent=getPendingCheckinsCount();
   document.getElementById('b-tasks').textContent=D.tasks.filter(t=>!t.done).length;
   const habitBadge=document.getElementById('b-habits');
   if(habitBadge) habitBadge.textContent=(D.habits||[]).filter(h=>!h.archived).length;
@@ -3127,6 +3252,719 @@ function renderHabits(){
 }
 
 // ── HEUTE ─────────────────────────────────────────────────────
+// -- LIFE OS ---------------------------------------------------
+const BUILTIN_HABITS = [
+  { id:'habit-breakfast', name:'Fruehstueck eingehalten' },
+  { id:'habit-lunch', name:'Mittagessen eingehalten' },
+  { id:'habit-dinner', name:'Abendessen eingehalten' },
+  { id:'habit-calories', name:'Kalorienziel eingehalten' },
+  { id:'habit-water', name:'Wasserziel eingehalten' }
+];
+
+function timeNowStr(d=new Date()) {
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function toMinutes(t) {
+  if(!t || !String(t).includes(':')) return null;
+  const [h,m] = String(t).split(':').map(Number);
+  if(!Number.isFinite(h) || !Number.isFinite(m)) return null;
+  return h*60 + m;
+}
+function formatTimeFromMinutes(total) {
+  if(!Number.isFinite(total)) return '–';
+  const fixed = ((Math.round(total)%1440)+1440)%1440;
+  const h = Math.floor(fixed/60);
+  const m = fixed%60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+function round1(n) { return Math.round((Number(n)||0)*10)/10; }
+function average(arr) {
+  const vals = arr.map(Number).filter(n=>Number.isFinite(n));
+  return vals.length ? vals.reduce((a,b)=>a+b,0) / vals.length : null;
+}
+function startOfWeek(d=new Date()) {
+  const base=new Date(d);
+  const day=base.getDay() || 7;
+  base.setHours(12,0,0,0);
+  base.setDate(base.getDate() - day + 1);
+  return base;
+}
+function endOfWeek(d=new Date()) {
+  const end=new Date(startOfWeek(d));
+  end.setDate(end.getDate()+6);
+  return end;
+}
+function weekKeyForDate(d=new Date()) { return dateKey(startOfWeek(d)); }
+function formatWeekRange(startDate, endDate) {
+  return `${fmtDue(startDate)} - ${fmtDue(endDate)}`;
+}
+function inLastDays(ds, days) {
+  return !!ds && daysBetweenISO(ds, todayISO()) <= (days-1);
+}
+function findDateEntry(colName, date=todayISO()) {
+  return (D[colName]||[]).find(x=>x.date===date) || null;
+}
+async function upsertDateEntry(colName, date, defaults, patch) {
+  let item = findDateEntry(colName, date);
+  if(item) {
+    Object.assign(item, patch, { updatedAt:Date.now() });
+    await fsUpdate(colName, item);
+    return item;
+  }
+  item = { id:uid(), date, ...defaults, ...patch, createdAt:Date.now(), updatedAt:Date.now() };
+  await fsAdd(colName, item);
+  return item;
+}
+async function deleteLifeEntry(colName, id, label='Eintrag geloescht') {
+  await fsDel(colName, id);
+  toast(label);
+}
+function getDayPhase(date=new Date()) {
+  const mins=(date.getHours()*60)+date.getMinutes();
+  const midday=toMinutes(S.reminderPrefs?.midday) || (12*60);
+  const afternoon=toMinutes(S.reminderPrefs?.afternoon) || (17*60);
+  const evening=toMinutes(S.reminderPrefs?.evening) || (21*60);
+  if(mins < midday) return 'morning';
+  if(mins < afternoon) return 'midday';
+  if(mins < evening) return 'afternoon';
+  return 'evening';
+}
+function energyLabel(value) {
+  const v=Number(value)||0;
+  if(v >= 9) return 'hellwach';
+  if(v >= 7) return 'wach';
+  if(v >= 5) return 'okay';
+  if(v >= 3) return 'muede';
+  return 'komplett durch';
+}
+function slotFromTime(t) {
+  const mins=toMinutes(t);
+  if(mins===null) return 'morgen';
+  if(mins < 12*60) return 'morgen';
+  if(mins < 15*60) return 'mittag';
+  if(mins < 20*60) return 'nachmittag';
+  return 'abend';
+}
+function hasEnergyForSlot(slot, date=todayISO()) {
+  return (D.energyLogs||[]).some(x=>x.date===date && (x.slot || slotFromTime(x.time))===slot);
+}
+function sleepHoursFromLog(log) {
+  if(!log?.bedTime || !log?.wakeTime) return null;
+  let bed = toMinutes(log.bedTime);
+  let wake = toMinutes(log.wakeTime);
+  if(bed===null || wake===null) return null;
+  if(wake <= bed) wake += 1440;
+  return round1((wake-bed)/60);
+}
+function avgWakeTime(days=14) {
+  return average((D.sleepLogs||[]).filter(x=>inLastDays(x.date,days)).map(x=>toMinutes(x.wakeTime)).filter(n=>n!==null));
+}
+function avgBedTime(days=14) {
+  return average((D.sleepLogs||[]).filter(x=>inLastDays(x.date,days)).map(x=>{
+    const m=toMinutes(x.bedTime);
+    if(m===null) return null;
+    return m < 12*60 ? m + 1440 : m;
+  }).filter(n=>n!==null));
+}
+function avgSleepHours(days=14) {
+  return average((D.sleepLogs||[]).filter(x=>inLastDays(x.date,days)).map(sleepHoursFromLog).filter(n=>n!==null));
+}
+function routineCompletionRate(field, days=14) {
+  const items=(D.dailyLogs||[]).filter(x=>inLastDays(x.date,days));
+  if(!items.length) return null;
+  return Math.round((items.filter(x=>!!x[field]).length / items.length) * 100);
+}
+function habitDefinitions() {
+  const custom=(D.habits||[]).filter(h=>!h.archived).map(h=>({ id:h.id, name:h.name }));
+  return [...BUILTIN_HABITS, ...custom];
+}
+function findHabitLog(habitId, date=todayISO()) {
+  return (D.habitLogs||[]).find(x=>x.date===date && x.habitId===habitId) || null;
+}
+async function toggleHabitLog(habitId) {
+  const def = habitDefinitions().find(h=>h.id===habitId) || { id:habitId, name:'Habit' };
+  const existing = findHabitLog(habitId);
+  if(existing) {
+    existing.done = !existing.done;
+    existing.updatedAt = Date.now();
+    await fsUpdate('habitLogs', existing);
+    toast(existing.done ? `${def.name} erledigt` : `${def.name} entfernt`);
+    return;
+  }
+  await fsAdd('habitLogs', { id:uid(), date:todayISO(), habitId:def.id, name:def.name, done:true, createdAt:Date.now(), updatedAt:Date.now() });
+  toast(`${def.name} erledigt`);
+}
+function getCurrentWeekGoal() {
+  const key=weekKeyForDate(new Date());
+  return (D.weeklyGoals||[]).find(x=>x.weekKey===key) || null;
+}
+function weekGoalProgress(goal) {
+  const total=(goal?.milestones||[]).length;
+  const done=(goal?.milestones||[]).filter(x=>x.done).length;
+  return { done, total, percent: total ? Math.round((done/total)*100) : 0 };
+}
+function parseMilestonesText(text, current=[]) {
+  const lines=String(text||'').split('\n').map(x=>x.trim()).filter(Boolean);
+  return lines.map(line=>{
+    const existing=current.find(m=>String(m.title||'').toLowerCase()===line.toLowerCase());
+    return { id:existing?.id || uid(), title:line, done:!!existing?.done, linkedTaskId:existing?.linkedTaskId || null };
+  });
+}
+async function saveWeeklyGoal() {
+  const title=document.getElementById('wg-title')?.value.trim() || '';
+  if(!title) { toast('Bitte ein Wochenziel eingeben','err'); return; }
+  const desc=document.getElementById('wg-desc')?.value.trim() || '';
+  const current=getCurrentWeekGoal();
+  const start=dateKey(startOfWeek(new Date()));
+  const end=dateKey(endOfWeek(new Date()));
+  const milestones=parseMilestonesText(document.getElementById('wg-milestones')?.value || '', current?.milestones || []);
+  if(current) {
+    current.title=title;
+    current.description=desc;
+    current.startDate=start;
+    current.endDate=end;
+    current.milestones=milestones;
+    current.updatedAt=Date.now();
+    await fsUpdate('weeklyGoals', current);
+    toast('Wochenziel aktualisiert');
+  } else {
+    await fsAdd('weeklyGoals', { id:uid(), weekKey:weekKeyForDate(new Date()), title, description:desc, startDate:start, endDate:end, milestones, createdAt:Date.now(), updatedAt:Date.now() });
+    toast('Wochenziel gespeichert');
+  }
+}
+async function toggleWeeklyMilestone(goalId, milestoneId) {
+  const goal=(D.weeklyGoals||[]).find(x=>x.id===goalId);
+  if(!goal) return;
+  const item=(goal.milestones||[]).find(x=>x.id===milestoneId);
+  if(!item) return;
+  item.done=!item.done;
+  goal.updatedAt=Date.now();
+  await fsUpdate('weeklyGoals', goal);
+}
+async function deleteWeeklyGoal(goalId) {
+  if(!confirm('Wochenziel wirklich loeschen?')) return;
+  await fsDel('weeklyGoals', goalId);
+  toast('Wochenziel geloescht');
+}
+async function createTaskFromMilestone(goalId, milestoneId) {
+  const goal=(D.weeklyGoals||[]).find(x=>x.id===goalId);
+  if(!goal) return;
+  const item=(goal.milestones||[]).find(x=>x.id===milestoneId);
+  if(!item) return;
+  if(item.linkedTaskId && D.tasks.some(t=>t.id===item.linkedTaskId)) { go('tasks'); return; }
+  const task={ id:uid(), title:item.title, context:`Aus Wochenziel: ${goal.title}`, priority:'mittel', kategorie:'sonstiges', subkategorie:null, dueDate:null, estimatedTime:null, recurrence:null, tags:['wochenziel'], done:false, createdAt:Date.now(), linkedWeeklyGoalId:goal.id };
+  await fsAdd('tasks', task);
+  item.linkedTaskId=task.id;
+  goal.updatedAt=Date.now();
+  await fsUpdate('weeklyGoals', goal);
+  toast('Milestone als Task angelegt');
+}
+async function toggleRoutine(field) {
+  const daily=findDateEntry('dailyLogs') || {};
+  const next=!daily[field];
+  await upsertDateEntry('dailyLogs', todayISO(), { morningRoutineDone:false, eveningRoutineDone:false, note:'' }, { [field]:next });
+  toast(next ? 'Routine gespeichert' : 'Routine entfernt');
+}
+async function quickWakeNow() {
+  await upsertDateEntry('sleepLogs', todayISO(), { bedTime:null, wakeTime:null, note:'' }, { wakeTime:timeNowStr() });
+  toast('Aufstehzeit gespeichert');
+}
+async function quickBedNow() {
+  await upsertDateEntry('sleepLogs', todayISO(), { bedTime:null, wakeTime:null, note:'' }, { bedTime:timeNowStr() });
+  toast('Schlafenszeit gespeichert');
+}
+async function saveSleepEntry() {
+  const bedTime=document.getElementById('sleep-bedtime')?.value || null;
+  const wakeTime=document.getElementById('sleep-waketime')?.value || null;
+  const note=document.getElementById('sleep-note')?.value.trim() || '';
+  await upsertDateEntry('sleepLogs', todayISO(), { bedTime:null, wakeTime:null, note:'' }, { bedTime, wakeTime, note });
+  toast('Schlafdaten gespeichert');
+}
+async function saveEnergyEntry(level=null) {
+  const energy=level ?? Number(document.getElementById('energy-value')?.value || 0);
+  if(!energy) { toast('Bitte Energie waehlen','err'); return; }
+  const focus=Number(document.getElementById('energy-focus')?.value || 0);
+  const note=document.getElementById('energy-note')?.value.trim() || '';
+  const time=document.getElementById('energy-time')?.value || timeNowStr();
+  await fsAdd('energyLogs', { id:uid(), date:todayISO(), time, energy, energyLabel:energyLabel(energy), focus:focus||null, note, slot:slotFromTime(time), createdAt:Date.now() });
+  const noteEl=document.getElementById('energy-note');
+  if(noteEl) noteEl.value='';
+  const focusEl=document.getElementById('energy-focus');
+  if(focusEl) focusEl.value='';
+  toast('Energie gespeichert');
+}
+async function saveTrainingEntry(typePreset='') {
+  const type=typePreset || document.getElementById('training-type')?.value || 'Anderes';
+  const duration=Number(document.getElementById('training-duration')?.value || 0) || null;
+  const time=document.getElementById('training-time')?.value || timeNowStr();
+  const note=document.getElementById('training-note')?.value.trim() || '';
+  await fsAdd('trainingLogs', { id:uid(), date:todayISO(), time, type, duration, note, createdAt:Date.now() });
+  const noteEl=document.getElementById('training-note');
+  if(noteEl) noteEl.value='';
+  toast('Training gespeichert');
+}
+async function saveWeightEntry() {
+  const value=Number(document.getElementById('weight-value')?.value || 0);
+  if(!value) { toast('Bitte Gewicht eingeben','err'); return; }
+  await upsertDateEntry('weightLogs', todayISO(), { weightKg:null, note:'' }, { weightKg:round1(value), note:document.getElementById('weight-note')?.value.trim() || '' });
+  toast('Gewicht gespeichert');
+}
+function saveReminderPrefs() {
+  S.reminderPrefs = {
+    enabled:(document.getElementById('reminder-enabled')?.value || 'yes') === 'yes',
+    morning:document.getElementById('reminder-morning')?.value || '08:00',
+    midday:document.getElementById('reminder-midday')?.value || '12:00',
+    afternoon:document.getElementById('reminder-afternoon')?.value || S.reminderPrefs?.afternoon || '17:00',
+    evening:document.getElementById('reminder-evening')?.value || '21:00'
+  };
+  saveSettings();
+  if(db && currentUser) db.collection('settings').doc(currentUser.uid).set({ reminderPrefs:S.reminderPrefs }, { merge:true });
+  toast('Reminder gespeichert');
+  renderHome();
+}
+
+function homeStatusData() {
+  const today=todayISO();
+  const phase=getDayPhase(new Date());
+  const daily=findDateEntry('dailyLogs', today) || {};
+  const sleep=findDateEntry('sleepLogs', today) || {};
+  const energyToday=(D.energyLogs||[]).filter(x=>x.date===today).sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
+  const trainingToday=(D.trainingLogs||[]).filter(x=>x.date===today).sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
+  const weight=findDateEntry('weightLogs', today);
+  const goal=getCurrentWeekGoal();
+  const habitsToday=(D.habitLogs||[]).filter(x=>x.date===today && x.done);
+  return { today, phase, daily, sleep, energyToday, trainingToday, weight, goal, habitsToday };
+}
+function getPendingCheckinsCount() {
+  const s=homeStatusData();
+  let count=0;
+  if(!s.goal) count++;
+  if(!s.sleep.wakeTime) count++;
+  if(!s.daily.morningRoutineDone) count++;
+  if(!hasEnergyForSlot(slotFromTime(timeNowStr()))) count++;
+  if(!s.trainingToday.length) count++;
+  if(!s.daily.eveningRoutineDone && getDayPhase(new Date())==='evening') count++;
+  return count;
+}
+function weeklyTrainingCount(date=new Date()) {
+  const start=dateKey(startOfWeek(date));
+  const end=dateKey(endOfWeek(date));
+  return (D.trainingLogs||[]).filter(x=>x.date>=start && x.date<=end).length;
+}
+function lastEnergyEntry() {
+  return [...(D.energyLogs||[])].sort((a,b)=>`${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`))[0] || null;
+}
+function weightTrend(days=14) {
+  const items=[...(D.weightLogs||[])].filter(x=>inLastDays(x.date,days) && Number.isFinite(Number(x.weightKg))).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  if(items.length < 2) return null;
+  return round1(Number(items[items.length-1].weightKg) - Number(items[0].weightKg));
+}
+function energySlotAverages(days=21) {
+  const groups={ morgen:[], mittag:[], nachmittag:[], abend:[] };
+  (D.energyLogs||[]).filter(x=>inLastDays(x.date,days)).forEach(x=>groups[x.slot||slotFromTime(x.time)].push(Number(x.energy)||0));
+  return Object.fromEntries(Object.entries(groups).map(([k,v])=>[k, average(v)]));
+}
+function habitCompletionRate(days=14) {
+  const defs=habitDefinitions();
+  if(!defs.length) return null;
+  const daysCovered=Math.max(1, Math.min(days, new Set((D.habitLogs||[]).filter(x=>inLastDays(x.date,days)).map(x=>x.date)).size || 1));
+  const done=(D.habitLogs||[]).filter(x=>inLastDays(x.date,days) && x.done).length;
+  return Math.round((done/(defs.length*daysCovered))*100);
+}
+function sleepVsEnergyInsight() {
+  const byDate={};
+  (D.energyLogs||[]).filter(x=>inLastDays(x.date,21)).forEach(x=>{
+    byDate[x.date] = byDate[x.date] || [];
+    byDate[x.date].push(Number(x.energy)||0);
+  });
+  const rested=[], tired=[];
+  (D.sleepLogs||[]).filter(x=>inLastDays(x.date,21)).forEach(x=>{
+    const sleep=sleepHoursFromLog(x);
+    const avg=average(byDate[x.date]||[]);
+    if(sleep===null || avg===null) return;
+    if(sleep >= 7) rested.push(avg);
+    else tired.push(avg);
+  });
+  const a=average(rested), b=average(tired);
+  if(a===null || b===null) return null;
+  return round1(a-b);
+}
+function analyticsInsights() {
+  const insights=[];
+  const slotAverages=energySlotAverages(21);
+  const bestSlot=Object.entries(slotAverages).filter(([,v])=>v!==null).sort((a,b)=>b[1]-a[1])[0];
+  const worstSlot=Object.entries(slotAverages).filter(([,v])=>v!==null).sort((a,b)=>a[1]-b[1])[0];
+  const sleepEnergy=sleepVsEnergyInsight();
+  const goal=getCurrentWeekGoal();
+  const progress=weekGoalProgress(goal);
+  if(bestSlot) insights.push(`Beste Energie zuletzt meist am ${bestSlot[0]} (${round1(bestSlot[1])}/10).`);
+  if(worstSlot) insights.push(`Schwaechstes Fenster zuletzt am ${worstSlot[0]} (${round1(worstSlot[1])}/10).`);
+  if(sleepEnergy!==null) insights.push(sleepEnergy >= 0 ? `Mit 7h+ Schlaf liegt deine Energie im Schnitt um ${sleepEnergy} Punkte hoeher.` : `Mehr Schlaf zeigt aktuell noch keinen klaren Energie-Vorteil (${sleepEnergy}).`);
+  if(goal) insights.push(`Wochenziel-Fortschritt: ${progress.done}/${progress.total || 0} Milestones erledigt.`);
+  if(!goal) insights.push('Fuer diese Woche ist noch kein Hauptziel gesetzt.');
+  return insights.slice(0,4);
+}
+function contextCardConfig() {
+  const s=homeStatusData();
+  const phase=s.phase;
+  if(!s.goal) {
+    return {
+      title:'Setze dein Wochenziel fuer diese Woche',
+      note:'Ein klares Hauptziel macht Training, Routinen und Check-ins deutlich greifbarer.',
+      actions:[`<button class="micro-btn primary" onclick="toggleForm('weekly-goal-form');setTimeout(()=>document.getElementById('wg-title')?.focus(),30)">Wochenziel setzen</button>`]
+    };
+  }
+  if(phase==='morning' && (!s.sleep.wakeTime || !s.daily.morningRoutineDone || !hasEnergyForSlot('morgen'))) {
+    return {
+      title:'Zeit fuer deinen Morgen-Check-in',
+      note:'Logge Aufstehen, Morgenroutine und den ersten Energiepunkt fuer heute.',
+      actions:[
+        `<button class="micro-btn primary" onclick="quickWakeNow()">Jetzt aufgewacht</button>`,
+        `<button class="micro-btn" onclick="toggleRoutine('morningRoutineDone')">${s.daily.morningRoutineDone ? 'Morgenroutine erledigt' : 'Morgenroutine abhaken'}</button>`,
+        `<button class="micro-btn good" onclick="saveEnergyEntry(8)">Energie: wach</button>`
+      ]
+    };
+  }
+  if((phase==='midday' || phase==='afternoon') && !hasEnergyForSlot(phase==='midday' ? 'mittag' : 'nachmittag')) {
+    return {
+      title:'Energie-Check-in offen',
+      note:'Ein schneller Energiepunkt macht spaetere Muster mit Schlaf, Training und Fokus sichtbar.',
+      actions:[
+        `<button class="micro-btn good" onclick="saveEnergyEntry(9)">hellwach</button>`,
+        `<button class="micro-btn primary" onclick="saveEnergyEntry(7)">wach</button>`,
+        `<button class="micro-btn" onclick="saveEnergyEntry(5)">okay</button>`,
+        `<button class="micro-btn warn" onclick="saveEnergyEntry(3)">muede</button>`,
+        `<button class="micro-btn bad" onclick="saveEnergyEntry(1)">komplett durch</button>`
+      ]
+    };
+  }
+  if((phase==='afternoon' || phase==='evening') && !s.trainingToday.length) {
+    return {
+      title:'Training fuer heute noch nicht geloggt',
+      note:'Wenn du trainiert hast, logge es jetzt. Wenn nicht, entscheide bewusst fuer heute.',
+      actions:[
+        `<button class="micro-btn primary" onclick="saveTrainingEntry('Gym')">Gym</button>`,
+        `<button class="micro-btn" onclick="saveTrainingEntry('Thai-Boxen')">Thai-Boxen</button>`,
+        `<button class="micro-btn" onclick="saveTrainingEntry('Spaziergang')">Spaziergang</button>`
+      ]
+    };
+  }
+  if(phase==='evening' && !s.daily.eveningRoutineDone) {
+    return {
+      title:'Abendroutine noch offen',
+      note:'Ein kurzer Tagesabschluss hilft der Schlaf- und Energieauswertung spuerbar.',
+      actions:[
+        `<button class="micro-btn primary" onclick="toggleRoutine('eveningRoutineDone')">Abendroutine abhaken</button>`,
+        `<button class="micro-btn" onclick="quickBedNow()">Schlafenszeit jetzt</button>`
+      ]
+    };
+  }
+  return {
+    title:'Heute ist der naechste kleine Check-in dran',
+    note:'Alles Wichtige ist im Flow. Du kannst jetzt Details nachtragen oder einfach weitermachen.',
+    actions:[
+      `<button class="micro-btn primary" onclick="saveEnergyEntry(7)">Energie aktualisieren</button>`,
+      `<button class="micro-btn" onclick="go('habits')">Habits ansehen</button>`,
+      `<button class="micro-btn" onclick="go('week')">Woche ansehen</button>`
+    ]
+  };
+}
+
+function renderHomeContextCard() {
+  const cfg=contextCardConfig();
+  return `<div class="dashboard-card hero">
+    <div class="dashboard-head">
+      <div>
+        <div class="dashboard-title">Naechster sinnvoller Schritt</div>
+        <div class="dashboard-sub">Kontextbezogen, low resistance und auf das aktuelle Zeitfenster abgestimmt.</div>
+      </div>
+      <span class="habit-chip ${getPendingCheckinsCount()>2?'warn':'good'}">${getPendingCheckinsCount()} offen</span>
+    </div>
+    <div class="context-copy">${esc(cfg.title)}</div>
+    <div class="context-note">${esc(cfg.note)}</div>
+    <div class="action-cluster">${cfg.actions.join('')}</div>
+  </div>`;
+}
+function renderHomeStats() {
+  const goal=getCurrentWeekGoal();
+  const progress=weekGoalProgress(goal);
+  const sleepAvg=avgSleepHours(14);
+  const energy=lastEnergyEntry();
+  const habitRate=habitCompletionRate(14);
+  return `<div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Wochenziel</div><div class="stat-value">${goal ? `${progress.done}/${progress.total || 0}` : '0/0'}</div><div class="stat-sub">${goal ? esc(goal.title) : 'Noch kein Ziel gesetzt'}</div></div>
+    <div class="stat-card"><div class="stat-label">Schlaf 14T</div><div class="stat-value">${sleepAvg!==null ? `${round1(sleepAvg)}h` : '–'}</div><div class="stat-sub">Durchschnittliche Schlafdauer</div></div>
+    <div class="stat-card"><div class="stat-label">Letzte Energie</div><div class="stat-value">${energy ? energyLabel(energy.energy) : '–'}</div><div class="stat-sub">${energy ? `${esc(energy.time)} · ${energy.energy}/10` : 'Noch kein Eintrag heute'}</div></div>
+    <div class="stat-card"><div class="stat-label">Training Woche</div><div class="stat-value">${weeklyTrainingCount()}</div><div class="stat-sub">${habitRate!==null ? `Habit Completion ${habitRate}%` : 'Noch wenig Habit-Daten'}</div></div>
+  </div>`;
+}
+function renderWeeklyGoalCard() {
+  const goal=getCurrentWeekGoal();
+  const progress=weekGoalProgress(goal);
+  const history=[...(D.weeklyGoals||[])].filter(x=>x.weekKey!==weekKeyForDate(new Date())).sort((a,b)=>String(b.startDate).localeCompare(String(a.startDate))).slice(0,5);
+  return `<div class="dashboard-card home-anchor" id="home-weekly-goal">
+    <div class="dashboard-head">
+      <div>
+        <div class="dashboard-title">Wochenziel</div>
+        <div class="dashboard-sub">${formatWeekRange(dateKey(startOfWeek(new Date())), dateKey(endOfWeek(new Date())))}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="toggleForm('weekly-goal-form')">${goal ? 'Bearbeiten' : 'Setzen'}</button>
+    </div>
+    ${goal ? `
+      <div class="goal-title" style="font-size:18px">${esc(goal.title)}</div>
+      ${goal.description ? `<div class="helper-text">${esc(goal.description)}</div>` : ''}
+      <div class="progress-shell">
+        <div class="progress-head"><span>Fortschritt</span><span>${progress.done}/${progress.total || 0}</span></div>
+        <div class="task-progress-bar"><div class="task-progress-fill" style="width:${progress.percent}%"></div></div>
+      </div>
+      <div class="goal-list" style="margin-top:12px">
+        ${(goal.milestones||[]).length ? goal.milestones.map(item=>`
+          <div class="goal-row ${item.done?'done':''}">
+            <button class="goal-toggle" onclick="toggleWeeklyMilestone('${goal.id}','${item.id}')">${item.done?'✓':''}</button>
+            <div class="goal-body">
+              <div class="goal-title">${esc(item.title)}</div>
+              <div class="goal-meta">${item.linkedTaskId ? 'Mit Task verknuepft' : 'Optional als Task anlegen'}</div>
+            </div>
+            <button class="link-btn" onclick="createTaskFromMilestone('${goal.id}','${item.id}')">${item.linkedTaskId ? 'Zu Task' : 'Als Task'}</button>
+          </div>`).join('') : `<div class="mini-empty">Noch keine Milestones hinterlegt.</div>`}
+      </div>
+      <div class="mini-actions">
+        <button class="link-btn danger-link" onclick="deleteWeeklyGoal('${goal.id}')">Wochenziel loeschen</button>
+      </div>
+    ` : `<div class="mini-empty">Genau ein Hauptziel pro Woche. Lege hier fuer diese Woche den Fokus fest.</div>`}
+    <div class="add-form" id="weekly-goal-form" style="display:${goal?'none':'block'};margin-top:14px">
+      <div class="form-row"><input type="text" id="wg-title" placeholder="Diese Woche wieder in Sportroutine kommen" value="${esc(goal?.title || '')}" /></div>
+      <div class="form-row"><input type="text" id="wg-desc" placeholder="Optional: warum diese Woche wichtig ist" value="${esc(goal?.description || '')}" /></div>
+      <div class="form-row"><textarea class="form-ta" id="wg-milestones" placeholder="Montag trainieren&#10;Mittwoch trainieren&#10;Samstag Spaziergang">${esc((goal?.milestones||[]).map(x=>x.title).join('\n'))}</textarea></div>
+      <div class="form-row">
+        <button class="btn btn-primary btn-sm" onclick="saveWeeklyGoal()">Speichern</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleForm('weekly-goal-form')">Schliessen</button>
+      </div>
+    </div>
+    ${history.length ? `<div style="margin-top:16px"><div class="dashboard-title" style="font-size:14px">Archiv</div><div class="archive-list" style="margin-top:8px">${history.map(item=>{ const p=weekGoalProgress(item); return `<div class="archive-item"><div class="goal-body"><div class="archive-title">${esc(item.title)}</div><div class="goal-meta">${esc(formatWeekRange(item.startDate,item.endDate))} · ${p.done}/${p.total || 0}</div></div></div>`; }).join('')}</div></div>` : ''}
+  </div>`;
+}
+function renderRoutineCard() {
+  const daily=findDateEntry('dailyLogs') || {};
+  const sleep=findDateEntry('sleepLogs') || {};
+  const sleepHours=sleepHoursFromLog(sleep);
+  return `<div class="dashboard-card">
+    <div class="dashboard-head">
+      <div>
+        <div class="dashboard-title">Heute</div>
+        <div class="dashboard-sub">Schlaf, Aufstehen und Routinen fuer den aktuellen Tag.</div>
+      </div>
+      <span class="habit-chip">${todayISO()}</span>
+    </div>
+    <div class="check-row">
+      <button class="toggle-chip ${daily.morningRoutineDone?'active':''}" onclick="toggleRoutine('morningRoutineDone')">Morgenroutine</button>
+      <button class="toggle-chip ${daily.eveningRoutineDone?'active':''}" onclick="toggleRoutine('eveningRoutineDone')">Abendroutine</button>
+      <button class="toggle-chip ${sleep.wakeTime?'active':''}" onclick="quickWakeNow()">Aufstehen</button>
+      <button class="toggle-chip ${sleep.bedTime?'active':''}" onclick="quickBedNow()">Schlafen</button>
+    </div>
+    <div class="section-grid" style="margin-top:12px">
+      <label class="field"><span class="field-label">Schlafenszeit</span><input type="time" id="sleep-bedtime" value="${esc(sleep.bedTime || '')}" /></label>
+      <label class="field"><span class="field-label">Aufstehzeit</span><input type="time" id="sleep-waketime" value="${esc(sleep.wakeTime || '')}" /></label>
+    </div>
+    <div class="form-row" style="margin-top:10px">
+      <input type="text" id="sleep-note" placeholder="Optional: Schlaf-Notiz" value="${esc(sleep.note || '')}" />
+      <button class="btn btn-primary btn-sm" onclick="saveSleepEntry()">Speichern</button>
+    </div>
+    <div class="metric-stack" style="margin-top:12px">
+      <div class="metric-row"><span>Schlafdauer</span><strong>${sleepHours!==null ? `${sleepHours}h` : '–'}</strong></div>
+      <div class="metric-row"><span>Durchschnitt Schlafenszeit</span><strong>${formatTimeFromMinutes(avgBedTime(14))}</strong></div>
+      <div class="metric-row"><span>Durchschnitt Aufstehzeit</span><strong>${formatTimeFromMinutes(avgWakeTime(14))}</strong></div>
+      <div class="metric-row"><span>Morgenroutine 14T</span><strong>${routineCompletionRate('morningRoutineDone',14) ?? '–'}%</strong></div>
+      <div class="metric-row"><span>Abendroutine 14T</span><strong>${routineCompletionRate('eveningRoutineDone',14) ?? '–'}%</strong></div>
+    </div>
+  </div>`;
+}
+function renderEnergyCard() {
+  const entries=(D.energyLogs||[]).filter(x=>x.date===todayISO()).sort((a,b)=>String(b.time||'').localeCompare(String(a.time||''))).slice(0,5);
+  const slotAverages=energySlotAverages(21);
+  return `<div class="dashboard-card">
+    <div class="dashboard-head">
+      <div>
+        <div class="dashboard-title">Energie</div>
+        <div class="dashboard-sub">3 bis 4 kurze Pulse pro Tag. Schnell per Buttons oder mit Notiz.</div>
+      </div>
+      <span class="habit-chip">${entries.length} heute</span>
+    </div>
+    <div class="quick-pill-row">
+      ${[9,7,5,3,1].map(v=>`<button class="pill-value" onclick="saveEnergyEntry(${v})">${energyLabel(v)}</button>`).join('')}
+    </div>
+    <div class="section-grid" style="margin-top:12px">
+      <label class="field"><span class="field-label">Uhrzeit</span><input type="time" id="energy-time" value="${timeNowStr()}" /></label>
+      <label class="field"><span class="field-label">Fokus 1-10</span><input type="number" id="energy-focus" min="1" max="10" placeholder="optional" /></label>
+    </div>
+    <div class="form-row" style="margin-top:10px">
+      <input type="number" id="energy-value" min="1" max="10" placeholder="Energie 1-10" style="max-width:150px" />
+      <input type="text" id="energy-note" placeholder="Kurze Notiz" />
+      <button class="btn btn-primary btn-sm" onclick="saveEnergyEntry()">Speichern</button>
+    </div>
+    <div class="timeline-list" style="margin-top:12px">
+      ${entries.length ? entries.map(item=>`<div class="timeline-item"><div class="timeline-time">${esc(item.time || '--:--')}</div><div class="timeline-body"><div class="timeline-title">${esc(item.energyLabel || energyLabel(item.energy))}</div><div class="timeline-meta">${item.focus ? `Fokus ${item.focus}/10` : 'Ohne Fokuswert'}${item.note ? ` · ${esc(item.note)}` : ''}</div></div><button class="link-btn danger-link" onclick="deleteLifeEntry('energyLogs','${item.id}','Energie geloescht')">Entfernen</button></div>`).join('') : `<div class="mini-empty">Noch kein Energieeintrag fuer heute.</div>`}
+    </div>
+    <div class="analytics-grid">
+      ${Object.entries(slotAverages).map(([slot,val])=>`<div class="analytics-mini"><div class="stat-label">${esc(slot)}</div><div class="stat-value">${val!==null ? round1(val) : '–'}</div><div class="stat-sub">Durchschnitt 21 Tage</div></div>`).join('')}
+    </div>
+  </div>`;
+}
+function renderTrainingCard() {
+  const todayEntries=(D.trainingLogs||[]).filter(x=>x.date===todayISO()).sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
+  const recent=(D.trainingLogs||[]).filter(x=>inLastDays(x.date,14)).sort((a,b)=>`${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`)).slice(0,6);
+  return `<div class="dashboard-card">
+    <div class="dashboard-head">
+      <div>
+        <div class="dashboard-title">Training</div>
+        <div class="dashboard-sub">Sport als eigene Event-Historie, getrennt von Tasks und Habits.</div>
+      </div>
+      <span class="habit-chip">${weeklyTrainingCount()} diese Woche</span>
+    </div>
+    <div class="quick-pill-row">
+      ${['Gym','Thai-Boxen','Spaziergang','Laufen','Anderes'].map(type=>`<button class="pill-value" onclick="saveTrainingEntry('${type}')">${esc(type)}</button>`).join('')}
+    </div>
+    <div class="section-grid" style="margin-top:12px">
+      <label class="field"><span class="field-label">Typ</span><select id="training-type"><option>Gym</option><option>Thai-Boxen</option><option>Spaziergang</option><option>Laufen</option><option>Anderes</option></select></label>
+      <label class="field"><span class="field-label">Uhrzeit</span><input type="time" id="training-time" value="${timeNowStr()}" /></label>
+    </div>
+    <div class="form-row" style="margin-top:10px">
+      <input type="number" id="training-duration" min="0" placeholder="Dauer in Minuten" style="max-width:180px" />
+      <input type="text" id="training-note" placeholder="Optional: Notiz" />
+      <button class="btn btn-primary btn-sm" onclick="saveTrainingEntry()">Speichern</button>
+    </div>
+    <div class="timeline-list" style="margin-top:12px">
+      ${recent.length ? recent.map(item=>`<div class="timeline-item"><div class="timeline-time">${esc(item.date===todayISO() ? (item.time || '--:--') : fmtDue(item.date))}</div><div class="timeline-body"><div class="timeline-title">${esc(item.type)}</div><div class="timeline-meta">${item.duration ? `${item.duration} Min.` : 'Ohne Dauer'}${item.note ? ` · ${esc(item.note)}` : ''}</div></div><button class="link-btn danger-link" onclick="deleteLifeEntry('trainingLogs','${item.id}','Training geloescht')">Entfernen</button></div>`).join('') : `<div class="mini-empty">Noch keine Trainingseintraege in den letzten 14 Tagen.</div>`}
+    </div>
+    <div class="helper-text" style="margin-top:10px">${todayEntries.length ? `${todayEntries.length} Trainingseintrag(e) heute geloggt.` : 'Heute ist noch kein Training geloggt.'}</div>
+  </div>`;
+}
+function renderHabitsWeightCard() {
+  const defs=habitDefinitions();
+  const lastWeight=findDateEntry('weightLogs');
+  const trend=weightTrend(14);
+  return `<div class="dashboard-card">
+    <div class="dashboard-head">
+      <div>
+        <div class="dashboard-title">Habits und Gewicht</div>
+        <div class="dashboard-sub">Toggle-basierte Tageslogs fuer Struktur, Essen und eigene Gewohnheiten.</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="go('habits')">Habits verwalten</button>
+    </div>
+    <div class="check-row">
+      ${defs.slice(0,8).map(def=>`<button class="toggle-chip ${findHabitLog(def.id)?.done ? 'active' : ''}" onclick="toggleHabitLog('${def.id}')">${esc(def.name)}</button>`).join('')}
+    </div>
+    <div class="form-row" style="margin-top:12px">
+      <input type="number" id="weight-value" min="0" step="0.1" placeholder="Gewicht in kg" style="max-width:180px" value="${esc(lastWeight?.weightKg || '')}" />
+      <input type="text" id="weight-note" placeholder="Optional: Notiz" value="${esc(lastWeight?.note || '')}" />
+      <button class="btn btn-primary btn-sm" onclick="saveWeightEntry()">Speichern</button>
+    </div>
+    <div class="metric-stack" style="margin-top:12px">
+      <div class="metric-row"><span>Gewicht heute</span><strong>${lastWeight?.weightKg ? `${lastWeight.weightKg} kg` : '–'}</strong></div>
+      <div class="metric-row"><span>Trend 14 Tage</span><strong>${trend===null ? '–' : `${trend>0?'+':''}${trend} kg`}</strong></div>
+      <div class="metric-row"><span>Habit Completion 14 Tage</span><strong>${habitCompletionRate(14) ?? '–'}%</strong></div>
+    </div>
+  </div>`;
+}
+function renderAnalyticsCard() {
+  const insights=analyticsInsights();
+  const sleepAvg=avgSleepHours(21);
+  const wakeAvg=avgWakeTime(21);
+  const bedAvg=avgBedTime(21);
+  const morningRate=routineCompletionRate('morningRoutineDone',21);
+  const eveningRate=routineCompletionRate('eveningRoutineDone',21);
+  const slotAverages=energySlotAverages(21);
+  const bestSlot=Object.entries(slotAverages).filter(([,v])=>v!==null).sort((a,b)=>b[1]-a[1])[0];
+  return `<div class="dashboard-card">
+    <div class="dashboard-head">
+      <div>
+        <div class="dashboard-title">Basis Analytics</div>
+        <div class="dashboard-sub">Phase-1-Auswertung mit sauber getrennten Daten fuer spaetere Korrelationen.</div>
+      </div>
+      <span class="habit-chip">${(D.energyLogs||[]).length + (D.trainingLogs||[]).length + (D.habitLogs||[]).length} Logs</span>
+    </div>
+    <div class="analytics-grid">
+      <div class="analytics-mini"><div class="stat-label">Schlafenszeit</div><div class="stat-value">${formatTimeFromMinutes(bedAvg)}</div><div class="stat-sub">Durchschnitt 21 Tage</div></div>
+      <div class="analytics-mini"><div class="stat-label">Aufstehzeit</div><div class="stat-value">${formatTimeFromMinutes(wakeAvg)}</div><div class="stat-sub">Durchschnitt 21 Tage</div></div>
+      <div class="analytics-mini"><div class="stat-label">Schlafdauer</div><div class="stat-value">${sleepAvg!==null ? `${round1(sleepAvg)}h` : '–'}</div><div class="stat-sub">Durchschnitt 21 Tage</div></div>
+      <div class="analytics-mini"><div class="stat-label">Trainingshaeufigkeit</div><div class="stat-value">${weeklyTrainingCount()}</div><div class="stat-sub">Aktuelle Woche</div></div>
+      <div class="analytics-mini"><div class="stat-label">Bestes Zeitfenster</div><div class="stat-value">${bestSlot ? esc(bestSlot[0]) : '–'}</div><div class="stat-sub">${bestSlot ? `${round1(bestSlot[1])}/10 Energie` : 'Noch wenig Energiedaten'}</div></div>
+      <div class="analytics-mini"><div class="stat-label">Routinen</div><div class="stat-value">${morningRate ?? '–'} / ${eveningRate ?? '–'}</div><div class="stat-sub">Morgen / Abend in %</div></div>
+      <div class="analytics-mini"><div class="stat-label">Habit Rate</div><div class="stat-value">${habitCompletionRate(21) ?? '–'}%</div><div class="stat-sub">Erfuellung der Tages-Habits</div></div>
+    </div>
+    <div class="insight-list" style="margin-top:12px">
+      ${insights.length ? insights.map(text=>`<div class="insight-item"><div class="goal-body"><div class="goal-title">Insight</div><div class="goal-meta">${esc(text)}</div></div></div>`).join('') : `<div class="mini-empty">Noch nicht genug Daten fuer Insights.</div>`}
+    </div>
+  </div>`;
+}
+function renderHome() {
+  const el=document.getElementById('home-content');
+  if(!el) return;
+  el.innerHTML = `<div class="home-layout">
+    ${renderHomeContextCard()}
+    ${renderHomeStats()}
+    <div class="home-split">
+      <div class="dashboard-stack">
+        ${renderWeeklyGoalCard()}
+        ${renderRoutineCard()}
+        ${renderAnalyticsCard()}
+      </div>
+      <div class="dashboard-stack">
+        ${renderEnergyCard()}
+        ${renderTrainingCard()}
+        ${renderHabitsWeightCard()}
+      </div>
+    </div>
+  </div>`;
+}
+function renderHeuteLifeSummary() {
+  const el=document.getElementById('heute-life-summary');
+  if(!el) return;
+  const s=homeStatusData();
+  const lastEnergy=s.energyToday[0];
+  const progress=weekGoalProgress(s.goal);
+  el.innerHTML = `<div class="dashboard-card">
+    <div class="dashboard-head">
+      <div>
+        <div class="dashboard-title">Heute kompakt</div>
+        <div class="dashboard-sub">Status fuer Routinen, Energie, Training und Wochenziel direkt ueber der Task-Liste.</div>
+      </div>
+      <span class="habit-chip">${getPendingCheckinsCount()} offen</span>
+    </div>
+    <div class="section-grid">
+      <div class="metric-row"><span>Wochenziel</span><strong>${s.goal ? `${progress.done}/${progress.total || 0}` : 'fehlt'}</strong></div>
+      <div class="metric-row"><span>Morgen / Abend</span><strong>${s.daily.morningRoutineDone ? '✓' : '–'} / ${s.daily.eveningRoutineDone ? '✓' : '–'}</strong></div>
+      <div class="metric-row"><span>Letzte Energie</span><strong>${lastEnergy ? energyLabel(lastEnergy.energy) : '–'}</strong></div>
+      <div class="metric-row"><span>Training heute</span><strong>${s.trainingToday.length}</strong></div>
+    </div>
+  </div>`;
+}
+function renderWeekLifeSummary() {
+  const el=document.getElementById('week-life-summary');
+  if(!el) return;
+  const days=getWeekDays();
+  const start=dateKey(days[0]);
+  const end=dateKey(days[6]);
+  const goal=(D.weeklyGoals||[]).find(x=>x.weekKey===start) || null;
+  const progress=weekGoalProgress(goal);
+  const energyCount=(D.energyLogs||[]).filter(x=>x.date>=start && x.date<=end).length;
+  el.innerHTML = `<div class="dashboard-card">
+    <div class="dashboard-head">
+      <div>
+        <div class="dashboard-title">Wochenstatus</div>
+        <div class="dashboard-sub">Wochenziel, Training und Tracking-Dichte fuer die aktuelle Woche.</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="go('home')">Zum Dashboard</button>
+    </div>
+    <div class="section-grid">
+      <div class="metric-row"><span>Wochenziel</span><strong>${goal ? esc(goal.title) : 'nicht gesetzt'}</strong></div>
+      <div class="metric-row"><span>Milestones</span><strong>${goal ? `${progress.done}/${progress.total || 0}` : '0/0'}</strong></div>
+      <div class="metric-row"><span>Trainings diese Woche</span><strong>${weeklyTrainingCount(days[0])}</strong></div>
+      <div class="metric-row"><span>Energie-Logs diese Woche</span><strong>${energyCount}</strong></div>
+    </div>
+  </div>`;
+}
+
 let heuteDragId = null;
 let touchDragId = null, touchClone = null, touchDragEl = null, touchDragMoved = false;
 
@@ -3241,6 +4079,7 @@ async function heuteTouchEnd(e) {
 }
 
 function renderHeute() {
+  renderHeuteLifeSummary();
   const todayStr = dateKey();
   const list = D.tasks.filter(t => (t.forToday || t.dueDate === todayStr) && t.hideFromHeute !== todayStr)
     .sort((a,b) => {
@@ -3459,6 +4298,7 @@ function openCalEvent(e, id) {
 }
 
 function renderWeek() {
+  renderWeekLifeSummary();
   const days=getWeekDays();
   const todayStr=dateStr(new Date());
   const s=days[0], e=days[6];
@@ -4279,7 +5119,8 @@ function exportData(){
     taskCategoryShowSubsCollapsed:S.taskCategoryShowSubsCollapsed||{},
     taskCategoryParents:S.taskCategoryParents||{},
     thoughtCategories:S.thoughtCategories||[],
-    thoughtCategoryLabels:S.thoughtCategoryLabels||{}
+    thoughtCategoryLabels:S.thoughtCategoryLabels||{},
+    reminderPrefs:S.reminderPrefs||{}
   }},null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download='minddump-'+dateKey()+'.json'; a.click(); URL.revokeObjectURL(url);
@@ -4294,9 +5135,17 @@ function importData(e){
       if(!imp.tasks||!imp.thoughts||!imp.snippets) throw new Error('Ungültiges Format');
       imp.notes = Array.isArray(imp.notes) ? imp.notes : [];
       imp.habits = Array.isArray(imp.habits) ? imp.habits : [];
+      imp.weeklyGoals = Array.isArray(imp.weeklyGoals) ? imp.weeklyGoals : [];
+      imp.dailyLogs = Array.isArray(imp.dailyLogs) ? imp.dailyLogs : [];
+      imp.energyLogs = Array.isArray(imp.energyLogs) ? imp.energyLogs : [];
+      imp.sleepLogs = Array.isArray(imp.sleepLogs) ? imp.sleepLogs : [];
+      imp.trainingLogs = Array.isArray(imp.trainingLogs) ? imp.trainingLogs : [];
+      imp.habitLogs = Array.isArray(imp.habitLogs) ? imp.habitLogs : [];
+      imp.weightLogs = Array.isArray(imp.weightLogs) ? imp.weightLogs : [];
+      imp.checkinState = Array.isArray(imp.checkinState) ? imp.checkinState : [];
       if(currentUser && db) {
         toast('Lade zu Firebase hoch...');
-        for(const name of ['tasks','thoughts','snippets','notes','habits']) {
+        for(const name of ['tasks','thoughts','snippets','notes','habits','weeklyGoals','dailyLogs','energyLogs','sleepLogs','trainingLogs','habitLogs','weightLogs','checkinState']) {
           for(const item of imp[name]) {
             const {id,...data}=item;
             await col(name).doc(id).set(data);
@@ -4309,17 +5158,20 @@ function importData(e){
         if(imp.meta?.taskCategoryParents && typeof imp.meta.taskCategoryParents === 'object') S.taskCategoryParents = imp.meta.taskCategoryParents;
         if(Array.isArray(imp.meta?.thoughtCategories)) S.thoughtCategories = imp.meta.thoughtCategories;
         if(imp.meta?.thoughtCategoryLabels && typeof imp.meta.thoughtCategoryLabels === 'object') S.thoughtCategoryLabels = imp.meta.thoughtCategoryLabels;
+        if(imp.meta?.reminderPrefs && typeof imp.meta.reminderPrefs === 'object') S.reminderPrefs = { enabled:true, morning:'08:00', midday:'12:00', afternoon:'17:00', evening:'21:00', ...imp.meta.reminderPrefs };
         ensureTaskCategorySettings();
         ensureThoughtCategorySettings();
         saveSettings();
+        if(currentUser && db) db.collection('settings').doc(currentUser.uid).set({ reminderPrefs:S.reminderPrefs }, { merge:true });
         saveTaskCategoriesToFirebase();
         renderTaskCategoryInputs();
         renderTasks();
         renderHabits();
         renderNotes();
+        renderHome();
         toast(`Zu Firebase hochgeladen: ${imp.tasks.length} Tasks, ${imp.snippets.length} Snippets, ${imp.notes.length} Notizen, ${imp.habits.length} Habits`);
       } else {
-        D={tasks:imp.tasks,thoughts:imp.thoughts,snippets:imp.snippets,notes:imp.notes,habits:imp.habits}; saveLocal();
+        D={tasks:imp.tasks,thoughts:imp.thoughts,snippets:imp.snippets,notes:imp.notes,habits:imp.habits,weeklyGoals:imp.weeklyGoals,dailyLogs:imp.dailyLogs,energyLogs:imp.energyLogs,sleepLogs:imp.sleepLogs,trainingLogs:imp.trainingLogs,habitLogs:imp.habitLogs,weightLogs:imp.weightLogs,checkinState:imp.checkinState}; saveLocal();
         if(Array.isArray(imp.meta?.taskCategories)) S.taskCategories = imp.meta.taskCategories;
         if(imp.meta?.taskCategoryLabels && typeof imp.meta.taskCategoryLabels === 'object') S.taskCategoryLabels = imp.meta.taskCategoryLabels;
         if(Array.isArray(imp.meta?.taskCategoryOrder)) S.taskCategoryOrder = imp.meta.taskCategoryOrder;
@@ -4327,6 +5179,7 @@ function importData(e){
         if(imp.meta?.taskCategoryParents && typeof imp.meta.taskCategoryParents === 'object') S.taskCategoryParents = imp.meta.taskCategoryParents;
         if(Array.isArray(imp.meta?.thoughtCategories)) S.thoughtCategories = imp.meta.thoughtCategories;
         if(imp.meta?.thoughtCategoryLabels && typeof imp.meta.thoughtCategoryLabels === 'object') S.thoughtCategoryLabels = imp.meta.thoughtCategoryLabels;
+        if(imp.meta?.reminderPrefs && typeof imp.meta.reminderPrefs === 'object') S.reminderPrefs = { enabled:true, morning:'08:00', midday:'12:00', afternoon:'17:00', evening:'21:00', ...imp.meta.reminderPrefs };
         ensureTaskCategorySettings();
         ensureThoughtCategorySettings();
         saveSettings();
@@ -4334,6 +5187,7 @@ function importData(e){
         renderTasks();
         renderHabits();
         renderNotes();
+        renderHome();
         toast(`Importiert: ${D.tasks.length} Tasks, ${D.snippets.length} Snippets, ${D.notes.length} Notizen, ${D.habits.length} Habits`);
       }
     } catch(err){ toast('Import fehlgeschlagen: '+err.message,'err'); }
@@ -4342,8 +5196,8 @@ function importData(e){
 }
 function clearAll(){
   if(confirm('Wirklich ALLE Daten löschen?')){
-    D={tasks:[],thoughts:[],snippets:[],notes:[],habits:[]}; saveLocal();
-    renderTasks();renderThoughts();renderSnips();renderNotes();renderHabits();
+    D={tasks:[],thoughts:[],snippets:[],notes:[],habits:[],weeklyGoals:[],dailyLogs:[],energyLogs:[],sleepLogs:[],trainingLogs:[],habitLogs:[],weightLogs:[],checkinState:[]}; saveLocal();
+    renderTasks();renderThoughts();renderSnips();renderNotes();renderHabits();renderHome();
     toast('Alle Daten gelöscht');
   }
 }
@@ -4866,10 +5720,17 @@ function init() {
   loadLocal();
   renderTaskCategoryInputs();
   if(S.groqKey) document.getElementById('api-key-in').value=S.groqKey;
+  if(document.getElementById('reminder-morning')) document.getElementById('reminder-morning').value=S.reminderPrefs?.morning || '08:00';
+  if(document.getElementById('reminder-midday')) document.getElementById('reminder-midday').value=S.reminderPrefs?.midday || '12:00';
+  if(document.getElementById('reminder-afternoon')) document.getElementById('reminder-afternoon').value=S.reminderPrefs?.afternoon || '17:00';
+  if(document.getElementById('reminder-evening')) document.getElementById('reminder-evening').value=S.reminderPrefs?.evening || '21:00';
+  if(document.getElementById('reminder-enabled')) document.getElementById('reminder-enabled').value=S.reminderPrefs?.enabled===false ? 'no' : 'yes';
   loadBrainAiSettings();
   updateApiIndicator();
   badges();
   renderUserArea();
+  renderHome();
+  go('home');
   // Sidebar auf Mobile geschlossen starten
   if(window.innerWidth <= 600) document.querySelector('.sidebar').classList.add('collapsed');
 
@@ -4894,7 +5755,7 @@ function init() {
       currentUser=user;
       renderUserArea();
       if(user){ subscribeFS(); }
-      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; }
+      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; renderHome(); }
     });
     updateFBStatus(true);
   } catch(e) { console.warn('Firebase auto-init failed:', e.message); }
