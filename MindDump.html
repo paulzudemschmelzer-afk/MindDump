@@ -344,6 +344,11 @@ textarea::placeholder { color:#7c8aa2; }
 .finance-amount.income { color:#34d399; }
 .finance-amount.expense { color:#f87171; }
 .finance-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.finance-list .timeline-item { gap:12px; }
+.finance-list .timeline-title { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.finance-list .timeline-title > span { flex:1 1 180px; min-width:0; overflow-wrap:anywhere; }
+.finance-list .timeline-title .finance-amount { flex:0 0 auto; white-space:nowrap; }
+.finance-list .finance-actions { flex:0 1 auto; justify-content:flex-end; row-gap:4px; }
 .sub-pill { display:inline-flex; align-items:center; gap:6px; padding:5px 9px; border-radius:999px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); font-size:12px; color:var(--sub); }
 .sub-pill.active { color:var(--text); border-color:rgba(52,211,153,.22); background:rgba(52,211,153,.10); }
 .link-btn { background:none; border:none; color:var(--accent2); cursor:pointer; font:inherit; font-size:12px; padding:0; }
@@ -606,6 +611,8 @@ select option { background:#122030; }
   .task-filter-group { display:block; padding:10px; border-radius:16px; }
   .task-filter-label { width:auto; min-width:0; padding-top:0; margin-bottom:8px; display:block; }
   .stats-grid, .analytics-grid, .section-grid, .home-split, .finance-grid, .finance-summary-grid { grid-template-columns:1fr; }
+  .finance-list .timeline-item { flex-direction:column; }
+  .finance-list .finance-actions { width:100%; justify-content:flex-start; }
   .context-copy { font-size:17px; }
 
   /* Task Cards */
