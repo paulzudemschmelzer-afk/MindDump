@@ -384,6 +384,12 @@ select option { background:#1c1c1c; }
 .month-col { display:flex; flex-direction:column; align-items:center; gap:2px; flex-shrink:0; width:14px; }
 .month-bar { width:10px; border-radius:2px 2px 0 0; min-height:1px; }
 .no-data-hint { text-align:center; color:var(--sub); font-size:13px; padding:20px 0; }
+/* Sleep tap buttons */
+.sleep-track-row { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+.sleep-btn { padding:7px 14px; border-radius:20px; border:1px solid var(--border); background:var(--card2); color:var(--text); font-size:13px; cursor:pointer; font-family:inherit; transition:all .15s; }
+.sleep-btn:hover { border-color:var(--accent2); color:var(--accent2); }
+.sleep-btn.active { background:rgba(124,58,237,.2); border-color:var(--accent2); color:var(--accent2); }
+.sleep-info { font-size:13px; color:var(--text); font-weight:500; }
 /* Quick-Log intraday widget */
 .quicklog-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:13px 16px; margin-bottom:14px; }
 .quicklog-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
@@ -618,8 +624,16 @@ select option { background:#1c1c1c; }
         <div><span class="te-title">Tageseinstieg</span><span class="te-date" id="te-datum"></span></div>
         <span class="te-saved" id="te-saved" style="display:none">✓ Gespeichert</span>
       </div>
+
+      <!-- Schlaf-Tap-Buttons -->
+      <div class="sleep-track-row" id="sleep-track-row">
+        <button class="sleep-btn" id="btn-schlafen" onclick="tapSchlafen()">🌙 Schlafen</button>
+        <button class="sleep-btn" id="btn-aufstehen" onclick="tapAufstehen()">🌅 Aufgestanden</button>
+        <span class="sleep-info" id="sleep-info"></span>
+      </div>
+
       <div class="te-row">
-        <div class="te-field">
+        <div class="te-field" style="display:none">
           <span class="te-lbl">😴 Schlaf (h)</span>
           <input type="number" id="te-schlaf" class="te-num" min="0" max="24" step="0.5" placeholder="–" oninput="saveTageseinstieg()" />
         </div>
@@ -2632,20 +2646,88 @@ async function heuteTouchEnd(e) {
   touchDragId = null;
 }
 
+// ── SCHLAF-TAP ────────────────────────────────────────────────
+async function tapSchlafen() {
+  const today = new Date().toISOString().slice(0,10);
+  if(!D.dailyLog) D.dailyLog={};
+  if(!D.dailyLog[today]) D.dailyLog[today]={};
+  D.dailyLog[today].schlafStart = Date.now();
+  await _saveDailyLogDay(today);
+  renderTageseinstieg();
+  toast('Gute Nacht 🌙 ' + fmtHHMM(Date.now()));
+}
+
+async function tapAufstehen() {
+  const today = new Date().toISOString().slice(0,10);
+  if(!D.dailyLog) D.dailyLog={};
+  if(!D.dailyLog[today]) D.dailyLog[today]={};
+  // Find most recent schlafStart (today or yesterday)
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const yKey = yesterday.toISOString().slice(0,10);
+  const start = D.dailyLog[today]?.schlafStart || D.dailyLog[yKey]?.schlafStart || null;
+  D.dailyLog[today].schlafEnde = Date.now();
+  if(start) {
+    const hours = (Date.now() - start) / 3600000;
+    D.dailyLog[today].schlaf = Math.round(hours*10)/10;
+    // If start was yesterday, store there too
+    if(!D.dailyLog[today].schlafStart && D.dailyLog[yKey]?.schlafStart) {
+      D.dailyLog[yKey].schlafEnde = Date.now();
+      await _saveDailyLogDay(yKey);
+    }
+  }
+  await _saveDailyLogDay(today);
+  renderTageseinstieg();
+  const h = D.dailyLog[today].schlaf;
+  toast('Guten Morgen 🌅' + (h ? ' — ' + h + 'h Schlaf' : ''));
+}
+
+async function _saveDailyLogDay(dateKey) {
+  if(useFS()) {
+    await db.collection(`users/${currentUser.uid}/dailyLog`).doc(dateKey).set(D.dailyLog[dateKey]);
+  } else { saveLocal(); }
+}
+
 // ── TAGESEINSTIEG ──────────────────────────────────────────────
 function renderTageseinstieg() {
   const today = new Date().toISOString().slice(0,10);
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const yKey = yesterday.toISOString().slice(0,10);
   const entry = (D.dailyLog && D.dailyLog[today]) || {};
+  const yEntry = (D.dailyLog && D.dailyLog[yKey]) || {};
+
   const dateEl = document.getElementById('te-datum');
   if(dateEl) dateEl.textContent = ' — ' + new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
+
+  // Sleep tap button states + info
+  const start = entry.schlafStart || yEntry.schlafStart || null;
+  const ende = entry.schlafEnde || null;
+  const btnSchlafen = document.getElementById('btn-schlafen');
+  const btnAufstehen = document.getElementById('btn-aufstehen');
+  const sleepInfo = document.getElementById('sleep-info');
+  if(btnSchlafen) btnSchlafen.classList.toggle('active', !!(start && !ende));
+  if(btnAufstehen) btnAufstehen.classList.toggle('active', !!ende);
+  if(sleepInfo) {
+    if(entry.schlaf != null) {
+      const startStr = start ? fmtHHMM(start) : '?';
+      const endeStr = ende ? fmtHHMM(ende) : '?';
+      sleepInfo.textContent = `${startStr} – ${endeStr} · ${entry.schlaf}h`;
+    } else if(start && !ende) {
+      sleepInfo.textContent = `Schlafen seit ${fmtHHMM(start)} 💤`;
+    } else {
+      sleepInfo.textContent = '';
+    }
+  }
+
+  // Hidden schlaf number (auto-filled)
   const schlafEl = document.getElementById('te-schlaf');
   if(schlafEl) schlafEl.value = entry.schlaf != null ? entry.schlaf : '';
+
   ['energie','stimmung'].forEach(f => {
     document.querySelectorAll(`#te-${f}-btns .te-btn`).forEach(b => b.classList.toggle('active', Number(b.dataset.val) === entry[f]));
   });
   const notizEl = document.getElementById('te-notiz');
   if(notizEl) notizEl.value = entry.notiz || '';
-  if(Object.keys(entry).filter(k=>k!=='intraday').length > 0) { const s=document.getElementById('te-saved'); if(s){s.style.display='inline'; setTimeout(()=>s.style.display='none',1500);} }
+
   // Update clock and mini chart
   const qlNow = document.getElementById('ql-now');
   if(qlNow) qlNow.textContent = fmtHHMM(Date.now());
