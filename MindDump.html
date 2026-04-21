@@ -621,62 +621,6 @@ select option { background:#1c1c1c; }
       <button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>
     </div>
 
-    <!-- Tageseinstieg -->
-    <div class="tageseinstieg" id="tageseinstieg-card">
-      <div class="te-header">
-        <div><span class="te-title">Tageseinstieg</span><span class="te-date" id="te-datum"></span></div>
-        <span class="te-saved" id="te-saved" style="display:none">✓ Gespeichert</span>
-      </div>
-
-      <!-- Schlaf-Tap-Buttons -->
-      <div class="sleep-track-row" id="sleep-track-row">
-        <button class="sleep-btn" id="btn-schlafen" onclick="tapSchlafen()">🌙 Schlafen</button>
-        <button class="sleep-btn" id="btn-aufstehen" onclick="tapAufstehen()">🌅 Aufgestanden</button>
-        <span class="sleep-info" id="sleep-info"></span>
-      </div>
-
-      <div class="te-row">
-        <div class="te-field" style="display:none">
-          <span class="te-lbl">😴 Schlaf (h)</span>
-          <input type="number" id="te-schlaf" class="te-num" min="0" max="24" step="0.5" placeholder="–" oninput="saveTageseinstieg()" />
-        </div>
-        <div class="te-field">
-          <span class="te-lbl">⚡ Energie</span>
-          <div class="te-btns" id="te-energie-btns">
-            <button class="te-btn" data-val="1" onclick="setTe('energie',1)">1</button>
-            <button class="te-btn" data-val="2" onclick="setTe('energie',2)">2</button>
-            <button class="te-btn" data-val="3" onclick="setTe('energie',3)">3</button>
-            <button class="te-btn" data-val="4" onclick="setTe('energie',4)">4</button>
-            <button class="te-btn" data-val="5" onclick="setTe('energie',5)">5</button>
-          </div>
-        </div>
-      </div>
-      <input type="text" id="te-notiz" class="te-notiz" placeholder="Wie startest du heute? (optional)" oninput="saveTageseinstieg()" />
-    </div>
-
-    <!-- Intraday Quick-Log -->
-    <div class="quicklog-card">
-      <div class="quicklog-header">
-        <span class="quicklog-title">Wie geht's dir gerade?</span>
-        <span class="quicklog-time" id="ql-now"></span>
-      </div>
-      <div class="quicklog-row">
-        <div class="te-field">
-          <span class="te-lbl">⚡ Energie</span>
-          <div class="te-btns" id="ql-energie-btns">
-            <button class="te-btn" data-val="1" onclick="setQl('energie',1)">1</button>
-            <button class="te-btn" data-val="2" onclick="setQl('energie',2)">2</button>
-            <button class="te-btn" data-val="3" onclick="setQl('energie',3)">3</button>
-            <button class="te-btn" data-val="4" onclick="setQl('energie',4)">4</button>
-            <button class="te-btn" data-val="5" onclick="setQl('energie',5)">5</button>
-          </div>
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="saveQuickLog()" style="align-self:flex-end">Eintragen</button>
-        <span id="ql-saved" style="display:none;font-size:11px;color:var(--green);align-self:flex-end">✓</span>
-      </div>
-      <div class="ql-mini-chart" id="ql-mini-chart"></div>
-    </div>
-
     <div class="heute-quick-add">
       <input type="text" id="heute-title" placeholder="Heute-Task schnell erfassen" onkeydown="if(event.key==='Enter')addHeuteQuickTask()" />
       <select id="heute-prio" title="Prioritaet">
@@ -2709,10 +2653,6 @@ function renderTageseinstieg() {
   const notizEl = document.getElementById('te-notiz');
   if(notizEl) notizEl.value = entry.notiz || '';
 
-  // Update clock and mini chart
-  const qlNow = document.getElementById('ql-now');
-  if(qlNow) qlNow.textContent = fmtHHMM(Date.now());
-  renderQlMiniChart(today);
 }
 
 function setTe(field, val) {
@@ -2742,40 +2682,6 @@ function saveTageseinstieg() {
     const s = document.getElementById('te-saved');
     if(s){ s.style.display='inline'; setTimeout(()=>s.style.display='none',1500); }
   }, 700);
-}
-
-// ── INTRADAY QUICK-LOG ────────────────────────────────────────
-let _qlEnergie = null;
-
-function setQl(field, val) {
-  if(field==='energie') _qlEnergie=val;
-  document.querySelectorAll(`#ql-${field}-btns .te-btn`).forEach(b=>b.classList.toggle('active',Number(b.dataset.val)===val));
-}
-
-async function saveQuickLog() {
-  if(_qlEnergie===null) return;
-  const today = new Date().toISOString().slice(0,10);
-  if(!D.dailyLog) D.dailyLog={};
-  if(!D.dailyLog[today]) D.dailyLog[today]={};
-  if(!D.dailyLog[today].intraday) D.dailyLog[today].intraday=[];
-  const entry = { ts: Date.now() };
-  if(_qlEnergie!==null) entry.energie=_qlEnergie;
-  D.dailyLog[today].intraday.push(entry);
-  if(useFS()) {
-    await db.collection(`users/${currentUser.uid}/dailyLog`).doc(today).set(D.dailyLog[today]);
-  } else { saveLocal(); }
-  // Reset buttons
-  _qlEnergie=null;
-  document.querySelectorAll('#ql-energie-btns .te-btn').forEach(b=>b.classList.remove('active'));
-  const s=document.getElementById('ql-saved'); if(s){s.style.display='inline';setTimeout(()=>s.style.display='none',1500);}
-  renderQlMiniChart(today);
-}
-
-function renderQlMiniChart(dateKey) {
-  const el = document.getElementById('ql-mini-chart'); if(!el) return;
-  const entries = D.dailyLog?.[dateKey]?.intraday||[];
-  if(!entries.length){el.innerHTML='';return;}
-  el.innerHTML = buildLineChart(entries, 280, 60, true);
 }
 
 function buildLineChart(entries, W, H, showLabels) {
@@ -3091,7 +2997,7 @@ function renderStats() {
     if(r<-0.2) return {cls:'corr-neg',text:'Leichte negative Korrelation ↓'};
     return {cls:'corr-neu',text:'Kein klarer Zusammenhang'};
   }
-  const cE = corrLabel(corrE), cS = corrLabel(corrS);
+  const cE = corrLabel(corrE);
 
   // Sleep quality insight
   const sleepGroups = {};
@@ -3165,37 +3071,6 @@ function renderStats() {
         <div class="month-strip">${monthStrip}</div>
       </div>
     </div>
-    ${buildTagesverlaufSection(log)}`;
-}
-
-function buildTagesverlaufSection(log) {
-  // Find days that have intraday entries, show most recent by default
-  const daysWithIntraday = Object.entries(log)
-    .filter(([,v])=>v.intraday&&v.intraday.length>=1)
-    .sort(([a],[b])=>b.localeCompare(a));
-  if(!daysWithIntraday.length) return `<div class="dash-card full"><div class="dash-title">📈 Tagesverlauf</div><div class="no-data-hint">Noch keine Tagesverlauf-Daten — nutze das "Wie geht's dir?" Widget auf der Heute-Seite.</div></div>`;
-
-  const dayOptions = daysWithIntraday.map(([d])=>`<option value="${d}">${new Date(d+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short'})}</option>`).join('');
-  const selDate = daysWithIntraday[0][0];
-  const chart = buildLineChart(daysWithIntraday[0][1].intraday.sort((a,b)=>a.ts-b.ts), 500, 140, true);
-
-  return `<div class="dash-card full" style="margin-top:14px">
-    <div class="dash-title" style="display:flex;align-items:center;gap:10px">
-      📈 Tagesverlauf
-      <select onchange="updateTagesverlauf(this.value)" style="background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:2px 6px;font-size:12px;font-family:inherit">
-        ${dayOptions}
-      </select>
-    </div>
-    <div id="tagesverlauf-chart" class="linechart-wrap">${chart}</div>
-  </div>`;
-}
-
-function updateTagesverlauf(dateStr) {
-  const el = document.getElementById('tagesverlauf-chart'); if(!el) return;
-  const entries = (D.dailyLog?.[dateStr]?.intraday||[]).sort((a,b)=>a.ts-b.ts);
-  el.innerHTML = buildLineChart(entries, 500, 140, true);
-}
-
 function renderWeek() {
   const days=getWeekDays();
   const todayStr=dateStr(new Date());
