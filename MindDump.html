@@ -600,15 +600,18 @@ select option { background:#1c1c1c; }
         <button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">Abbrechen</button>
       </div>
     </div>
-    <div class="ftabs">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
       <button class="ftab active" onclick="setTaskFilter('all',this)">Alle</button>
       <button class="ftab" onclick="setTaskFilter('open',this)">Offen</button>
       <button class="ftab" onclick="setTaskFilter('done',this)">Erledigt</button>
+      <div style="flex:1"></div>
+      <div class="ftabs" id="task-sort-tabs" style="margin-bottom:0"></div>
     </div>
-    <div class="ftabs" id="task-sort-tabs"></div>
-    <div class="ftabs" id="kat-ftabs"></div>
     <div id="tag-filter-row" style="display:none;flex-wrap:wrap;gap:5px;margin-bottom:12px;align-items:center"></div>
     <div id="tasks-list"></div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
+      <button class="btn btn-ghost btn-sm" onclick="openNewTaskCategoryPrompt()">+ Neue Kategorie</button>
+    </div>
   </div>
 
   <!-- HEUTE -->
@@ -2702,9 +2705,7 @@ function renderTageseinstieg() {
   const schlafEl = document.getElementById('te-schlaf');
   if(schlafEl) schlafEl.value = entry.schlaf != null ? entry.schlaf : '';
 
-  ['energie','stimmung'].forEach(f => {
-    document.querySelectorAll(`#te-${f}-btns .te-btn`).forEach(b => b.classList.toggle('active', Number(b.dataset.val) === entry[f]));
-  });
+  document.querySelectorAll('#te-energie-btns .te-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.val) === entry.energie));
   const notizEl = document.getElementById('te-notiz');
   if(notizEl) notizEl.value = entry.notiz || '';
 
@@ -2744,30 +2745,28 @@ function saveTageseinstieg() {
 }
 
 // ── INTRADAY QUICK-LOG ────────────────────────────────────────
-let _qlEnergie = null, _qlStimmung = null;
+let _qlEnergie = null;
 
 function setQl(field, val) {
   if(field==='energie') _qlEnergie=val;
-  else _qlStimmung=val;
   document.querySelectorAll(`#ql-${field}-btns .te-btn`).forEach(b=>b.classList.toggle('active',Number(b.dataset.val)===val));
 }
 
 async function saveQuickLog() {
-  if(_qlEnergie===null && _qlStimmung===null) return;
+  if(_qlEnergie===null) return;
   const today = new Date().toISOString().slice(0,10);
   if(!D.dailyLog) D.dailyLog={};
   if(!D.dailyLog[today]) D.dailyLog[today]={};
   if(!D.dailyLog[today].intraday) D.dailyLog[today].intraday=[];
   const entry = { ts: Date.now() };
   if(_qlEnergie!==null) entry.energie=_qlEnergie;
-  if(_qlStimmung!==null) entry.stimmung=_qlStimmung;
   D.dailyLog[today].intraday.push(entry);
   if(useFS()) {
     await db.collection(`users/${currentUser.uid}/dailyLog`).doc(today).set(D.dailyLog[today]);
   } else { saveLocal(); }
   // Reset buttons
-  _qlEnergie=null; _qlStimmung=null;
-  document.querySelectorAll('#ql-energie-btns .te-btn, #ql-stimmung-btns .te-btn').forEach(b=>b.classList.remove('active'));
+  _qlEnergie=null;
+  document.querySelectorAll('#ql-energie-btns .te-btn').forEach(b=>b.classList.remove('active'));
   const s=document.getElementById('ql-saved'); if(s){s.style.display='inline';setTimeout(()=>s.style.display='none',1500);}
   renderQlMiniChart(today);
 }
@@ -2782,7 +2781,7 @@ function renderQlMiniChart(dateKey) {
 function buildLineChart(entries, W, H, showLabels) {
   if(entries.length < 2) {
     const e = entries[0]||{};
-    return `<div style="font-size:12px;color:var(--sub);padding:4px 0">${fmtHHMM(e.ts)}: Energie ${e.energie??'–'} · Stimmung ${e.stimmung??'–'}</div>`;
+    return `<div style="font-size:12px;color:var(--sub);padding:4px 0">${fmtHHMM(e.ts)}: Energie ${e.energie??'–'}</div>`;
   }
   const pad = {l:24, r:8, t:8, b:20};
   const iW = W-pad.l-pad.r, iH = H-pad.t-pad.b;
@@ -2814,9 +2813,7 @@ function buildLineChart(entries, W, H, showLabels) {
   return `<svg width="${W}" height="${H}" style="max-width:100%">
     ${grid}${yLabels}${xLabels}
     ${line('energie','#f59e0b')}
-    ${line('stimmung','#34d399')}
     <text x="${pad.l+4}" y="${pad.t+10}" font-size="9" fill="#f59e0b">⚡ Energie</text>
-    <text x="${pad.l+60}" y="${pad.t+10}" font-size="9" fill="#34d399">💭 Stimmung</text>
   </svg>`;
 }
 
@@ -3071,11 +3068,9 @@ function renderStats() {
   // Averages
   const withSchlaf = entries.filter(e=>e.schlaf!=null);
   const withEnergie = entries.filter(e=>e.energie!=null);
-  const withStimmung = entries.filter(e=>e.stimmung!=null);
   const avg = arr => arr.length ? (arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(1) : '–';
   const avgSchlaf = avg(withSchlaf.map(e=>e.schlaf));
   const avgEnergie = avg(withEnergie.map(e=>e.energie));
-  const avgStimmung = avg(withStimmung.map(e=>e.stimmung));
 
   // Correlation: schlaf vs energie
   function pearson(xs, ys) {
@@ -3087,8 +3082,6 @@ function renderStats() {
   }
   const pairsE = entries.filter(e=>e.schlaf!=null&&e.energie!=null);
   const corrE = pearson(pairsE.map(e=>e.schlaf), pairsE.map(e=>e.energie));
-  const pairsS = entries.filter(e=>e.schlaf!=null&&e.stimmung!=null);
-  const corrS = pearson(pairsS.map(e=>e.schlaf), pairsS.map(e=>e.stimmung));
 
   function corrLabel(r) {
     if(r===null) return {cls:'corr-neu',text:'Zu wenig Daten'};
@@ -3129,17 +3122,6 @@ function renderStats() {
     </div>`;
   }).join('');
 
-  // Stimmung distribution
-  const moodEmojis = ['','😫','😕','😐','🙂','😄'];
-  const moodCounts = [0,0,0,0,0,0];
-  withStimmung.forEach(e=>{ if(e.stimmung>=1&&e.stimmung<=5) moodCounts[e.stimmung]++; });
-  const maxMood = Math.max(...moodCounts,1);
-  const moodDist = [1,2,3,4,5].map(i=>
-    `<div class="dist-row"><span class="dist-emoji">${moodEmojis[i]}</span>
-    <div class="dist-bar-wrap"><div class="dist-bar-fill" style="width:${Math.round(moodCounts[i]/maxMood*100)}%"></div></div>
-    <span class="dist-label">${moodCounts[i]}x</span></div>`
-  ).join('');
-
   // Monthly strip (last 30 days schlaf)
   const last30 = [];
   for(let i=29;i>=0;i--){ const d=new Date(today); d.setDate(d.getDate()-i); const k=d.toISOString().slice(0,10); last30.push({date:k,...(log[k]||{})}); }
@@ -3158,33 +3140,25 @@ function renderStats() {
         <div class="dash-sub">${withSchlaf.length} Einträge</div>
       </div>
       <div class="dash-card">
-        <div class="dash-title">⌀ Energie / Stimmung</div>
+        <div class="dash-title">⌀ Energie</div>
         <div class="dash-big">${avgEnergie} <span style="font-size:16px;color:var(--sub)">/ 5</span></div>
-        <div class="dash-sub">Stimmung: Ø ${avgStimmung} / 5</div>
+        <div class="dash-sub">${withEnergie.length} Einträge</div>
       </div>
       <div class="dash-card full">
         <div class="dash-title">😴 Schlaf — letzte 7 Tage</div>
         <div class="chart-bar-row">${barChart}</div>
       </div>
-      <div class="dash-card">
+      <div class="dash-card full">
         <div class="dash-title">⚡ Energie — letzte 7 Tage</div>
         <div class="chart-bar-row">${metricBars('energie','energie')}</div>
       </div>
-      <div class="dash-card">
-        <div class="dash-title">💭 Stimmung — Verteilung</div>
-        ${moodDist}
-      </div>
       <div class="dash-card full">
-        <div class="dash-title">📉 Korrelationen (Schlaf → ?)</div>
+        <div class="dash-title">📉 Schlaf → Energie</div>
         <div class="corr-row">
-          <span class="corr-label">Schlaf → Energie</span>
+          <span class="corr-label">Korrelation</span>
           <span class="corr-val ${cE.cls}">${cE.text}${corrE!==null?' (r='+corrE.toFixed(2)+')':''}</span>
         </div>
-        <div class="corr-row">
-          <span class="corr-label">Schlaf → Stimmung</span>
-          <span class="corr-val ${cS.cls}">${cS.text}${corrS!==null?' (r='+corrS.toFixed(2)+')':''}</span>
-        </div>
-        ${sleepInsight||'<div class="corr-row"><span class="corr-label corr-neu">Zu wenig Daten für Schlaf-Gruppen-Analyse</span></div>'}
+        ${sleepInsight||'<div class="corr-row"><span class="corr-label corr-neu">Zu wenig Daten für Gruppenanalyse</span></div>'}
       </div>
       <div class="dash-card full">
         <div class="dash-title">📅 Schlaf — letzte 30 Tage <span style="font-size:10px;margin-left:6px;color:var(--green)">grün ≥8h</span> <span style="font-size:10px;color:var(--accent2)">lila 6-8h</span> <span style="font-size:10px;color:#f59e0b">gelb &lt;6h</span></div>
@@ -3347,14 +3321,15 @@ function renderWeek() {
     body.dataset.scrolled='1';
   }
 
-  const unsched=D.tasks.filter(t=>!t.dueDate&&!t.done);
+  const allOpen=D.tasks.filter(t=>!t.done).sort((a,b)=>{const o={hoch:0,mittel:1,niedrig:2};return(o[a.priority]??1)-(o[b.priority]??1);});
   const ua=document.getElementById('unscheduled-area');
-  if(unsched.length){
+  if(allOpen.length){
     ua.innerHTML=`<div class="unscheduled-area" style="margin-top:16px">
-      <div class="section-label">Ohne Datum (${unsched.length})</div>
+      <div class="section-label">Tasks — in Kalender ziehen (${allOpen.length})</div>
       <div class="unsched-tasks">
-        ${unsched.map(t=>`<div class="unsched-task" draggable="true" ondragstart="dragTask(event,'${t.id}')">
+        ${allOpen.map(t=>`<div class="unsched-task" draggable="true" ondragstart="dragTask(event,'${t.id}')" title="${esc(t.title)}">
           <span style="font-size:12px">${esc(t.title)}</span>
+          ${t.dueDate?`<span style="font-size:10px;color:var(--accent2)">📅 ${t.dueDate}</span>`:''}
           ${t.estimatedTime?`<span style="font-size:10px;color:var(--sub)">${t.estimatedTime}</span>`:''}
         </div>`).join('')}
       </div>
