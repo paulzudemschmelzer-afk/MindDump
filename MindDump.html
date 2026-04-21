@@ -352,6 +352,39 @@ select option { background:#1c1c1c; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:#2a2a2a; border-radius:3px; }
 
+/* DASHBOARD / STATS */
+.dash-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.dash-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; }
+.dash-card.full { grid-column:1/-1; }
+.dash-title { font-size:12px; font-weight:600; color:var(--sub); text-transform:uppercase; letter-spacing:.5px; margin-bottom:14px; }
+.dash-big { font-size:32px; font-weight:700; color:var(--text); line-height:1; }
+.dash-sub { font-size:12px; color:var(--sub); margin-top:4px; }
+.chart-bar-row { display:flex; align-items:flex-end; gap:5px; height:80px; }
+.chart-bar-col { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
+.chart-bar { width:100%; border-radius:4px 4px 0 0; transition:height .3s; min-height:2px; }
+.chart-bar.schlaf { background:var(--accent2); }
+.chart-bar.energie { background:#f59e0b; }
+.chart-bar.stimmung { background:#34d399; }
+.chart-day { font-size:10px; color:var(--sub); text-align:center; }
+.chart-val { font-size:10px; color:var(--sub); }
+.corr-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); }
+.corr-row:last-child { border-bottom:none; }
+.corr-label { font-size:13px; color:var(--text); }
+.corr-val { font-size:13px; font-weight:600; }
+.corr-pos { color:#34d399; }
+.corr-neg { color:var(--red); }
+.corr-neu { color:var(--sub); }
+.dist-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+.dist-emoji { font-size:15px; min-width:22px; text-align:center; }
+.dist-bar-wrap { flex:1; height:8px; background:var(--card2); border-radius:4px; overflow:hidden; }
+.dist-bar-fill { height:100%; border-radius:4px; background:var(--accent2); transition:width .4s; }
+.dist-label { font-size:11px; color:var(--sub); min-width:24px; text-align:right; }
+.month-strip { display:flex; align-items:flex-end; gap:2px; height:60px; overflow-x:auto; scrollbar-width:none; padding-bottom:4px; }
+.month-strip::-webkit-scrollbar { display:none; }
+.month-col { display:flex; flex-direction:column; align-items:center; gap:2px; flex-shrink:0; width:14px; }
+.month-bar { width:10px; border-radius:2px 2px 0 0; min-height:1px; }
+.no-data-hint { text-align:center; color:var(--sub); font-size:13px; padding:20px 0; }
+
 #mobile-topbar { display:none; }
 
 @media (max-width: 900px) {
@@ -460,6 +493,7 @@ select option { background:#1c1c1c; }
     <button class="nav-btn" onclick="go('braindump')"><span class="nav-icon">⚡</span>Brain Dump</button>
     <button class="nav-btn" onclick="go('tasks')"><span class="nav-icon">✓</span>Tasks<span class="badge" id="b-tasks">0</span></button>
     <button class="nav-btn active" onclick="go('heute')"><span class="nav-icon">☀</span>Heute<span class="badge" id="b-heute" style="background:#f59e0b">0</span></button>
+    <button class="nav-btn" onclick="go('stats')"><span class="nav-icon">📊</span>Dashboard</button>
     <button class="nav-btn" onclick="go('week')"><span class="nav-icon">📅</span>Woche</button>
     <button class="nav-btn" onclick="go('thoughts')"><span class="nav-icon">💡</span>Thoughts<span class="badge" id="b-thoughts">0</span></button>
     <button class="nav-btn" onclick="go('snippets')"><span class="nav-icon">⌨</span>Snippets<span class="badge" id="b-snippets">0</span></button>
@@ -619,6 +653,12 @@ select option { background:#1c1c1c; }
       ondrop="dropHeute(event)">
       <div id="heute-list"></div>
     </div>
+  </div>
+
+  <!-- DASHBOARD / STATS -->
+  <div class="tab-panel" id="tab-stats">
+    <div class="page-header"><h1>Dashboard</h1><p>Deine Statistiken & Auswertungen.</p></div>
+    <div id="stats-content"></div>
   </div>
 
   <!-- WEEK CALENDAR -->
@@ -1062,7 +1102,7 @@ function nextDueDate(dueDate, recurrence) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
-const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',settings:'Settings'};
+const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',stats:'Dashboard',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',settings:'Settings'};
 const TAB_ACTIONS = {
   tasks:    `<button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">+ Hinzufügen</button>`,
   heute:    `<button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>`,
@@ -1085,6 +1125,7 @@ function go(tab) {
   if(tab==='heute') renderHeute();
   if(tab==='thoughts') renderThoughts();
   if(tab==='snippets') renderSnips();
+  if(tab==='stats') renderStats();
   if(tab==='week') renderWeek();
   if(tab==='taurus') { renderTaurusChat(); checkTaurusStatus(); }
 }
@@ -2809,6 +2850,156 @@ function openCalEvent(e, id) {
       <button class="btn btn-ghost btn-sm" onclick="closeModal();setTimeout(()=>openEditTask('${t.id}'),50)" style="font-size:12px">Alle Details</button>
     </div>`;
   document.getElementById('modal').style.display='flex';
+}
+
+// ── DASHBOARD / STATS ─────────────────────────────────────────
+function renderStats() {
+  const el = document.getElementById('stats-content');
+  if(!el) return;
+  const log = D.dailyLog || {};
+  const entries = Object.entries(log)
+    .map(([date, v]) => ({date, ...v}))
+    .filter(e => e.date && e.date.match(/^\d{4}-\d{2}-\d{2}$/))
+    .sort((a,b) => a.date.localeCompare(b.date));
+
+  if(entries.length === 0) {
+    el.innerHTML = `<div class="no-data-hint">Noch keine Daten — trage täglich im Heute-Tab deine Werte ein. 📊</div>`;
+    return;
+  }
+
+  // Last 7 days
+  const today = new Date();
+  const last7 = [];
+  for(let i=6; i>=0; i--) {
+    const d = new Date(today); d.setDate(d.getDate()-i);
+    const key = d.toISOString().slice(0,10);
+    const dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+    last7.push({date:key, label:dayNames[d.getDay()], ...( log[key]||{})});
+  }
+
+  // Averages
+  const withSchlaf = entries.filter(e=>e.schlaf!=null);
+  const withEnergie = entries.filter(e=>e.energie!=null);
+  const withStimmung = entries.filter(e=>e.stimmung!=null);
+  const avg = arr => arr.length ? (arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(1) : '–';
+  const avgSchlaf = avg(withSchlaf.map(e=>e.schlaf));
+  const avgEnergie = avg(withEnergie.map(e=>e.energie));
+  const avgStimmung = avg(withStimmung.map(e=>e.stimmung));
+
+  // Correlation: schlaf vs energie
+  function pearson(xs, ys) {
+    if(xs.length < 3) return null;
+    const mx=xs.reduce((s,v)=>s+v,0)/xs.length, my=ys.reduce((s,v)=>s+v,0)/ys.length;
+    let num=0,dx=0,dy=0;
+    for(let i=0;i<xs.length;i++){num+=(xs[i]-mx)*(ys[i]-my);dx+=(xs[i]-mx)**2;dy+=(ys[i]-my)**2;}
+    return (dx&&dy)?num/Math.sqrt(dx*dy):null;
+  }
+  const pairsE = entries.filter(e=>e.schlaf!=null&&e.energie!=null);
+  const corrE = pearson(pairsE.map(e=>e.schlaf), pairsE.map(e=>e.energie));
+  const pairsS = entries.filter(e=>e.schlaf!=null&&e.stimmung!=null);
+  const corrS = pearson(pairsS.map(e=>e.schlaf), pairsS.map(e=>e.stimmung));
+
+  function corrLabel(r) {
+    if(r===null) return {cls:'corr-neu',text:'Zu wenig Daten'};
+    if(r>0.5) return {cls:'corr-pos',text:'Starke Korrelation ↑'};
+    if(r>0.2) return {cls:'corr-pos',text:'Leichte Korrelation ↑'};
+    if(r<-0.5) return {cls:'corr-neg',text:'Starke negative Korrelation ↓'};
+    if(r<-0.2) return {cls:'corr-neg',text:'Leichte negative Korrelation ↓'};
+    return {cls:'corr-neu',text:'Kein klarer Zusammenhang'};
+  }
+  const cE = corrLabel(corrE), cS = corrLabel(corrS);
+
+  // Sleep quality insight
+  const sleepGroups = {};
+  pairsE.forEach(e=>{const k=e.schlaf>=8?'8h+':e.schlaf>=6?'6-8h':'<6h';if(!sleepGroups[k])sleepGroups[k]=[];sleepGroups[k].push(e.energie);});
+  const sleepInsight = Object.entries(sleepGroups).map(([k,arr])=>
+    `<div class="corr-row"><span class="corr-label">Schlaf ${k}</span><span class="corr-val corr-pos">Ø Energie ${avg(arr)} / 5</span></div>`
+  ).join('');
+
+  // Bar chart: last 7 days schlaf
+  const maxSchlaf = Math.max(...last7.map(d=>d.schlaf||0), 8);
+  const barChart = last7.map(d=>{
+    const h = d.schlaf!=null ? Math.round((d.schlaf/maxSchlaf)*72) : 0;
+    return `<div class="chart-bar-col">
+      <span class="chart-val">${d.schlaf!=null?d.schlaf+'h':''}</span>
+      <div class="chart-bar schlaf" style="height:${h}px"></div>
+      <span class="chart-day">${d.label}</span>
+    </div>`;
+  }).join('');
+
+  // Energie / Stimmung bars for last 7 days
+  const metricBars = (field, cls) => last7.map(d=>{
+    const val = d[field];
+    const h = val!=null ? Math.round((val/5)*72) : 0;
+    return `<div class="chart-bar-col">
+      <span class="chart-val">${val!=null?val:''}</span>
+      <div class="chart-bar ${cls}" style="height:${h}px"></div>
+      <span class="chart-day">${d.label}</span>
+    </div>`;
+  }).join('');
+
+  // Stimmung distribution
+  const moodEmojis = ['','😫','😕','😐','🙂','😄'];
+  const moodCounts = [0,0,0,0,0,0];
+  withStimmung.forEach(e=>{ if(e.stimmung>=1&&e.stimmung<=5) moodCounts[e.stimmung]++; });
+  const maxMood = Math.max(...moodCounts,1);
+  const moodDist = [1,2,3,4,5].map(i=>
+    `<div class="dist-row"><span class="dist-emoji">${moodEmojis[i]}</span>
+    <div class="dist-bar-wrap"><div class="dist-bar-fill" style="width:${Math.round(moodCounts[i]/maxMood*100)}%"></div></div>
+    <span class="dist-label">${moodCounts[i]}x</span></div>`
+  ).join('');
+
+  // Monthly strip (last 30 days schlaf)
+  const last30 = [];
+  for(let i=29;i>=0;i--){ const d=new Date(today); d.setDate(d.getDate()-i); const k=d.toISOString().slice(0,10); last30.push({date:k,...(log[k]||{})}); }
+  const maxM = Math.max(...last30.map(d=>d.schlaf||0),8);
+  const monthStrip = last30.map(d=>{
+    const h = d.schlaf!=null ? Math.round((d.schlaf/maxM)*52)+2 : 2;
+    const col = d.schlaf!=null ? (d.schlaf>=8?'#34d399':d.schlaf>=6?'var(--accent2)':'#f59e0b') : 'var(--border)';
+    return `<div class="month-col"><div class="month-bar" style="height:${h}px;background:${col}"></div></div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="dash-grid">
+      <div class="dash-card">
+        <div class="dash-title">⌀ Schlaf</div>
+        <div class="dash-big">${avgSchlaf}h</div>
+        <div class="dash-sub">${withSchlaf.length} Einträge</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-title">⌀ Energie / Stimmung</div>
+        <div class="dash-big">${avgEnergie} <span style="font-size:16px;color:var(--sub)">/ 5</span></div>
+        <div class="dash-sub">Stimmung: Ø ${avgStimmung} / 5</div>
+      </div>
+      <div class="dash-card full">
+        <div class="dash-title">😴 Schlaf — letzte 7 Tage</div>
+        <div class="chart-bar-row">${barChart}</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-title">⚡ Energie — letzte 7 Tage</div>
+        <div class="chart-bar-row">${metricBars('energie','energie')}</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-title">💭 Stimmung — Verteilung</div>
+        ${moodDist}
+      </div>
+      <div class="dash-card full">
+        <div class="dash-title">📉 Korrelationen (Schlaf → ?)</div>
+        <div class="corr-row">
+          <span class="corr-label">Schlaf → Energie</span>
+          <span class="corr-val ${cE.cls}">${cE.text}${corrE!==null?' (r='+corrE.toFixed(2)+')':''}</span>
+        </div>
+        <div class="corr-row">
+          <span class="corr-label">Schlaf → Stimmung</span>
+          <span class="corr-val ${cS.cls}">${cS.text}${corrS!==null?' (r='+corrS.toFixed(2)+')':''}</span>
+        </div>
+        ${sleepInsight||'<div class="corr-row"><span class="corr-label corr-neu">Zu wenig Daten für Schlaf-Gruppen-Analyse</span></div>'}
+      </div>
+      <div class="dash-card full">
+        <div class="dash-title">📅 Schlaf — letzte 30 Tage <span style="font-size:10px;margin-left:6px;color:var(--green)">grün ≥8h</span> <span style="font-size:10px;color:var(--accent2)">lila 6-8h</span> <span style="font-size:10px;color:#f59e0b">gelb &lt;6h</span></div>
+        <div class="month-strip">${monthStrip}</div>
+      </div>
+    </div>`;
 }
 
 function renderWeek() {
