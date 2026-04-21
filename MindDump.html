@@ -991,8 +991,29 @@ function subscribeFS() {
   // Daily log (keyed by date)
   unsubListeners.push(
     db.collection(`users/${currentUser.uid}/dailyLog`).onSnapshot(snap=>{
-      D.dailyLog = {};
-      snap.docs.forEach(d=>{ D.dailyLog[d.id]={...d.data()}; });
+      const remoteDailyLog = {};
+      snap.docs.forEach(d=>{ remoteDailyLog[d.id]={...d.data()}; });
+      const localDailyLog = (D.dailyLog && typeof D.dailyLog === 'object') ? D.dailyLog : {};
+      const mergedDailyLog = { ...remoteDailyLog };
+      const keys = new Set([...Object.keys(localDailyLog), ...Object.keys(remoteDailyLog)]);
+      keys.forEach(key => {
+        const localEntry = localDailyLog[key];
+        const remoteEntry = remoteDailyLog[key];
+        if(!localEntry) return;
+        if(!remoteEntry) {
+          mergedDailyLog[key] = localEntry;
+          if(useFS()) db.collection(`users/${currentUser.uid}/dailyLog`).doc(key).set(localEntry).catch(err=>console.error('dailyLog sync', err));
+          return;
+        }
+        const localStamp = localEntry.updatedAt || localEntry.schlafEnde || localEntry.schlafStart || 0;
+        const remoteStamp = remoteEntry.updatedAt || remoteEntry.schlafEnde || remoteEntry.schlafStart || 0;
+        if(localStamp > remoteStamp) {
+          mergedDailyLog[key] = localEntry;
+          if(useFS()) db.collection(`users/${currentUser.uid}/dailyLog`).doc(key).set(localEntry).catch(err=>console.error('dailyLog sync', err));
+        }
+      });
+      D.dailyLog = mergedDailyLog;
+      saveLocal();
       renderTageseinstieg();
     }, err=>console.error('dailyLog',err))
   );
@@ -2642,9 +2663,10 @@ async function tapAufstehen() {
 }
 
 async function _saveDailyLogDay(dateKey) {
+  saveLocal();
   if(useFS()) {
     await db.collection(`users/${currentUser.uid}/dailyLog`).doc(dateKey).set(D.dailyLog[dateKey]);
-  } else { saveLocal(); }
+  }
 }
 
 // ── TAGESEINSTIEG ──────────────────────────────────────────────
@@ -2709,9 +2731,10 @@ function saveTageseinstieg() {
   D.dailyLog[today].updatedAt = Date.now();
   clearTimeout(_teSaveTimer);
   _teSaveTimer = setTimeout(async () => {
+    saveLocal();
     if(useFS()) {
       await db.collection(`users/${currentUser.uid}/dailyLog`).doc(today).set(D.dailyLog[today]);
-    } else { saveLocal(); }
+    }
     const s = document.getElementById('te-saved');
     if(s){ s.style.display='inline'; setTimeout(()=>s.style.display='none',1500); }
   }, 700);
