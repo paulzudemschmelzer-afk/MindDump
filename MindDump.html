@@ -384,6 +384,17 @@ select option { background:#1c1c1c; }
 .month-col { display:flex; flex-direction:column; align-items:center; gap:2px; flex-shrink:0; width:14px; }
 .month-bar { width:10px; border-radius:2px 2px 0 0; min-height:1px; }
 .no-data-hint { text-align:center; color:var(--sub); font-size:13px; padding:20px 0; }
+/* Quick-Log intraday widget */
+.quicklog-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:13px 16px; margin-bottom:14px; }
+.quicklog-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.quicklog-title { font-size:12px; font-weight:600; color:var(--sub); text-transform:uppercase; letter-spacing:.5px; }
+.quicklog-time { font-size:12px; color:var(--sub); }
+.quicklog-row { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.ql-mini-chart { margin-top:12px; overflow-x:auto; }
+/* SVG line chart */
+.linechart-wrap { position:relative; }
+.linechart-wrap svg { display:block; overflow:visible; }
+.linechart-axis { font-size:9px; fill:var(--sub); }
 
 #mobile-topbar { display:none; }
 
@@ -634,6 +645,39 @@ select option { background:#1c1c1c; }
         </div>
       </div>
       <input type="text" id="te-notiz" class="te-notiz" placeholder="Wie startest du heute? (optional)" oninput="saveTageseinstieg()" />
+    </div>
+
+    <!-- Intraday Quick-Log -->
+    <div class="quicklog-card">
+      <div class="quicklog-header">
+        <span class="quicklog-title">Wie geht's dir gerade?</span>
+        <span class="quicklog-time" id="ql-now"></span>
+      </div>
+      <div class="quicklog-row">
+        <div class="te-field">
+          <span class="te-lbl">⚡ Energie</span>
+          <div class="te-btns" id="ql-energie-btns">
+            <button class="te-btn" data-val="1" onclick="setQl('energie',1)">1</button>
+            <button class="te-btn" data-val="2" onclick="setQl('energie',2)">2</button>
+            <button class="te-btn" data-val="3" onclick="setQl('energie',3)">3</button>
+            <button class="te-btn" data-val="4" onclick="setQl('energie',4)">4</button>
+            <button class="te-btn" data-val="5" onclick="setQl('energie',5)">5</button>
+          </div>
+        </div>
+        <div class="te-field">
+          <span class="te-lbl">💭 Stimmung</span>
+          <div class="te-btns" id="ql-stimmung-btns">
+            <button class="te-btn" data-val="1" onclick="setQl('stimmung',1)">😫</button>
+            <button class="te-btn" data-val="2" onclick="setQl('stimmung',2)">😕</button>
+            <button class="te-btn" data-val="3" onclick="setQl('stimmung',3)">😐</button>
+            <button class="te-btn" data-val="4" onclick="setQl('stimmung',4)">🙂</button>
+            <button class="te-btn" data-val="5" onclick="setQl('stimmung',5)">😄</button>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveQuickLog()" style="align-self:flex-end">Eintragen</button>
+        <span id="ql-saved" style="display:none;font-size:11px;color:var(--green);align-self:flex-end">✓</span>
+      </div>
+      <div class="ql-mini-chart" id="ql-mini-chart"></div>
     </div>
 
     <div class="heute-quick-add">
@@ -2601,7 +2645,11 @@ function renderTageseinstieg() {
   });
   const notizEl = document.getElementById('te-notiz');
   if(notizEl) notizEl.value = entry.notiz || '';
-  if(Object.keys(entry).length > 0) { const s=document.getElementById('te-saved'); if(s){s.style.display='inline'; setTimeout(()=>s.style.display='none',1500);} }
+  if(Object.keys(entry).filter(k=>k!=='intraday').length > 0) { const s=document.getElementById('te-saved'); if(s){s.style.display='inline'; setTimeout(()=>s.style.display='none',1500);} }
+  // Update clock and mini chart
+  const qlNow = document.getElementById('ql-now');
+  if(qlNow) qlNow.textContent = fmtHHMM(Date.now());
+  renderQlMiniChart(today);
 }
 
 function setTe(field, val) {
@@ -2631,6 +2679,87 @@ function saveTageseinstieg() {
     const s = document.getElementById('te-saved');
     if(s){ s.style.display='inline'; setTimeout(()=>s.style.display='none',1500); }
   }, 700);
+}
+
+// ── INTRADAY QUICK-LOG ────────────────────────────────────────
+let _qlEnergie = null, _qlStimmung = null;
+
+function setQl(field, val) {
+  if(field==='energie') _qlEnergie=val;
+  else _qlStimmung=val;
+  document.querySelectorAll(`#ql-${field}-btns .te-btn`).forEach(b=>b.classList.toggle('active',Number(b.dataset.val)===val));
+}
+
+async function saveQuickLog() {
+  if(_qlEnergie===null && _qlStimmung===null) return;
+  const today = new Date().toISOString().slice(0,10);
+  if(!D.dailyLog) D.dailyLog={};
+  if(!D.dailyLog[today]) D.dailyLog[today]={};
+  if(!D.dailyLog[today].intraday) D.dailyLog[today].intraday=[];
+  const entry = { ts: Date.now() };
+  if(_qlEnergie!==null) entry.energie=_qlEnergie;
+  if(_qlStimmung!==null) entry.stimmung=_qlStimmung;
+  D.dailyLog[today].intraday.push(entry);
+  if(useFS()) {
+    await db.collection(`users/${currentUser.uid}/dailyLog`).doc(today).set(D.dailyLog[today]);
+  } else { saveLocal(); }
+  // Reset buttons
+  _qlEnergie=null; _qlStimmung=null;
+  document.querySelectorAll('#ql-energie-btns .te-btn, #ql-stimmung-btns .te-btn').forEach(b=>b.classList.remove('active'));
+  const s=document.getElementById('ql-saved'); if(s){s.style.display='inline';setTimeout(()=>s.style.display='none',1500);}
+  renderQlMiniChart(today);
+}
+
+function renderQlMiniChart(dateKey) {
+  const el = document.getElementById('ql-mini-chart'); if(!el) return;
+  const entries = D.dailyLog?.[dateKey]?.intraday||[];
+  if(!entries.length){el.innerHTML='';return;}
+  el.innerHTML = buildLineChart(entries, 280, 60, true);
+}
+
+function buildLineChart(entries, W, H, showLabels) {
+  if(entries.length < 2) {
+    const e = entries[0]||{};
+    return `<div style="font-size:12px;color:var(--sub);padding:4px 0">${fmtHHMM(e.ts)}: Energie ${e.energie??'–'} · Stimmung ${e.stimmung??'–'}</div>`;
+  }
+  const pad = {l:24, r:8, t:8, b:20};
+  const iW = W-pad.l-pad.r, iH = H-pad.t-pad.b;
+  const times = entries.map(e=>e.ts);
+  const tMin=Math.min(...times), tMax=Math.max(...times);
+  const tRange = tMax-tMin||1;
+  const xPos = t => pad.l + ((t-tMin)/tRange)*iW;
+  const yPos = v => pad.t + (1-(v-1)/4)*iH;
+
+  const line = (field, color) => {
+    const pts = entries.filter(e=>e[field]!=null);
+    if(pts.length<2) return '';
+    const d = pts.map((e,i)=>`${i===0?'M':'L'}${xPos(e.ts).toFixed(1)},${yPos(e[field]).toFixed(1)}`).join(' ');
+    const dots = pts.map(e=>`<circle cx="${xPos(e.ts).toFixed(1)}" cy="${yPos(e[field]).toFixed(1)}" r="3" fill="${color}"/>`).join('');
+    return `<path d="${d}" stroke="${color}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>${dots}`;
+  };
+
+  // Y axis labels
+  const yLabels = [1,2,3,4,5].map(v=>`<text x="${pad.l-4}" y="${(yPos(v)+3.5).toFixed(0)}" class="linechart-axis" text-anchor="end">${v}</text>`).join('');
+
+  // X axis time labels (max 5)
+  const step = Math.ceil(entries.length/5);
+  const xLabels = entries.filter((_,i)=>i%step===0||i===entries.length-1)
+    .map(e=>`<text x="${xPos(e.ts).toFixed(0)}" y="${H-2}" class="linechart-axis" text-anchor="middle">${fmtHHMM(e.ts)}</text>`).join('');
+
+  // Grid lines
+  const grid = [1,2,3,4,5].map(v=>`<line x1="${pad.l}" y1="${yPos(v).toFixed(0)}" x2="${W-pad.r}" y2="${yPos(v).toFixed(0)}" stroke="var(--border)" stroke-width="1"/>`).join('');
+
+  return `<svg width="${W}" height="${H}" style="max-width:100%">
+    ${grid}${yLabels}${xLabels}
+    ${line('energie','#f59e0b')}
+    ${line('stimmung','#34d399')}
+    <text x="${pad.l+4}" y="${pad.t+10}" font-size="9" fill="#f59e0b">⚡ Energie</text>
+    <text x="${pad.l+60}" y="${pad.t+10}" font-size="9" fill="#34d399">💭 Stimmung</text>
+  </svg>`;
+}
+
+function fmtHHMM(ts) {
+  const d=new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
 }
 
 function renderHeute() {
@@ -2999,7 +3128,36 @@ function renderStats() {
         <div class="dash-title">📅 Schlaf — letzte 30 Tage <span style="font-size:10px;margin-left:6px;color:var(--green)">grün ≥8h</span> <span style="font-size:10px;color:var(--accent2)">lila 6-8h</span> <span style="font-size:10px;color:#f59e0b">gelb &lt;6h</span></div>
         <div class="month-strip">${monthStrip}</div>
       </div>
-    </div>`;
+    </div>
+    ${buildTagesverlaufSection(log)}`;
+}
+
+function buildTagesverlaufSection(log) {
+  // Find days that have intraday entries, show most recent by default
+  const daysWithIntraday = Object.entries(log)
+    .filter(([,v])=>v.intraday&&v.intraday.length>=1)
+    .sort(([a],[b])=>b.localeCompare(a));
+  if(!daysWithIntraday.length) return `<div class="dash-card full"><div class="dash-title">📈 Tagesverlauf</div><div class="no-data-hint">Noch keine Tagesverlauf-Daten — nutze das "Wie geht's dir?" Widget auf der Heute-Seite.</div></div>`;
+
+  const dayOptions = daysWithIntraday.map(([d])=>`<option value="${d}">${new Date(d+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short'})}</option>`).join('');
+  const selDate = daysWithIntraday[0][0];
+  const chart = buildLineChart(daysWithIntraday[0][1].intraday.sort((a,b)=>a.ts-b.ts), 500, 140, true);
+
+  return `<div class="dash-card full" style="margin-top:14px">
+    <div class="dash-title" style="display:flex;align-items:center;gap:10px">
+      📈 Tagesverlauf
+      <select onchange="updateTagesverlauf(this.value)" style="background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:2px 6px;font-size:12px;font-family:inherit">
+        ${dayOptions}
+      </select>
+    </div>
+    <div id="tagesverlauf-chart" class="linechart-wrap">${chart}</div>
+  </div>`;
+}
+
+function updateTagesverlauf(dateStr) {
+  const el = document.getElementById('tagesverlauf-chart'); if(!el) return;
+  const entries = (D.dailyLog?.[dateStr]?.intraday||[]).sort((a,b)=>a.ts-b.ts);
+  el.innerHTML = buildLineChart(entries, 500, 140, true);
 }
 
 function renderWeek() {
