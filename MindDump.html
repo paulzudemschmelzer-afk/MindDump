@@ -21,7 +21,8 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backg
 .sidebar { width:210px; min-width:210px; background:var(--sidebar); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:20px 0 14px; transition:transform .25s ease, width .25s ease; }
 .sidebar.collapsed { transform:translateX(-210px); width:0; min-width:0; overflow:hidden; border:none; }
 .toggle-btn { position:fixed; top:22px; left:14px; z-index:100; background:transparent; border:1px solid rgba(124,58,237,.4); border-radius:7px; color:var(--accent2); cursor:pointer; font-size:16px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; transition:left .25s ease; }
-.sidebar:not(.collapsed) ~ .toggle-btn, body:has(.sidebar:not(.collapsed)) .toggle-btn { left:222px; }
+/* On desktop, hide toggle when sidebar is open — use the × inside the sidebar instead */
+body:has(.sidebar:not(.collapsed)) .toggle-btn { display:none; }
 .logo { padding:0 20px 22px; font-size:19px; font-weight:700; letter-spacing:-0.5px; }
 .logo span { color:var(--accent2); }
 .nav-btn { width:100%; padding:10px 18px; background:none; border:none; color:var(--sub); font-size:14px; text-align:left; cursor:pointer; display:flex; align-items:center; gap:10px; transition:all .15s; border-right:2px solid transparent; }
@@ -42,7 +43,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backg
 .sign-btn:hover { background:rgba(124,58,237,.25); }
 
 /* MAIN */
-.main { flex:1; overflow-y:auto; padding:32px 36px; padding-top:22px; }
+.main { flex:1; overflow-y:auto; overflow-x:hidden; padding:32px 36px; padding-top:22px; }
 body:has(.sidebar.collapsed) .main { padding-left:52px; }
 .tab-panel { display:none; max-width:960px; margin:0 auto; }
 .tab-panel.active { display:block; }
@@ -502,7 +503,9 @@ select option { background:#1c1c1c; }
 .draw-size-dot { border-radius:50%; background:var(--text); }
 
 @media (max-width: 900px) {
-  .week-grid { grid-template-columns:repeat(7,minmax(90px,1fr)); overflow-x:auto; }
+  /* Wrap week-grid in a scrollable container via the tab-panel */
+  #tab-week .ap-cal { overflow-x:auto; }
+  .week-grid { grid-template-columns:repeat(7,minmax(90px,1fr)); }
   .main { padding:16px; padding-top:22px; }
 }
 
@@ -614,7 +617,7 @@ select option { background:#1c1c1c; }
 <aside class="sidebar">
   <div class="logo" style="display:flex;align-items:center;justify-content:space-between">
     <span>Mind<span style="color:var(--accent2)">Dump</span></span>
-    <button id="sidebar-close-btn" onclick="toggleSidebar()" style="display:none;background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
+    <button id="sidebar-close-btn" onclick="toggleSidebar()" style="background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
   </div>
   <nav>
     <button class="nav-btn" onclick="go('braindump')"><span class="nav-icon">⚡</span>Brain Dump</button>
@@ -3261,14 +3264,23 @@ function calStartMinutes(t) {
   return null;
 }
 
-let draggedTaskId=null, dragSourceDay=null;
-function dragTask(e,id){ draggedTaskId=id; dragSourceDay=D.tasks.find(x=>x.id===id)?.dueDate||null; e.dataTransfer.effectAllowed='move'; }
+let draggedTaskId=null, dragSourceDay=null, dragGrabOffsetMin=0;
+function dragTask(e,id){
+  draggedTaskId=id;
+  const t=D.tasks.find(x=>x.id===id);
+  dragSourceDay=t?.dueDate||null;
+  // Record how far down inside the block the user grabbed it
+  const blockRect=e.currentTarget.getBoundingClientRect();
+  dragGrabOffsetMin=Math.round((e.clientY-blockRect.top)/CAL_PX_PER_MIN);
+  e.dataTransfer.effectAllowed='move';
+}
 
 function dropYToTime(e, colEl) {
   const rect=colEl.getBoundingClientRect();
   const y=e.clientY-rect.top;
-  const totalMins=y/CAL_PX_PER_MIN;
-  let mins=Math.round((CAL_START_H*60+totalMins)/15)*15; // Snap to 15min
+  // Subtract grab offset so the block top lands at the cursor position where user grabbed
+  const totalMins=(y/CAL_PX_PER_MIN)-dragGrabOffsetMin;
+  let mins=Math.round((CAL_START_H*60+totalMins)/15)*15;
   mins=Math.max(CAL_START_H*60, Math.min(mins, CAL_END_H*60-15));
   const hh=String(Math.floor(mins/60)).padStart(2,'0');
   const mm=String(mins%60).padStart(2,'0');
@@ -3329,8 +3341,16 @@ function openCalEvent(e, id) {
     <div class="form-row" style="gap:6px">
       <button class="btn btn-ghost btn-sm" onclick="toggleTask('${t.id}');closeModal()" style="font-size:12px">${t.done?'↩ Wiederherstellen':'✓ Erledigt'}</button>
       <button class="btn btn-ghost btn-sm" onclick="closeModal();setTimeout(()=>openEditTask('${t.id}'),50)" style="font-size:12px">Alle Details</button>
+      <button class="btn btn-ghost btn-sm" onclick="removeFromCal('${t.id}');closeModal()" style="font-size:12px;color:#f87171">Aus Kalender</button>
     </div>`;
   document.getElementById('modal').style.display='flex';
+}
+
+async function removeFromCal(id) {
+  const t=D.tasks.find(x=>x.id===id); if(!t) return;
+  t.calStartTime=null;
+  await fsUpdate('tasks',t);
+  toast('Aus Kalender entfernt');
 }
 
 // ── DASHBOARD / STATS ─────────────────────────────────────────
