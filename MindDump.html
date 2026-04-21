@@ -404,6 +404,31 @@ select option { background:#1c1c1c; }
 
 #mobile-topbar { display:none; }
 
+/* ── HABITS ── */
+.habit-grid { display:grid; gap:12px; }
+.habit-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
+.habit-card.recovery { border-color:rgba(245,158,11,.4); }
+.habit-top { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; margin-bottom:12px; }
+.habit-name { font-size:15px; font-weight:700; margin-bottom:3px; }
+.habit-statement { color:var(--sub); font-size:13px; line-height:1.5; }
+.habit-bars { display:grid; grid-template-columns:repeat(4,minmax(100px,1fr)); gap:8px; margin:12px 0; }
+.habit-meter { background:rgba(0,0,0,.25); border:1px solid var(--border); border-radius:10px; padding:8px 10px; min-width:0; }
+.habit-meter-row { display:flex; justify-content:space-between; color:var(--sub); font-size:11px; margin-bottom:6px; }
+.habit-bar { height:7px; border-radius:999px; background:rgba(0,0,0,.4); overflow:hidden; }
+.habit-fill { height:100%; border-radius:999px; transition:width .2s; }
+.habit-fill.hp { background:linear-gradient(90deg,#ef4444,#f59e0b,#10b981); }
+.habit-fill.strength { background:linear-gradient(90deg,#7c3aed,#a78bfa); }
+.habit-fill.goal { background:linear-gradient(90deg,#0ea5e9,#10b981); }
+.habit-fill.risk { background:linear-gradient(90deg,#10b981,#f59e0b,#ef4444); }
+.habit-meta { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.habit-checkin { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); display:grid; grid-template-columns:repeat(4,1fr); gap:8px; align-items:end; }
+.habit-checkin .wide { grid-column:span 2; }
+.habit-recovery { margin-top:10px; color:#fbbf24; background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.2); border-radius:8px; padding:9px 10px; font-size:12px; line-height:1.5; }
+.habit-milestones { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+.milestone { font-size:11px; color:var(--sub); border:1px solid var(--border); border-radius:999px; padding:3px 8px; }
+.milestone.done { color:#34d399; border-color:rgba(16,185,129,.25); background:rgba(16,185,129,.08); }
+.habit-empty { background:var(--card); border:1px dashed var(--border); border-radius:10px; padding:28px 18px; text-align:center; color:var(--sub); }
+
 /* ── FINANCE ── */
 .finance-layout { display:grid; gap:14px; }
 .finance-grid { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr); gap:12px; align-items:start; }
@@ -541,6 +566,11 @@ select option { background:#1c1c1c; }
   .thought-card .card-actions { position:absolute; top:8px; right:6px; flex-direction:column; gap:2px; }
   .thought-text { font-size:13px; }
 
+  /* Habit Cards */
+  .habit-bars { grid-template-columns:repeat(2,1fr); }
+  .habit-checkin { grid-template-columns:repeat(2,1fr); }
+  .habit-checkin .wide { grid-column:span 2; }
+
   /* Snippet Cards */
   .snippet-card { position:relative; padding:10px 68px 10px 10px; }
   .snippet-card .card-actions { position:absolute; top:8px; right:6px; flex-direction:column; gap:2px; }
@@ -594,6 +624,7 @@ select option { background:#1c1c1c; }
     <button class="nav-btn" onclick="go('week')"><span class="nav-icon">📅</span>Woche</button>
     <button class="nav-btn" onclick="go('thoughts')"><span class="nav-icon">💡</span>Thoughts<span class="badge" id="b-thoughts">0</span></button>
     <button class="nav-btn" onclick="go('snippets')"><span class="nav-icon">⌨</span>Snippets<span class="badge" id="b-snippets">0</span></button>
+    <button class="nav-btn" onclick="go('habits')"><span class="nav-icon">🏆</span>Habits<span class="badge" id="b-habits" style="background:#10b981">0</span></button>
     <button class="nav-btn" onclick="go('finance')"><span class="nav-icon">€</span>Finanzen</button>
     <button class="nav-btn" onclick="go('notes')"><span class="nav-icon">📝</span>Notizen<span class="badge" id="b-notes">0</span></button>
     <button class="nav-btn" onclick="go('settings')" style="margin-top:auto"><span class="nav-icon">⚙</span>Settings</button>
@@ -759,6 +790,43 @@ select option { background:#1c1c1c; }
   <div class="tab-panel" id="tab-stats">
     <div class="page-header"><h1>Dashboard</h1><p>Deine Statistiken & Auswertungen.</p></div>
     <div id="stats-content"></div>
+  </div>
+
+  <!-- HABITS -->
+  <div class="tab-panel" id="tab-habits">
+    <div class="page-header header-row">
+      <div><h1>Habits</h1><p>Gewohnheiten tracken — mit Fortschritt, Decay und Recovery.</p></div>
+    </div>
+    <div class="add-form" id="add-habit-form" style="display:none">
+      <div class="form-row">
+        <label class="field"><span class="field-label">Name</span><input type="text" id="h-name" placeholder="z.B. Kniestabilität" /></label>
+        <label class="field" style="max-width:140px"><span class="field-label">Ziel / Woche</span><input type="number" id="h-frequency" min="1" max="14" value="3" /></label>
+      </div>
+      <div class="form-row">
+        <label class="field"><span class="field-label">Habit Statement</span><input type="text" id="h-statement" placeholder="Ich mache [Aktion] [Frequenz]" /></label>
+      </div>
+      <div class="form-row">
+        <label class="field"><span class="field-label">Endziel</span><input type="text" id="h-end-goal" placeholder="z.B. langfristig weniger Schmerzen" /></label>
+        <label class="field"><span class="field-label">Identität</span><input type="text" id="h-identity" placeholder="Ich bin jemand, der ..." /></label>
+      </div>
+      <div class="form-row">
+        <label class="field"><span class="field-label">Trigger</span><input type="text" id="h-cue" placeholder="z.B. nach dem Zähneputzen" /></label>
+        <label class="field"><span class="field-label">Belohnung</span><input type="text" id="h-reward" placeholder="z.B. kurzer Check-in" /></label>
+      </div>
+      <div class="form-row">
+        <label class="field"><span class="field-label">Minimalversion</span><input type="text" id="h-minimum" placeholder="z.B. 2 Minuten Aktivierung" /></label>
+        <label class="field"><span class="field-label">Warum</span><input type="text" id="h-why" placeholder="Warum ist das wichtig?" /></label>
+      </div>
+      <div class="form-row">
+        <label class="field" style="max-width:180px"><span class="field-label">Warnung nach Tagen</span><input type="number" id="h-warn-days" min="1" max="60" value="7" /></label>
+        <label class="field" style="max-width:180px"><span class="field-label">Hoher Decay nach Tagen</span><input type="number" id="h-danger-days" min="2" max="120" value="21" /></label>
+      </div>
+      <div class="form-row">
+        <button class="btn btn-primary btn-sm" onclick="addHabitManual()">Speichern</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleForm('add-habit-form')">Abbrechen</button>
+      </div>
+    </div>
+    <div id="habits-list" class="habit-grid"></div>
   </div>
 
   <!-- WEEK CALENDAR -->
@@ -1030,7 +1098,7 @@ select option { background:#1c1c1c; }
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────
-let D = { tasks:[], thoughts:[], snippets:[], notes:[], financeEntries:[], subscriptions:[], dailyLog:{} };
+let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[], financeEntries:[], subscriptions:[], dailyLog:{} };
 let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{} };
 let pendingResult = null;
 let taskFilter = 'all';
@@ -1087,6 +1155,7 @@ function loadLocal() {
   try { const s=localStorage.getItem('md_settings'); if(s) S=JSON.parse(s); } catch(e){}
   // Ensure all collections are arrays
   if(!Array.isArray(D.notes)) D.notes=[];
+  if(!Array.isArray(D.habits)) D.habits=[];
   if(!Array.isArray(D.financeEntries)) D.financeEntries=[];
   if(!Array.isArray(D.subscriptions)) D.subscriptions=[];
   if(!Array.isArray(D.tasks)) D.tasks=[];
@@ -1143,6 +1212,7 @@ function rerender(colName) {
   if(colName==='thoughts') renderThoughts();
   if(colName==='snippets') renderSnips();
   if(colName==='notes') renderNotes();
+  if(colName==='habits') renderHabits();
   if(colName==='financeEntries'||colName==='subscriptions') renderFinance();
 }
 
@@ -1180,7 +1250,7 @@ function connectFirebase() {
 function subscribeFS() {
   unsubListeners.forEach(u=>u());
   unsubListeners=[];
-  ['tasks','thoughts','snippets','notes','financeEntries','subscriptions'].forEach(name=>{
+  ['tasks','thoughts','snippets','notes','habits','financeEntries','subscriptions'].forEach(name=>{
     unsubListeners.push(
       col(name).onSnapshot(snap=>{
         D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1361,12 +1431,13 @@ function nextDueDate(dueDate, recurrence) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
-const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',stats:'Dashboard',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',finance:'Finanzen',notes:'Notizen',settings:'Settings'};
+const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',stats:'Dashboard',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',habits:'Habits',finance:'Finanzen',notes:'Notizen',settings:'Settings'};
 const TAB_ACTIONS = {
   tasks:    `<button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">+ Hinzufügen</button>`,
   heute:    `<button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>`,
   thoughts: `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-thought-form')">+ Hinzufügen</button>`,
   snippets: `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-snippet-form')">+ Hinzufügen</button>`,
+  habits:   `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-habit-form')">+ Gewohnheit</button>`,
   notes:    `<button class="btn btn-ghost btn-sm" onclick="createNote()">+ Neue Notiz</button>`,
 };
 function go(tab) {
@@ -1387,6 +1458,7 @@ function go(tab) {
   if(tab==='snippets') renderSnips();
   if(tab==='stats') renderStats();
   if(tab==='week') renderWeek();
+  if(tab==='habits') renderHabits();
   if(tab==='finance') renderFinance();
   if(tab==='notes') renderNotes();
   if(tab==='taurus') { renderTaurusChat(); checkTaurusStatus(); }
@@ -1397,6 +1469,7 @@ function badges() {
   document.getElementById('b-thoughts').textContent=D.thoughts.length;
   document.getElementById('b-snippets').textContent=D.snippets.length;
   const bNotes=document.getElementById('b-notes'); if(bNotes) bNotes.textContent=D.notes.length;
+  const bHabits=document.getElementById('b-habits'); if(bHabits) bHabits.textContent=(D.habits||[]).filter(h=>!h.archived).length;
   const todayStr=dateKey();
   document.getElementById('b-heute').textContent=D.tasks.filter(t=>!t.done&&(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr).length;
 }
@@ -3981,6 +4054,205 @@ function openEditSubscription(id) {
   document.getElementById('modal').style.display='flex';
   setTimeout(()=>document.getElementById('m-sub-name')?.focus(),50);
 }
+// ── HABITS ──────────────────────────────────────────────────
+function clamp(n,min=0,max=100){ return Math.max(min,Math.min(max,Number(n)||0)); }
+function daysBetweenISO(a,b){
+  if(!a||!b) return 0;
+  return Math.floor((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000);
+}
+function habitCheckins(h){ return Array.isArray(h.checkins)?h.checkins:[]; }
+function habitSuccessCheckins(h){ return habitCheckins(h).filter(c=>c.mode!=='miss'); }
+function habitWeighted(c){ if(c.mode==='miss')return 0; return c.mode==='minimal'?0.55:1; }
+function habitSinceDays(h){
+  const last=habitSuccessCheckins(h).map(c=>c.date).sort().pop();
+  return last?daysBetweenISO(last,todayISO()):999;
+}
+function habitWeekKey(date){
+  const d=new Date(date+'T12:00:00'), first=new Date(d.getFullYear(),0,1);
+  return d.getFullYear()+'-'+Math.ceil((((d-first)/86400000)+first.getDay()+1)/7);
+}
+function habitScore(h){
+  const checkins=habitCheckins(h), success=habitSuccessCheckins(h);
+  const target=Math.max(1,Number(h.frequencyCount)||3);
+  const now=todayISO();
+  const recent=success.filter(c=>daysBetweenISO(c.date,now)<=6);
+  const recentWeight=recent.reduce((s,c)=>s+habitWeighted(c),0);
+  const totalWeight=success.reduce((s,c)=>s+habitWeighted(c),0);
+  const recentMisses=checkins.filter(c=>c.mode==='miss'&&daysBetweenISO(c.date,now)<=6).length;
+  const warnDays=Math.max(1,Number(h.decayWarnDays)||7);
+  const dangerDays=Math.max(warnDays+1,Number(h.decayDangerDays)||21);
+  const since=habitSinceDays(h);
+  if(!checkins.length) return {hp:0,strength:0,goal:0,risk:20,since,recentWeight:0,totalWeight:0,solidWeeks:0,recovery:false,fresh:true,recentMisses:0};
+  let hp=clamp((recentWeight/target)*100);
+  hp=Math.max(0,hp-(recentMisses*22));
+  if(since>=warnDays) hp=Math.min(hp,70);
+  if(since>=dangerDays) hp=Math.min(hp,30);
+  const strengthTarget=Math.max(18,target*12);
+  let strength=clamp((1-Math.exp(-totalWeight/strengthTarget))*100);
+  strength=Math.max(0,strength-(recentMisses*4));
+  if(since>=warnDays) strength=Math.max(0,strength-12);
+  if(since>=dangerDays) strength=Math.max(0,strength-28);
+  let goal=strength*0.65;
+  const weekScores={};
+  success.forEach(c=>{const k=habitWeekKey(c.date);weekScores[k]=(weekScores[k]||0)+habitWeighted(c);});
+  const solidWeeks=Object.values(weekScores).filter(v=>v>=target).length;
+  let risk=15;
+  if(recentWeight<target) risk+=Math.round((1-(recentWeight/target))*35);
+  if(recentMisses) risk+=recentMisses*18;
+  if(since>=warnDays) risk+=25;
+  if(since>=dangerDays) risk+=35;
+  risk=clamp(risk);
+  const plannedGap=Math.ceil(7/target);
+  const recovery=checkins.length&&(since>plannedGap*2||hp<50||recentMisses>0);
+  return {hp,strength,goal:clamp(goal),risk,since,recentWeight,totalWeight,solidWeeks,recovery,fresh:false,recentMisses};
+}
+function habitStatus(score){
+  if(score.fresh) return {cls:'warn',text:'Startbereit'};
+  if(score.risk>=75) return {cls:'bad',text:'Decay hoch'};
+  if(score.recovery) return {cls:'warn',text:'Recovery'};
+  if(score.hp>=85) return {cls:'good',text:'Stabil'};
+  return {cls:'warn',text:'Aufbau'};
+}
+function habitMilestones(score){
+  return [
+    {label:'Start',done:score.totalWeight>=1},
+    {label:'1 Woche',done:score.solidWeeks>=1},
+    {label:'4 Wochen',done:score.solidWeeks>=4},
+    {label:'8 Wochen',done:score.solidWeeks>=8},
+    {label:'12 Wochen',done:score.solidWeeks>=12}
+  ];
+}
+function habitMeter(label,value,type){
+  const v=Math.round(clamp(value));
+  return `<div class="habit-meter"><div class="habit-meter-row"><span>${label}</span><span>${v}%</span></div><div class="habit-bar"><div class="habit-fill ${type}" style="width:${v}%"></div></div></div>`;
+}
+function renderHabitCard(h){
+  const score=habitScore(h), status=habitStatus(score), milestones=habitMilestones(score);
+  const target=Math.max(1,Number(h.frequencyCount)||3);
+  const last=habitSuccessCheckins(h).map(c=>c.date).sort().pop();
+  return `<div class="habit-card ${score.recovery?'recovery':''}">
+    <div class="habit-top">
+      <div>
+        <div class="habit-name">${esc(h.name)}</div>
+        <div class="habit-statement">${esc(h.statement||'')}</div>
+        <div class="habit-meta">
+          <span class="habit-chip ${status.cls}">${status.text}</span>
+          <span class="habit-chip">${target}x / Woche</span>
+          <span class="habit-chip">Letzter Check-in: ${last?esc(last):'noch keiner'}</span>
+          ${score.recentMisses?`<span class="habit-chip warn">${score.recentMisses}x ausgelassen</span>`:''}
+          ${h.cue?`<span class="habit-chip">Cue: ${esc(h.cue)}</span>`:''}
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="icon-btn edit-btn" onclick="openEditHabit('${h.id}')" title="Bearbeiten">✏</button>
+        <button class="icon-btn del" onclick="deleteHabit('${h.id}')" title="Löschen">×</button>
+      </div>
+    </div>
+    ${h.endGoal?`<div class="task-ctx" style="margin-bottom:4px"><b>Endziel:</b> ${esc(h.endGoal)}</div>`:''}
+    ${h.identityGoal?`<div class="task-ctx" style="margin-bottom:4px"><b>Identität:</b> ${esc(h.identityGoal)}</div>`:''}
+    <div class="habit-bars">
+      ${habitMeter('Consistency HP',score.hp,'hp')}
+      ${habitMeter('Habit Strength',score.strength,'strength')}
+      ${habitMeter('Goal Progress',score.goal,'goal')}
+      ${habitMeter('Decay Risk',score.risk,'risk')}
+    </div>
+    <div class="habit-milestones">${milestones.map(m=>`<span class="milestone ${m.done?'done':''}">${esc(m.label)}</span>`).join('')}</div>
+    ${score.recovery?`<div class="habit-recovery"><b>Recovery Quest:</b> ${esc(h.minimumVersion||'Mach heute nur die Minimalversion.')} Ein Ausfall ist normal — wichtig ist jetzt wieder einzusteigen.</div>`:''}
+    <div class="habit-checkin">
+      <label class="field"><span class="field-label">Dauer (min)</span><input type="number" id="hc-duration-${h.id}" placeholder="0" min="0" /></label>
+      <label class="field"><span class="field-label">Schmerz vorher</span><input type="number" id="hc-painBefore-${h.id}" placeholder="0-10" min="0" max="10" /></label>
+      <label class="field"><span class="field-label">Schmerz nachher</span><input type="number" id="hc-painAfter-${h.id}" placeholder="0-10" min="0" max="10" /></label>
+      <label class="field"><span class="field-label">Stabilität</span><input type="number" id="hc-stability-${h.id}" placeholder="0-10" min="0" max="10" /></label>
+      <label class="field"><span class="field-label">Energie</span><input type="number" id="hc-energy-${h.id}" placeholder="0-10" min="0" max="10" /></label>
+      <label class="field wide"><span class="field-label">Notiz</span><input type="text" id="hc-note-${h.id}" placeholder="Was war auffällig?" /></label>
+      <button class="btn btn-primary btn-sm" onclick="addHabitCheckin('${h.id}','full')">✓ Erledigt</button>
+      <button class="btn btn-ghost btn-sm" onclick="addHabitCheckin('${h.id}','minimal')">Minimalversion</button>
+      <button class="btn btn-ghost btn-sm" onclick="addHabitCheckin('${h.id}','miss')">Nicht gemacht</button>
+    </div>
+  </div>`;
+}
+function renderHabits(){
+  const el=document.getElementById('habits-list'); if(!el) return;
+  const habits=(D.habits||[]).filter(h=>!h.archived).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(!habits.length){
+    el.innerHTML='<div class="habit-empty"><h3>Noch keine Habit Quest</h3><p>Formuliere eine Gewohnheit, ihr Endziel und eine Minimalversion für schlechte Tage.</p></div>';
+    return;
+  }
+  el.innerHTML=habits.map(renderHabitCard).join('');
+}
+function habitField(id,field){ return document.getElementById(`hc-${field}-${id}`); }
+async function addHabitManual(){
+  const name=document.getElementById('h-name').value.trim();
+  if(!name){toast('Bitte Habit-Namen eingeben','err');return;}
+  const habit={id:uid(),name,
+    statement:document.getElementById('h-statement').value.trim()||name,
+    endGoal:document.getElementById('h-end-goal').value.trim(),
+    identityGoal:document.getElementById('h-identity').value.trim(),
+    why:document.getElementById('h-why').value.trim(),
+    cue:document.getElementById('h-cue').value.trim(),
+    reward:document.getElementById('h-reward').value.trim(),
+    minimumVersion:document.getElementById('h-minimum').value.trim()||'2 Minuten Minimalversion',
+    frequencyCount:Math.max(1,Number(document.getElementById('h-frequency').value)||3),
+    frequencyPeriod:'week',
+    decayWarnDays:Math.max(1,Number(document.getElementById('h-warn-days').value)||7),
+    decayDangerDays:Math.max(2,Number(document.getElementById('h-danger-days').value)||21),
+    checkins:[],archived:false,createdAt:Date.now()
+  };
+  await fsAdd('habits',habit);
+  ['h-name','h-statement','h-end-goal','h-identity','h-why','h-cue','h-reward','h-minimum'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('h-frequency').value=3;
+  document.getElementById('h-warn-days').value=7;
+  document.getElementById('h-danger-days').value=21;
+  toggleForm('add-habit-form');
+  toast('Habit Quest erstellt');
+}
+async function addHabitCheckin(id,mode='full'){
+  const h=D.habits.find(x=>x.id===id); if(!h) return;
+  const checkin={id:uid(),date:todayISO(),mode,
+    duration:Number(habitField(id,'duration')?.value)||null,
+    painBefore:habitField(id,'painBefore')?.value===''?null:Number(habitField(id,'painBefore')?.value),
+    painAfter:habitField(id,'painAfter')?.value===''?null:Number(habitField(id,'painAfter')?.value),
+    stability:habitField(id,'stability')?.value===''?null:Number(habitField(id,'stability')?.value),
+    energy:habitField(id,'energy')?.value===''?null:Number(habitField(id,'energy')?.value),
+    note:habitField(id,'note')?.value.trim()||'',
+    createdAt:Date.now()
+  };
+  h.checkins=habitCheckins(h).filter(c=>c.date!==checkin.date);
+  h.checkins.push(checkin);
+  await fsUpdate('habits',h);
+  toast(mode==='miss'?'Heute als nicht gemacht markiert':mode==='minimal'?'Minimalversion zählt!':'Check-in gespeichert ✓');
+}
+async function deleteHabit(id){
+  if(!confirm('Habit wirklich löschen?')) return;
+  await fsDel('habits',id);
+  toast('Habit gelöscht');
+}
+function openEditHabit(id){
+  const h=D.habits.find(x=>x.id===id); if(!h) return;
+  modalMode={type:'habit',id};
+  document.getElementById('modal-title').textContent='Habit bearbeiten';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><input type="text" id="m-h-name" value="${esc(h.name)}" placeholder="Name" /></div>
+    <div class="form-row"><input type="text" id="m-h-statement" value="${esc(h.statement||'')}" placeholder="Habit Statement" /></div>
+    <div class="form-row">
+      <input type="text" id="m-h-end-goal" value="${esc(h.endGoal||'')}" placeholder="Endziel" />
+      <input type="text" id="m-h-identity" value="${esc(h.identityGoal||'')}" placeholder="Identitätsziel" />
+    </div>
+    <div class="form-row">
+      <input type="text" id="m-h-cue" value="${esc(h.cue||'')}" placeholder="Trigger/Cue" />
+      <input type="text" id="m-h-reward" value="${esc(h.reward||'')}" placeholder="Belohnung" />
+    </div>
+    <div class="form-row"><input type="text" id="m-h-minimum" value="${esc(h.minimumVersion||'')}" placeholder="Minimalversion" /></div>
+    <div class="form-row">
+      <input type="number" id="m-h-frequency" min="1" max="14" value="${esc(h.frequencyCount||3)}" style="max-width:130px" title="Ziel / Woche" />
+      <input type="number" id="m-h-warn-days" min="1" max="60" value="${esc(h.decayWarnDays||7)}" style="max-width:140px" title="Warn nach Tagen" />
+      <input type="number" id="m-h-danger-days" min="2" max="120" value="${esc(h.decayDangerDays||21)}" style="max-width:140px" title="Danger nach Tagen" />
+    </div>
+    <div class="form-row"><textarea class="form-ta" id="m-h-why" placeholder="Warum?">${esc(h.why||'')}</textarea></div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-h-name')?.focus(),50);
+}
+
 function renderFinance() {
   const el=document.getElementById('finance-content'); if(!el) return;
   const summary=financeSummary(financeRange);
@@ -4503,6 +4775,22 @@ async function saveModal(){
     if(!title||!content){toast('Titel und Inhalt darf nicht leer sein','err');return;}
     s.title=title; s.content=content; s.category=document.getElementById('m-sn-cat').value;
     await fsUpdate('snippets',s); closeModal(); toast('Snippet aktualisiert!');
+  } else if(modalMode.type==='habit'){
+    const h=D.habits.find(x=>x.id===modalMode.id); if(!h) return;
+    const name=document.getElementById('m-h-name').value.trim();
+    if(!name){toast('Name darf nicht leer sein','err');return;}
+    h.name=name;
+    h.statement=document.getElementById('m-h-statement').value.trim();
+    h.endGoal=document.getElementById('m-h-end-goal').value.trim();
+    h.identityGoal=document.getElementById('m-h-identity').value.trim();
+    h.cue=document.getElementById('m-h-cue').value.trim();
+    h.reward=document.getElementById('m-h-reward').value.trim();
+    h.minimumVersion=document.getElementById('m-h-minimum').value.trim();
+    h.frequencyCount=Math.max(1,Number(document.getElementById('m-h-frequency').value)||3);
+    h.decayWarnDays=Math.max(1,Number(document.getElementById('m-h-warn-days').value)||7);
+    h.decayDangerDays=Math.max(h.decayWarnDays+1,Number(document.getElementById('m-h-danger-days').value)||21);
+    h.why=document.getElementById('m-h-why').value.trim();
+    await fsUpdate('habits',h); closeModal(); toast('Habit aktualisiert!');
   } else if(modalMode.type==='finance-entry'){
     const item=(D.financeEntries||[]).find(x=>x.id===modalMode.id); if(!item) return;
     item.kind=document.getElementById('m-fin-kind').value;
