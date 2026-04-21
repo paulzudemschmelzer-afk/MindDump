@@ -1064,9 +1064,10 @@ select option { background:#1c1c1c; }
     <!-- GOOGLE CALENDAR -->
     <div class="set-card">
       <h3>Google Calendar Sync</h3>
-      <p>Tasks mit Datum werden automatisch als Kalender-Events angelegt.</p>
-      <div style="margin-top:10px">
+      <p>Tasks mit Datum werden automatisch als Kalender-Events angelegt. Tasks mit Uhrzeit werden als Termin mit Uhrzeit synchronisiert.</p>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
         <button id="gcal-btn" class="btn btn-ghost" onclick="connectGCal()">Mit Google Calendar verbinden</button>
+        <button class="btn btn-ghost" onclick="gcalSyncAll()">Alle Tasks synchronisieren</button>
       </div>
     </div>
 
@@ -1215,7 +1216,7 @@ function rerender(colName) {
   if(colName==='thoughts') renderThoughts();
   if(colName==='snippets') renderSnips();
   if(colName==='notes') renderNotes();
-  if(colName==='habits') renderHabits();
+  if(colName==='habits') { renderHabits(); if(currentTab==='stats') renderStats(); }
   if(colName==='financeEntries'||colName==='subscriptions') renderFinance();
 }
 
@@ -3349,6 +3350,11 @@ function openCalEvent(e, id) {
 async function removeFromCal(id) {
   const t=D.tasks.find(x=>x.id===id); if(!t) return;
   t.calStartTime=null;
+  // Update GCal: revert to all-day event if date still set, otherwise delete
+  if(gcalToken&&t.gcalEventId){
+    if(t.dueDate) await gcalUpdate(t);
+    else { await gcalDelete(t.gcalEventId); t.gcalEventId=null; }
+  }
   await fsUpdate('tasks',t);
   toast('Aus Kalender entfernt');
 }
@@ -3478,11 +3484,55 @@ function renderStats() {
         <div class="month-strip">${monthStrip}</div>
       </div>
     </div>
-    ${buildTagesverlaufSection(log)}`;
+    ${buildHabitsSection()}`;
 }
 
-function buildTagesverlaufSection(log) {
-  return '';
+function buildHabitsSection() {
+  const habits=(D.habits||[]).filter(h=>!h.archived);
+  if(!habits.length) return '';
+  const now=todayISO();
+  // Last 7 days checkins across all habits
+  const weekRows=habits.map(h=>{
+    const score=habitScore(h);
+    const status=habitStatus(score);
+    const last7=[];
+    for(let i=6;i>=0;i--){
+      const d=new Date(); d.setDate(d.getDate()-i);
+      const dk=d.toISOString().slice(0,10);
+      const c=habitCheckins(h).find(x=>x.date===dk);
+      last7.push({dk,c});
+    }
+    const dots=last7.map(({dk,c})=>{
+      const col=!c?'var(--border)':c.mode==='miss'?'#f87171':c.mode==='minimal'?'#f59e0b':'#34d399';
+      const title=!c?dk:c.mode==='miss'?'Nicht gemacht':c.mode==='minimal'?'Minimalversion':'Erledigt';
+      return `<div title="${title}" style="width:18px;height:18px;border-radius:4px;background:${col};flex-shrink:0"></div>`;
+    }).join('');
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span class="habit-chip ${status.cls}" style="flex-shrink:0;min-width:70px;text-align:center">${status.text}</span>
+      <span style="flex:1;font-size:13px;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(h.name)}</span>
+      <div style="display:flex;gap:3px;flex-shrink:0">${dots}</div>
+      <span style="font-size:12px;color:var(--sub);flex-shrink:0;min-width:40px;text-align:right">${Math.round(score.hp)}%</span>
+    </div>`;
+  }).join('');
+  const decaying=habits.filter(h=>{ const s=habitScore(h); return s.risk>=60||s.recovery; });
+  const alert=decaying.length?`<div style="margin-bottom:10px;padding:8px 10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;font-size:12px;color:#fbbf24">⚠ ${decaying.length} Habit${decaying.length>1?'s':''} brauch${decaying.length>1?'en':'t'} Aufmerksamkeit: ${decaying.map(h=>esc(h.name)).join(', ')}</div>`:'';
+  return `<div class="dash-card" style="margin-top:14px">
+    <div class="dash-title" style="margin-bottom:12px">🏆 Habits — letzte 7 Tage</div>
+    ${alert}
+    <div style="display:flex;gap:4px;justify-content:flex-end;margin-bottom:6px">
+      ${['So','Mo','Di','Mi','Do','Fr','Sa'].map((_,i)=>{
+        const d=new Date(); d.setDate(d.getDate()-(6-i));
+        return `<div style="width:18px;text-align:center;font-size:9px;color:var(--sub)">${['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()]}</div>`;
+      }).join('')}
+    </div>
+    ${weekRows}
+    <div style="display:flex;gap:10px;margin-top:10px;font-size:11px;color:var(--sub)">
+      <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:10px;border-radius:2px;background:#34d399;display:inline-block"></span>Erledigt</span>
+      <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:10px;border-radius:2px;background:#f59e0b;display:inline-block"></span>Minimal</span>
+      <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:10px;border-radius:2px;background:#f87171;display:inline-block"></span>Ausgelassen</span>
+      <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:10px;border-radius:2px;background:var(--border);display:inline-block"></span>Kein Eintrag</span>
+    </div>
+  </div>`;
 }
 
 function updateTagesverlauf(dateStr) {
@@ -5190,13 +5240,33 @@ function updateGCalBtn(){
 
 function gcalNextDay(ds){ const d=new Date(ds+'T12:00:00'); d.setDate(d.getDate()+1); return dateKey(d); }
 function gcalColor(p){ return p==='hoch'?'11':p==='niedrig'?'10':'9'; }
+function parseEstMinutes(est){
+  if(!est) return 60;
+  const h=(est.match(/(\d+)\s*h/)||[])[1];
+  const m=(est.match(/(\d+)\s*min/)||[])[1];
+  return (Number(h||0)*60)+Number(m||0)||60;
+}
+function gcalEventBody(task){
+  const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const ds=task.dueDate||dateKey();
+  if(task.calStartTime){
+    const [h,m]=task.calStartTime.split(':').map(Number);
+    const startISO=`${ds}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`;
+    const endMs=new Date(`${ds}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`).getTime()+parseEstMinutes(task.estimatedTime)*60000;
+    const endD=new Date(endMs);
+    const endISO=`${dateKey(endD)}T${String(endD.getHours()).padStart(2,'0')}:${String(endD.getMinutes()).padStart(2,'0')}:00`;
+    return {summary:task.title,description:task.context||'',colorId:gcalColor(task.priority),
+      start:{dateTime:startISO,timeZone:tz},end:{dateTime:endISO,timeZone:tz}};
+  }
+  return {summary:task.title,description:task.context||'',colorId:gcalColor(task.priority),
+    start:{date:ds},end:{date:gcalNextDay(ds)}};
+}
 
 async function gcalCreate(task){
   if(!gcalToken||!task.dueDate) return null;
   const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{
-    method:'POST', headers:{'Authorization':'Bearer '+gcalToken,'Content-Type':'application/json'},
-    body:JSON.stringify({ summary:task.title, description:task.context||'', colorId:gcalColor(task.priority),
-      start:{date:task.dueDate}, end:{date:gcalNextDay(task.dueDate)} })
+    method:'POST',headers:{'Authorization':'Bearer '+gcalToken,'Content-Type':'application/json'},
+    body:JSON.stringify(gcalEventBody(task))
   });
   if(!r.ok) return null;
   return (await r.json()).id;
@@ -5205,17 +5275,31 @@ async function gcalCreate(task){
 async function gcalUpdate(task){
   if(!gcalToken||!task.gcalEventId) return;
   await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.gcalEventId}`,{
-    method:'PUT', headers:{'Authorization':'Bearer '+gcalToken,'Content-Type':'application/json'},
-    body:JSON.stringify({ summary:task.title, description:task.context||'', colorId:gcalColor(task.priority),
-      start:{date:task.dueDate||dateKey()}, end:{date:gcalNextDay(task.dueDate||dateKey())} })
+    method:'PUT',headers:{'Authorization':'Bearer '+gcalToken,'Content-Type':'application/json'},
+    body:JSON.stringify(gcalEventBody(task))
   });
 }
 
 async function gcalDelete(eventId){
   if(!gcalToken||!eventId) return;
   await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,{
-    method:'DELETE', headers:{'Authorization':'Bearer '+gcalToken}
+    method:'DELETE',headers:{'Authorization':'Bearer '+gcalToken}
   });
+}
+
+async function gcalSyncAll(){
+  if(!gcalToken){toast('Zuerst Google Calendar verbinden','err');return;}
+  const tasks=D.tasks.filter(t=>t.dueDate&&!t.done);
+  if(!tasks.length){toast('Keine offenen Tasks mit Datum');return;}
+  toast(`Synchronisiere ${tasks.length} Tasks…`);
+  let synced=0;
+  for(const t of tasks){
+    try{
+      if(t.gcalEventId){ await gcalUpdate(t); synced++; }
+      else{ const eid=await gcalCreate(t); if(eid){t.gcalEventId=eid;await fsUpdate('tasks',t);synced++;} }
+    }catch(e){ console.error('gcalSyncAll',e); }
+  }
+  toast(`${synced} Tasks mit Google Calendar synchronisiert ✓`);
 }
 
 setTimeout(()=>{ if(window.google?.accounts) initGCal(); else { const s=document.querySelector('script[src*="gsi"]'); if(s) s.onload=initGCal; } },1000);
