@@ -494,7 +494,88 @@ select option { background:#1c1c1c; }
   /* Modal + Add-Form */
   .modal { padding:16px; }
   .add-form { padding:14px; }
+  /* Finance on mobile */
+  .finance-grid { grid-template-columns:1fr; }
+  .finance-summary-grid { grid-template-columns:1fr 1fr; }
+  /* Notes on mobile */
+  .notes-layout { flex-direction:column; height:auto; min-height:calc(100vh - 54px); }
+  .notes-sidebar { width:100%; min-width:100%; max-height:180px; border-right:none; border-bottom:1px solid var(--border); }
+  .notes-editor-area { min-height:calc(100vh - 280px); }
 }
+
+/* ── FINANCE ── */
+.finance-layout { display:grid; gap:14px; }
+.finance-grid { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr); gap:12px; align-items:start; }
+.finance-period-tabs { display:flex; gap:8px; flex-wrap:wrap; }
+.finance-summary-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:12px; }
+.finance-summary-bar { margin-top:4px; }
+.finance-meta { color:var(--sub); font-size:12px; line-height:1.45; margin-top:4px; }
+.finance-amount.income { color:#34d399; }
+.finance-amount.expense { color:#f87171; }
+.finance-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.dashboard-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
+.dashboard-head { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:12px; }
+.dashboard-title { font-size:15px; font-weight:600; }
+.dashboard-sub { font-size:12px; color:var(--sub); margin-top:2px; }
+.dashboard-stack { display:flex; flex-direction:column; gap:12px; }
+.metric-stack { display:flex; flex-direction:column; gap:6px; }
+.metric-row { display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:4px 0; border-bottom:1px solid var(--border); }
+.metric-row:last-child { border-bottom:none; }
+.analytics-mini { background:var(--sidebar); border-radius:10px; padding:10px 12px; }
+.stat-label { font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:.05em; }
+.stat-value { font-size:20px; font-weight:700; margin:2px 0; }
+.stat-sub { font-size:11px; color:var(--sub); }
+.timeline-list { display:flex; flex-direction:column; gap:6px; }
+.finance-list { max-height:320px; overflow-y:auto; }
+.timeline-item { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; padding:8px 10px; background:var(--sidebar); border-radius:8px; }
+.timeline-body { flex:1; min-width:0; }
+.timeline-title { display:flex; justify-content:space-between; align-items:center; gap:6px; font-size:13px; font-weight:500; }
+.timeline-meta { font-size:11px; color:var(--sub); margin-top:3px; }
+.link-btn { background:none; border:none; color:var(--accent2); font-size:11px; cursor:pointer; padding:2px 4px; border-radius:4px; font-family:inherit; }
+.link-btn:hover { background:rgba(124,58,237,.12); }
+.link-btn.danger-link { color:#f87171; }
+.sub-pill { font-size:10px; padding:2px 7px; border-radius:20px; background:var(--border); color:var(--sub); }
+.sub-pill.active { background:rgba(52,211,153,.18); color:#34d399; }
+.mini-empty { padding:14px; text-align:center; color:var(--sub); font-size:13px; }
+.helper-text { font-size:12px; color:var(--sub); }
+.habit-chip { font-size:11px; background:rgba(124,58,237,.15); color:var(--accent2); border-radius:20px; padding:3px 10px; border:1px solid rgba(124,58,237,.2); white-space:nowrap; }
+
+/* ── NOTES ── */
+.notes-layout { display:flex; gap:0; height:calc(100vh - 120px); }
+.notes-sidebar { width:240px; min-width:240px; border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+.notes-sidebar-head { padding:10px 12px; border-bottom:1px solid var(--border); display:flex; gap:8px; align-items:center; }
+.notes-sidebar-head input { flex:1; padding:6px 10px; background:var(--card); border:1px solid var(--border); border-radius:7px; color:var(--text); font-size:12px; outline:none; font-family:inherit; }
+.notes-sidebar-head input:focus { border-color:var(--accent); }
+.notes-list { flex:1; overflow-y:auto; }
+.note-item { padding:10px 12px; cursor:pointer; border-bottom:1px solid var(--border); transition:background .12s; }
+.note-item:hover { background:var(--card); }
+.note-item.active { background:rgba(124,58,237,.12); }
+.note-item-title { font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.note-item-preview { font-size:11px; color:var(--sub); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.note-item-date { font-size:10px; color:var(--sub); margin-top:3px; }
+.notes-editor-area { flex:1; display:flex; flex-direction:column; min-width:0; }
+.notes-empty { display:flex; align-items:center; justify-content:center; flex:1; color:var(--sub); font-size:14px; }
+.notes-toolbar { display:flex; flex-wrap:wrap; gap:3px; padding:8px 12px; border-bottom:1px solid var(--border); align-items:center; background:var(--sidebar); }
+.nt-btn { padding:4px 8px; background:none; border:1px solid var(--border); border-radius:5px; color:var(--text); cursor:pointer; font-size:12px; font-family:inherit; }
+.nt-btn:hover, .nt-btn.active { background:rgba(124,58,237,.15); color:var(--accent2); border-color:rgba(124,58,237,.3); }
+.nt-select { padding:4px 6px; background:var(--card); border:1px solid var(--border); border-radius:5px; color:var(--text); font-size:12px; font-family:inherit; outline:none; }
+.nt-sep { width:1px; height:20px; background:var(--border); margin:0 2px; align-self:center; }
+.nt-color-btn { width:22px; height:22px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; }
+.notes-mode-bar { display:flex; gap:0; border-bottom:1px solid var(--border); }
+.notes-mode-btn { flex:1; padding:8px; text-align:center; font-size:13px; font-weight:600; cursor:pointer; background:none; border:none; color:var(--sub); transition:all .12s; font-family:inherit; border-bottom:2px solid transparent; }
+.notes-mode-btn:hover { color:var(--text); }
+.notes-mode-btn.active { color:var(--accent2); border-bottom-color:var(--accent2); background:rgba(124,58,237,.06); }
+.note-content-wrap { flex:1; overflow-y:auto; padding:14px; }
+.note-editor { min-height:300px; outline:none; font-size:14px; line-height:1.6; color:var(--text); }
+.note-editor:empty:before { content:attr(data-placeholder); color:var(--sub); }
+.note-canvas-wrap { display:none; flex:1; }
+.note-canvas-wrap.active { display:block; }
+.note-canvas { display:block; width:100%; height:100%; cursor:crosshair; }
+.draw-toolbar { display:none; gap:4px; padding:8px 12px; border-bottom:1px solid var(--border); align-items:center; flex-wrap:wrap; background:var(--sidebar); }
+.draw-toolbar.active { display:flex; }
+.draw-size-btn { padding:4px 6px; background:none; border:1px solid var(--border); border-radius:5px; cursor:pointer; display:flex; align-items:center; justify-content:center; width:28px; height:28px; }
+.draw-size-btn.active { background:rgba(124,58,237,.15); border-color:rgba(124,58,237,.3); }
+.draw-size-dot { border-radius:50%; background:var(--text); }
 </style>
 </head>
 <body>
@@ -514,6 +595,8 @@ select option { background:#1c1c1c; }
     <button class="nav-btn" onclick="go('week')"><span class="nav-icon">📅</span>Woche</button>
     <button class="nav-btn" onclick="go('thoughts')"><span class="nav-icon">💡</span>Thoughts<span class="badge" id="b-thoughts">0</span></button>
     <button class="nav-btn" onclick="go('snippets')"><span class="nav-icon">⌨</span>Snippets<span class="badge" id="b-snippets">0</span></button>
+    <button class="nav-btn" onclick="go('finance')"><span class="nav-icon">€</span>Finanzen</button>
+    <button class="nav-btn" onclick="go('notes')"><span class="nav-icon">📝</span>Notizen<span class="badge" id="b-notes">0</span></button>
     <button class="nav-btn" onclick="go('settings')" style="margin-top:auto"><span class="nav-icon">⚙</span>Settings</button>
   </nav>
   <div class="sidebar-bottom">
@@ -761,6 +844,82 @@ select option { background:#1c1c1c; }
     <div id="snippets-list"></div>
   </div>
 
+  <!-- FINANZEN -->
+  <div class="tab-panel" id="tab-finance">
+    <div class="page-header header-row">
+      <div><h1>Finanzen</h1><p>Einnahmen, Ausgaben und Abos sauber tracken.</p></div>
+    </div>
+    <div id="finance-content"></div>
+  </div>
+
+  <!-- NOTIZEN -->
+  <div class="tab-panel" id="tab-notes">
+    <div class="page-header header-row">
+      <div><h1>Notizen</h1><p>Tippen und Zeichnen — wie auf dem iPad.</p></div>
+    </div>
+    <div class="notes-layout">
+      <div class="notes-sidebar">
+        <div class="notes-sidebar-head">
+          <input type="text" id="notes-search" placeholder="Suchen..." oninput="renderNotesList()" />
+          <button class="nt-btn" onclick="createNote()" title="Neue Notiz" style="flex-shrink:0">+</button>
+        </div>
+        <div class="notes-list" id="notes-list"></div>
+      </div>
+      <div class="notes-editor-area" id="notes-editor-area">
+        <div class="notes-empty" id="notes-empty">Erstelle eine Notiz um loszulegen</div>
+        <div class="notes-mode-bar" id="notes-mode-bar" style="display:none">
+          <button class="notes-mode-btn active" onclick="setNoteMode('type')" id="mode-type-btn">✏️ Tippen</button>
+          <button class="notes-mode-btn" onclick="setNoteMode('draw')" id="mode-draw-btn">🖊️ Zeichnen</button>
+        </div>
+        <div class="notes-toolbar" id="notes-toolbar" style="display:none">
+          <select class="nt-select" onchange="noteExec('formatBlock',this.value);this.selectedIndex=0">
+            <option value="">Format</option>
+            <option value="h1">Überschrift 1</option>
+            <option value="h2">Überschrift 2</option>
+            <option value="h3">Überschrift 3</option>
+            <option value="p">Normal</option>
+          </select>
+          <div class="nt-sep"></div>
+          <button class="nt-btn" onclick="noteExec('bold')"><b>F</b></button>
+          <button class="nt-btn" onclick="noteExec('italic')"><i>K</i></button>
+          <button class="nt-btn" onclick="noteExec('underline')"><u>U</u></button>
+          <button class="nt-btn" onclick="noteExec('strikeThrough')"><s>S</s></button>
+          <div class="nt-sep"></div>
+          <button class="nt-btn" onclick="noteExec('insertUnorderedList')">•≡</button>
+          <button class="nt-btn" onclick="noteExec('insertOrderedList')">1.</button>
+          <div class="nt-sep"></div>
+          <input type="color" class="nt-color-btn" value="#e5e5e5" onchange="noteExec('foreColor',this.value)" title="Textfarbe" />
+          <button class="nt-btn" onclick="noteExec('removeFormat')">✕</button>
+        </div>
+        <div class="draw-toolbar" id="draw-toolbar">
+          <button class="nt-btn active" onclick="setDrawTool('pen')" id="draw-pen-btn">🖊️</button>
+          <button class="nt-btn" onclick="setDrawTool('eraser')" id="draw-eraser-btn">🧽</button>
+          <div class="nt-sep"></div>
+          <button class="draw-size-btn active" onclick="setDrawSize(2)" data-size="2"><div class="draw-size-dot" style="width:4px;height:4px"></div></button>
+          <button class="draw-size-btn" onclick="setDrawSize(4)" data-size="4"><div class="draw-size-dot" style="width:7px;height:7px"></div></button>
+          <button class="draw-size-btn" onclick="setDrawSize(8)" data-size="8"><div class="draw-size-dot" style="width:11px;height:11px"></div></button>
+          <button class="draw-size-btn" onclick="setDrawSize(16)" data-size="16"><div class="draw-size-dot" style="width:15px;height:15px"></div></button>
+          <div class="nt-sep"></div>
+          <input type="color" class="nt-color-btn" id="draw-color" value="#e5e5e5" onchange="drawColor=this.value" />
+          <button class="nt-color-btn" style="background:#e5e5e5" onclick="setDrawColor('#e5e5e5')"></button>
+          <button class="nt-color-btn" style="background:#ef4444" onclick="setDrawColor('#ef4444')"></button>
+          <button class="nt-color-btn" style="background:#3b82f6" onclick="setDrawColor('#3b82f6')"></button>
+          <button class="nt-color-btn" style="background:#10b981" onclick="setDrawColor('#10b981')"></button>
+          <button class="nt-color-btn" style="background:#f59e0b" onclick="setDrawColor('#f59e0b')"></button>
+          <div class="nt-sep"></div>
+          <button class="nt-btn" onclick="clearCanvas()">🗑️</button>
+          <button class="nt-btn" onclick="undoCanvas()">↩</button>
+        </div>
+        <div class="note-content-wrap" id="note-content-wrap" style="display:none">
+          <div class="note-editor" id="note-editor" contenteditable="true" data-placeholder="Hier tippen..." oninput="autoSaveNote()"></div>
+        </div>
+        <div class="note-canvas-wrap" id="note-canvas-wrap">
+          <canvas class="note-canvas" id="note-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- SETTINGS -->
   <div class="tab-panel" id="tab-settings">
     <div class="page-header"><h1>Settings</h1></div>
@@ -872,13 +1031,22 @@ select option { background:#1c1c1c; }
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────
-let D = { tasks:[], thoughts:[], snippets:[], dailyLog:{} };
+let D = { tasks:[], thoughts:[], snippets:[], notes:[], financeEntries:[], subscriptions:[], dailyLog:{} };
 let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{} };
 let pendingResult = null;
 let taskFilter = 'all';
 let taskTagFilter = null;
 let editingTags = [];
 let snipFilter = 'Alle';
+let financeRange = 'month';
+let activeNoteId = null;
+let noteMode = 'type';
+let drawTool = 'pen';
+let drawColor = '#e5e5e5';
+let drawSize = 2;
+let isDrawing = false;
+let canvasHistory = [];
+let noteAutoSaveTimer = null;
 let weekOffset = 0;
 let modalMode = null;
 let currentTab = 'braindump';
@@ -943,6 +1111,8 @@ function rerender(colName) {
   if(colName==='tasks') { renderTasks(); if(currentTab==='week') renderWeek(); if(currentTab==='heute') renderHeute(); }
   if(colName==='thoughts') renderThoughts();
   if(colName==='snippets') renderSnips();
+  if(colName==='notes') renderNotes();
+  if(colName==='financeEntries'||colName==='subscriptions') renderFinance();
 }
 
 // ── FIREBASE ──────────────────────────────────────────────────
@@ -979,7 +1149,7 @@ function connectFirebase() {
 function subscribeFS() {
   unsubListeners.forEach(u=>u());
   unsubListeners=[];
-  ['tasks','thoughts','snippets'].forEach(name=>{
+  ['tasks','thoughts','snippets','notes','financeEntries','subscriptions'].forEach(name=>{
     unsubListeners.push(
       col(name).onSnapshot(snap=>{
         D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1141,12 +1311,13 @@ function nextDueDate(dueDate, recurrence) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
-const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',stats:'Dashboard',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',settings:'Settings'};
+const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',stats:'Dashboard',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',finance:'Finanzen',notes:'Notizen',settings:'Settings'};
 const TAB_ACTIONS = {
   tasks:    `<button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">+ Hinzufügen</button>`,
   heute:    `<button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>`,
   thoughts: `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-thought-form')">+ Hinzufügen</button>`,
   snippets: `<button class="btn btn-ghost btn-sm" onclick="toggleForm('add-snippet-form')">+ Hinzufügen</button>`,
+  notes:    `<button class="btn btn-ghost btn-sm" onclick="createNote()">+ Neue Notiz</button>`,
 };
 function go(tab) {
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
@@ -1166,6 +1337,8 @@ function go(tab) {
   if(tab==='snippets') renderSnips();
   if(tab==='stats') renderStats();
   if(tab==='week') renderWeek();
+  if(tab==='finance') renderFinance();
+  if(tab==='notes') renderNotes();
   if(tab==='taurus') { renderTaurusChat(); checkTaurusStatus(); }
 }
 
@@ -1173,6 +1346,7 @@ function badges() {
   document.getElementById('b-tasks').textContent=D.tasks.filter(t=>!t.done).length;
   document.getElementById('b-thoughts').textContent=D.thoughts.length;
   document.getElementById('b-snippets').textContent=D.snippets.length;
+  const bNotes=document.getElementById('b-notes'); if(bNotes) bNotes.textContent=D.notes.length;
   const todayStr=dateKey();
   document.getElementById('b-heute').textContent=D.tasks.filter(t=>!t.done&&(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr).length;
 }
@@ -3637,6 +3811,355 @@ function initThoughtCategoryInputs() {
   }
 }
 
+// ── FINANCE ──────────────────────────────────────────────────
+function todayISO() { return dateKey(); }
+function fmtCurrency(v) { return (Number(v)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'}); }
+
+async function deleteLifeEntry(colName, id, label) {
+  if(!confirm((label||'Eintrag')+' wirklich löschen?')) return;
+  await fsDel(colName, id);
+  toast((label||'Eintrag')+' gelöscht');
+}
+
+function financeRangeMeta(range=financeRange, now=new Date()) {
+  const end=dateKey(now);
+  if(range==='7d') { const s=new Date(now); s.setDate(s.getDate()-6); return {start:dateKey(s),end,label:'letzte 7 Tage'}; }
+  if(range==='30d') { const s=new Date(now); s.setDate(s.getDate()-29); return {start:dateKey(s),end,label:'letzte 30 Tage'}; }
+  if(range==='all') return {start:null,end:null,label:'gesamte Zeit'};
+  const ms=new Date(now.getFullYear(),now.getMonth(),1,12); const me=new Date(now.getFullYear(),now.getMonth()+1,0,12);
+  return {start:dateKey(ms),end:dateKey(me),label:'dieser Monat'};
+}
+function inFinanceRange(ds,range=financeRange) {
+  const {start,end}=financeRangeMeta(range);
+  if(!ds) return false;
+  if(start&&ds<start) return false;
+  if(end&&ds>end) return false;
+  return true;
+}
+function financeEntriesForRange(range=financeRange) {
+  return [...(D.financeEntries||[])].filter(x=>inFinanceRange(x.date,range))
+    .sort((a,b)=>(`${b.date} ${b.createdAt||0}`).localeCompare(`${a.date} ${a.createdAt||0}`));
+}
+function activeSubscriptions() {
+  return [...(D.subscriptions||[])].filter(x=>x.active!==false)
+    .sort((a,b)=>String(a.nextDueDate||'9999-12-31').localeCompare(String(b.nextDueDate||'9999-12-31')));
+}
+function subscriptionMonthlyCost(sub) {
+  const amount=Number(sub?.amount)||0, cycle=sub?.billingCycle||'monthly';
+  if(cycle==='yearly') return amount/12;
+  if(cycle==='weekly') return amount*52/12;
+  return amount;
+}
+function financeSummary(range=financeRange) {
+  const items=financeEntriesForRange(range);
+  const income=items.filter(x=>x.kind==='income').reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const expense=items.filter(x=>x.kind!=='income').reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const recurring=activeSubscriptions().reduce((s,x)=>s+subscriptionMonthlyCost(x),0);
+  return {income:Math.round(income*100)/100,expense:Math.round(expense*100)/100,net:Math.round((income-expense)*100)/100,recurring:Math.round(recurring*100)/100,label:financeRangeMeta(range).label,count:items.length};
+}
+async function saveFinanceEntry() {
+  const amountEl=document.getElementById('finance-amount');
+  const amount=Math.round((Number(amountEl?.value)||0)*100)/100;
+  if(!amount){toast('Bitte Betrag eingeben','err');return;}
+  const kind=document.getElementById('finance-kind')?.value||'expense';
+  const date=document.getElementById('finance-date')?.value||todayISO();
+  const category=(document.getElementById('finance-category')?.value||'').trim()||(kind==='income'?'Einnahme':'Ausgabe');
+  const note=(document.getElementById('finance-note')?.value||'').trim();
+  await fsAdd('financeEntries',{id:uid(),kind,amount,date,category,note,createdAt:Date.now(),updatedAt:Date.now()});
+  ['finance-amount','finance-category','finance-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const dateEl=document.getElementById('finance-date'); if(dateEl) dateEl.value=todayISO();
+  toast(kind==='income'?'Einnahme gespeichert':'Ausgabe gespeichert');
+}
+async function saveSubscription() {
+  const name=(document.getElementById('sub-name')?.value||'').trim();
+  const amount=Math.round((Number(document.getElementById('sub-amount')?.value)||0)*100)/100;
+  if(!name||!amount){toast('Bitte Name und Betrag eingeben','err');return;}
+  const billingCycle=document.getElementById('sub-cycle')?.value||'monthly';
+  const nextDueDate=document.getElementById('sub-next-date')?.value||null;
+  const category=(document.getElementById('sub-category')?.value||'').trim()||'Abo';
+  const note=(document.getElementById('sub-note')?.value||'').trim();
+  await fsAdd('subscriptions',{id:uid(),name,amount,billingCycle,nextDueDate,category,note,active:true,createdAt:Date.now(),updatedAt:Date.now()});
+  ['sub-name','sub-amount','sub-category','sub-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const nextEl=document.getElementById('sub-next-date'); if(nextEl) nextEl.value='';
+  toast('Abo gespeichert');
+}
+function setFinanceRange(range) { financeRange=range; renderFinance(); }
+async function toggleSubscriptionActive(id) {
+  const sub=(D.subscriptions||[]).find(x=>x.id===id); if(!sub) return;
+  sub.active=sub.active===false; sub.updatedAt=Date.now();
+  await fsUpdate('subscriptions',sub); toast(sub.active===false?'Abo pausiert':'Abo aktiviert');
+}
+function openEditFinanceEntry(id) {
+  const item=(D.financeEntries||[]).find(x=>x.id===id); if(!item) return;
+  modalMode={type:'finance-entry',id};
+  document.getElementById('modal-title').textContent='Finanzeintrag bearbeiten';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row">
+      <select id="m-fin-kind" style="max-width:170px">
+        <option value="expense" ${item.kind!=='income'?'selected':''}>Ausgabe</option>
+        <option value="income" ${item.kind==='income'?'selected':''}>Einnahme</option>
+      </select>
+      <input type="number" id="m-fin-amount" min="0" step="0.01" value="${esc(item.amount)}" placeholder="Betrag" />
+      <input type="date" id="m-fin-date" value="${esc(item.date||todayISO())}" style="max-width:180px" />
+    </div>
+    <div class="form-row">
+      <input type="text" id="m-fin-category" value="${esc(item.category||'')}" placeholder="Kategorie" />
+      <input type="text" id="m-fin-note" value="${esc(item.note||'')}" placeholder="Notiz" />
+    </div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-fin-amount')?.focus(),50);
+}
+function openEditSubscription(id) {
+  const sub=(D.subscriptions||[]).find(x=>x.id===id); if(!sub) return;
+  modalMode={type:'subscription',id};
+  document.getElementById('modal-title').textContent='Abo bearbeiten';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row">
+      <input type="text" id="m-sub-name" value="${esc(sub.name||'')}" placeholder="Abo" />
+      <input type="number" id="m-sub-amount" min="0" step="0.01" value="${esc(sub.amount)}" placeholder="Betrag" style="max-width:150px" />
+      <select id="m-sub-cycle" style="max-width:170px">
+        <option value="monthly" ${sub.billingCycle==='monthly'?'selected':''}>Monatlich</option>
+        <option value="yearly" ${sub.billingCycle==='yearly'?'selected':''}>Jährlich</option>
+        <option value="weekly" ${sub.billingCycle==='weekly'?'selected':''}>Wöchentlich</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <input type="date" id="m-sub-next-date" value="${esc(sub.nextDueDate||'')}" style="max-width:180px" />
+      <input type="text" id="m-sub-category" value="${esc(sub.category||'')}" placeholder="Kategorie" />
+      <input type="text" id="m-sub-note" value="${esc(sub.note||'')}" placeholder="Notiz" />
+    </div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-sub-name')?.focus(),50);
+}
+function renderFinance() {
+  const el=document.getElementById('finance-content'); if(!el) return;
+  const summary=financeSummary(financeRange);
+  const entries=financeEntriesForRange(financeRange).slice(0,30);
+  const subs=[...(D.subscriptions||[])].sort((a,b)=>(a.active===false)-(b.active===false)||String(a.nextDueDate||'9999-12-31').localeCompare(String(b.nextDueDate||'9999-12-31')));
+  el.innerHTML=`<div class="finance-layout">
+    <div class="dashboard-card">
+      <div class="dashboard-head">
+        <div><div class="dashboard-title">Zeitraum</div></div>
+        <span class="habit-chip">${esc(summary.label)}</span>
+      </div>
+      <div class="finance-period-tabs">
+        <button class="ftab ${financeRange==='7d'?'active':''}" onclick="setFinanceRange('7d')">7 Tage</button>
+        <button class="ftab ${financeRange==='30d'?'active':''}" onclick="setFinanceRange('30d')">30 Tage</button>
+        <button class="ftab ${financeRange==='month'?'active':''}" onclick="setFinanceRange('month')">Monat</button>
+        <button class="ftab ${financeRange==='all'?'active':''}" onclick="setFinanceRange('all')">Alle</button>
+      </div>
+      <div class="finance-summary-grid">
+        <div class="analytics-mini"><div class="stat-label">Einnahmen</div><div class="stat-value finance-amount income">${fmtCurrency(summary.income)}</div><div class="stat-sub">${summary.count} Einträge</div></div>
+        <div class="analytics-mini"><div class="stat-label">Ausgaben</div><div class="stat-value finance-amount expense">${fmtCurrency(summary.expense)}</div><div class="stat-sub">${esc(summary.label)}</div></div>
+        <div class="analytics-mini"><div class="stat-label">Netto</div><div class="stat-value">${fmtCurrency(summary.net)}</div><div class="stat-sub">Abos: ${fmtCurrency(summary.recurring)}/Monat</div></div>
+      </div>
+    </div>
+    <div class="finance-grid">
+      <div class="dashboard-stack">
+        <div class="dashboard-card">
+          <div class="dashboard-head"><div><div class="dashboard-title">Eintrag erfassen</div></div></div>
+          <div class="form-row">
+            <select id="finance-kind" style="max-width:140px"><option value="expense">Ausgabe</option><option value="income">Einnahme</option></select>
+            <input type="number" id="finance-amount" min="0" step="0.01" placeholder="Betrag in EUR" onkeydown="if(event.key==='Enter')saveFinanceEntry()" />
+            <input type="date" id="finance-date" value="${todayISO()}" style="max-width:160px" />
+          </div>
+          <div class="form-row">
+            <input type="text" id="finance-category" placeholder="Kategorie, z. B. Essen" onkeydown="if(event.key==='Enter')saveFinanceEntry()" />
+            <input type="text" id="finance-note" placeholder="Notiz" onkeydown="if(event.key==='Enter')saveFinanceEntry()" />
+            <button class="btn btn-primary btn-sm" onclick="saveFinanceEntry()">Speichern</button>
+          </div>
+        </div>
+        <div class="dashboard-card">
+          <div class="dashboard-head"><div><div class="dashboard-title">Einträge</div><div class="dashboard-sub">${esc(summary.label)}</div></div></div>
+          <div class="timeline-list finance-list">
+            ${entries.length?entries.map(item=>`<div class="timeline-item"><div class="timeline-body"><div class="timeline-title"><span>${esc(item.category||(item.kind==='income'?'Einnahme':'Ausgabe'))}</span><strong class="finance-amount ${item.kind==='income'?'income':'expense'}">${item.kind==='income'?'+':'-'}${fmtCurrency(item.amount)}</strong></div><div class="timeline-meta">${fmtDue(item.date)}${item.note?' · '+esc(item.note):''}</div></div><div class="finance-actions"><button class="link-btn" onclick="openEditFinanceEntry('${item.id}')">Bearbeiten</button><button class="link-btn danger-link" onclick="deleteLifeEntry('financeEntries','${item.id}','Finanzeintrag')">Entfernen</button></div></div>`).join(''):`<div class="mini-empty">Noch keine Einträge für ${esc(summary.label)}.</div>`}
+          </div>
+        </div>
+      </div>
+      <div class="dashboard-card">
+        <div class="dashboard-head"><div><div class="dashboard-title">Abos</div><div class="dashboard-sub">Laufende Kosten</div></div><span class="habit-chip">${fmtCurrency(summary.recurring)}/Monat</span></div>
+        <div class="form-row">
+          <input type="text" id="sub-name" placeholder="z. B. Spotify" onkeydown="if(event.key==='Enter')saveSubscription()" />
+          <input type="number" id="sub-amount" min="0" step="0.01" placeholder="Betrag" style="max-width:120px" onkeydown="if(event.key==='Enter')saveSubscription()" />
+          <select id="sub-cycle" style="max-width:140px"><option value="monthly">Monatlich</option><option value="yearly">Jährlich</option><option value="weekly">Wöchentlich</option></select>
+        </div>
+        <div class="form-row">
+          <input type="date" id="sub-next-date" style="max-width:160px" />
+          <input type="text" id="sub-category" placeholder="Kategorie" onkeydown="if(event.key==='Enter')saveSubscription()" />
+          <button class="btn btn-primary btn-sm" onclick="saveSubscription()">Speichern</button>
+        </div>
+        <div class="timeline-list finance-list" style="margin-top:12px">
+          ${subs.length?subs.map(sub=>`<div class="timeline-item"><div class="timeline-body"><div class="timeline-title"><span>${esc(sub.name)}</span><strong class="finance-amount expense">${fmtCurrency(sub.amount)}</strong></div><div class="finance-meta">${esc(sub.category||'Abo')} · ${sub.billingCycle==='yearly'?'jährlich':sub.billingCycle==='weekly'?'wöchentlich':'monatlich'}${sub.nextDueDate?' · fällig '+fmtDue(sub.nextDueDate):''}</div><div class="finance-meta">≈ ${fmtCurrency(subscriptionMonthlyCost(sub))}/Monat</div></div><div class="finance-actions"><span class="sub-pill ${sub.active!==false?'active':''}">${sub.active!==false?'aktiv':'pausiert'}</span><button class="link-btn" onclick="openEditSubscription('${sub.id}')">Bearbeiten</button><button class="link-btn" onclick="toggleSubscriptionActive('${sub.id}')">${sub.active===false?'Aktivieren':'Pausieren'}</button><button class="link-btn danger-link" onclick="deleteLifeEntry('subscriptions','${sub.id}','Abo')">Entfernen</button></div></div>`).join(''):`<div class="mini-empty">Noch keine Abos.</div>`}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── NOTES ──────────────────────────────────────────────────
+function stripHtml(html) {
+  if(!html) return '';
+  const tmp=document.createElement('div'); tmp.innerHTML=html; return tmp.textContent||'';
+}
+function formatNoteDate(iso) {
+  if(!iso) return '';
+  const d=new Date(iso), now=new Date(), diff=now-d;
+  if(diff<60000) return 'gerade eben';
+  if(diff<3600000) return Math.floor(diff/60000)+' Min.';
+  if(diff<86400000) return Math.floor(diff/3600000)+' Std.';
+  return d.toLocaleDateString('de-DE',{day:'numeric',month:'short'});
+}
+async function createNote() {
+  const note={id:uid(),title:'Neue Notiz',html:'',canvasData:null,created:new Date().toISOString(),updated:new Date().toISOString()};
+  activeNoteId=note.id;
+  await fsAdd('notes',note);
+  renderNotes();
+  setTimeout(()=>document.getElementById('note-editor')?.focus(),100);
+}
+async function deleteNote(id) {
+  if(!confirm('Notiz wirklich löschen?')) return;
+  if(activeNoteId===id) activeNoteId=null;
+  await fsDel('notes',id);
+  renderNotes(); toast('Notiz gelöscht');
+}
+function renderNotes() { renderNotesList(); renderNoteEditor(); badges(); }
+function renderNotesList() {
+  const list=document.getElementById('notes-list'); if(!list) return;
+  const q=(document.getElementById('notes-search')?.value||'').toLowerCase();
+  const sorted=[...D.notes].sort((a,b)=>new Date(b.updated)-new Date(a.updated));
+  const filtered=q?sorted.filter(n=>n.title.toLowerCase().includes(q)||stripHtml(n.html).toLowerCase().includes(q)):sorted;
+  if(!filtered.length){
+    list.innerHTML=`<div style="padding:20px;text-align:center;color:var(--sub);font-size:13px">${D.notes.length?'Keine Treffer':'Noch keine Notizen'}</div>`;
+    return;
+  }
+  list.innerHTML=filtered.map(n=>`
+    <div class="note-item ${n.id===activeNoteId?'active':''}" onclick="openNote('${n.id}')">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="note-item-title" style="flex:1">${esc(n.title)}</div>
+        <button class="icon-btn del" onclick="event.stopPropagation();deleteNote('${n.id}')" style="font-size:12px">✕</button>
+      </div>
+      <div class="note-item-preview">${stripHtml(n.html).slice(0,60)||'(leer)'}</div>
+      <div class="note-item-date">${formatNoteDate(n.updated)}</div>
+    </div>`).join('');
+}
+function openNote(id) {
+  if(activeNoteId&&activeNoteId!==id) saveCurrentNote();
+  activeNoteId=id; noteMode='type'; canvasHistory=[];
+  renderNotes();
+}
+function renderNoteEditor() {
+  const empty=document.getElementById('notes-empty');
+  const modeBar=document.getElementById('notes-mode-bar');
+  const toolbar=document.getElementById('notes-toolbar');
+  const drawBar=document.getElementById('draw-toolbar');
+  const contentWrap=document.getElementById('note-content-wrap');
+  const canvasWrap=document.getElementById('note-canvas-wrap');
+  if(!activeNoteId||!D.notes.find(n=>n.id===activeNoteId)){
+    activeNoteId=null;
+    if(empty) empty.style.display='flex';
+    if(modeBar) modeBar.style.display='none';
+    if(toolbar) toolbar.style.display='none';
+    if(drawBar) drawBar.classList.remove('active');
+    if(contentWrap) contentWrap.style.display='none';
+    if(canvasWrap) canvasWrap.classList.remove('active');
+    return;
+  }
+  const note=D.notes.find(n=>n.id===activeNoteId);
+  if(empty) empty.style.display='none';
+  if(modeBar) modeBar.style.display='flex';
+  document.getElementById('mode-type-btn')?.classList.toggle('active',noteMode==='type');
+  document.getElementById('mode-draw-btn')?.classList.toggle('active',noteMode==='draw');
+  if(noteMode==='type'){
+    if(toolbar) toolbar.style.display='flex';
+    if(drawBar) drawBar.classList.remove('active');
+    if(contentWrap) contentWrap.style.display='block';
+    if(canvasWrap) canvasWrap.classList.remove('active');
+    const editor=document.getElementById('note-editor');
+    if(editor&&editor.innerHTML!==note.html) editor.innerHTML=note.html||'';
+  } else {
+    if(toolbar) toolbar.style.display='none';
+    if(drawBar) drawBar.classList.add('active');
+    if(contentWrap) contentWrap.style.display='none';
+    if(canvasWrap) canvasWrap.classList.add('active');
+    initCanvas(note);
+  }
+}
+function setNoteMode(mode) { saveCurrentNote(); noteMode=mode; renderNoteEditor(); }
+function noteExec(cmd,val) { document.execCommand(cmd,false,val||null); document.getElementById('note-editor')?.focus(); }
+function autoSaveNote() {
+  clearTimeout(noteAutoSaveTimer);
+  noteAutoSaveTimer=setTimeout(()=>saveCurrentNote(),800);
+  const editor=document.getElementById('note-editor');
+  if(editor&&activeNoteId){
+    const note=D.notes.find(n=>n.id===activeNoteId);
+    if(note){
+      const firstLine=stripHtml(editor.innerHTML).split('\n')[0].trim().slice(0,80);
+      if(firstLine&&firstLine!==note.title){note.title=firstLine;renderNotesList();}
+    }
+  }
+}
+function saveCurrentNote() {
+  if(!activeNoteId) return;
+  const note=D.notes.find(n=>n.id===activeNoteId); if(!note) return;
+  const editor=document.getElementById('note-editor');
+  if(editor&&noteMode==='type') note.html=editor.innerHTML;
+  if(noteMode==='draw'){
+    const canvas=document.getElementById('note-canvas');
+    if(canvas&&canvas.width>0) note.canvasData=canvas.toDataURL('image/png');
+  }
+  note.updated=new Date().toISOString();
+  fsUpdate('notes',note);
+}
+function initCanvas(note) {
+  const canvas=document.getElementById('note-canvas');
+  const wrap=document.getElementById('note-canvas-wrap');
+  if(!canvas||!wrap) return;
+  const rect=wrap.getBoundingClientRect();
+  canvas.width=rect.width||800; canvas.height=rect.height||600;
+  const newCanvas=canvas.cloneNode(true);
+  canvas.parentNode.replaceChild(newCanvas,canvas);
+  const nCtx=newCanvas.getContext('2d');
+  nCtx.lineCap='round'; nCtx.lineJoin='round';
+  if(note.canvasData){const img=new Image();img.onload=()=>nCtx.drawImage(img,0,0);img.src=note.canvasData;}
+  else{nCtx.fillStyle='#1a1a1a';nCtx.fillRect(0,0,newCanvas.width,newCanvas.height);canvasHistory=[newCanvas.toDataURL()];}
+  let lastX,lastY;
+  function getPos(e){const r=newCanvas.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};}
+  newCanvas.addEventListener('pointerdown',e=>{e.preventDefault();isDrawing=true;const p=getPos(e);lastX=p.x;lastY=p.y;});
+  newCanvas.addEventListener('pointermove',e=>{if(!isDrawing)return;e.preventDefault();const p=getPos(e);nCtx.strokeStyle=drawTool==='eraser'?'#1a1a1a':drawColor;nCtx.lineWidth=drawTool==='eraser'?drawSize*4:drawSize;nCtx.beginPath();nCtx.moveTo(lastX,lastY);nCtx.lineTo(p.x,p.y);nCtx.stroke();lastX=p.x;lastY=p.y;});
+  newCanvas.addEventListener('pointerup',e=>{if(!isDrawing)return;isDrawing=false;if(canvasHistory.length>30)canvasHistory.shift();canvasHistory.push(newCanvas.toDataURL());autoSaveNote();});
+  newCanvas.addEventListener('pointerleave',e=>{if(isDrawing){isDrawing=false;canvasHistory.push(newCanvas.toDataURL());autoSaveNote();}});
+  newCanvas.style.touchAction='none';
+}
+function setDrawTool(tool) {
+  drawTool=tool;
+  document.getElementById('draw-pen-btn')?.classList.toggle('active',tool==='pen');
+  document.getElementById('draw-eraser-btn')?.classList.toggle('active',tool==='eraser');
+}
+function setDrawSize(size) {
+  drawSize=size;
+  document.querySelectorAll('.draw-size-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.size)===size));
+}
+function setDrawColor(color) {
+  drawColor=color;
+  const inp=document.getElementById('draw-color'); if(inp) inp.value=color;
+  setDrawTool('pen');
+}
+function clearCanvas() {
+  if(!confirm('Canvas wirklich leeren?')) return;
+  const canvas=document.getElementById('note-canvas'); if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#1a1a1a'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  canvasHistory=[canvas.toDataURL()]; autoSaveNote();
+}
+function undoCanvas() {
+  const canvas=document.getElementById('note-canvas'); if(!canvas||canvasHistory.length<2) return;
+  canvasHistory.pop();
+  const img=new Image();
+  img.onload=()=>{const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0);};
+  img.src=canvasHistory[canvasHistory.length-1];
+  autoSaveNote();
+}
+
 function renderThoughts(){
   initThoughtCategoryInputs();
   const cats = getKnownThoughtCategories();
@@ -3930,6 +4453,25 @@ async function saveModal(){
     if(!title||!content){toast('Titel und Inhalt darf nicht leer sein','err');return;}
     s.title=title; s.content=content; s.category=document.getElementById('m-sn-cat').value;
     await fsUpdate('snippets',s); closeModal(); toast('Snippet aktualisiert!');
+  } else if(modalMode.type==='finance-entry'){
+    const item=(D.financeEntries||[]).find(x=>x.id===modalMode.id); if(!item) return;
+    item.kind=document.getElementById('m-fin-kind').value;
+    item.amount=Math.round((Number(document.getElementById('m-fin-amount').value)||0)*100)/100;
+    item.date=document.getElementById('m-fin-date').value||todayISO();
+    item.category=document.getElementById('m-fin-category').value.trim();
+    item.note=document.getElementById('m-fin-note').value.trim();
+    item.updatedAt=Date.now();
+    await fsUpdate('financeEntries',item); closeModal(); toast('Finanzeintrag aktualisiert!');
+  } else if(modalMode.type==='subscription'){
+    const sub=(D.subscriptions||[]).find(x=>x.id===modalMode.id); if(!sub) return;
+    sub.name=document.getElementById('m-sub-name').value.trim();
+    sub.amount=Math.round((Number(document.getElementById('m-sub-amount').value)||0)*100)/100;
+    sub.billingCycle=document.getElementById('m-sub-cycle').value;
+    sub.nextDueDate=document.getElementById('m-sub-next-date').value||null;
+    sub.category=document.getElementById('m-sub-category').value.trim();
+    sub.note=document.getElementById('m-sub-note').value.trim();
+    sub.updatedAt=Date.now();
+    await fsUpdate('subscriptions',sub); closeModal(); toast('Abo aktualisiert!');
   } else if(modalMode.type==='cal-event'){
     const t=D.tasks.find(x=>x.id===modalMode.id); if(!t) return;
     const title=document.getElementById('m-cal-title').value.trim();
