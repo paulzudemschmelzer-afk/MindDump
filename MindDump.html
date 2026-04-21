@@ -3064,7 +3064,7 @@ function renderStats() {
     if(r<-0.2) return {cls:'corr-neg',text:'Leichte negative Korrelation ↓'};
     return {cls:'corr-neu',text:'Kein klarer Zusammenhang'};
   }
-  const cE = corrLabel(corrE), cS = corrLabel(corrS);
+  const cE = corrLabel(corrE);
 
   // Sleep quality insight
   const sleepGroups = {};
