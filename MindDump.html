@@ -118,8 +118,9 @@ textarea::placeholder { color:#444; }
 .te-num { width:60px; background:var(--card2); border:1px solid var(--border); border-radius:6px; color:var(--text); padding:5px 8px; font-size:14px; font-family:inherit; outline:none; }
 .te-num:focus-visible { border-color:var(--accent); }
 .te-btns { display:flex; gap:4px; }
-.te-btn { background:none; border:1px solid var(--border); border-radius:6px; padding:4px 7px; cursor:pointer; font-size:13px; color:var(--sub); transition:all .15s; font-family:inherit; }
+.te-btn { background:none; border:1px solid var(--border); border-radius:6px; padding:4px 7px; cursor:pointer; font-size:13px; color:var(--sub); transition:all .15s; font-family:inherit; outline:none; -webkit-tap-highlight-color:transparent; }
 .te-btn:hover { border-color:var(--accent2); color:var(--accent2); }
+.te-btn:focus,.te-btn:focus-visible { outline:none; }
 .te-btn.active { background:rgba(124,58,237,.2); border-color:var(--accent2); color:var(--accent2); }
 .te-notiz { width:100%; background:none; border:none; border-bottom:1px solid var(--border); color:var(--text); font-size:13px; padding-bottom:5px; outline:none; font-family:inherit; box-sizing:border-box; }
 .te-notiz:focus-visible { border-bottom-color:var(--accent); }
@@ -394,8 +395,9 @@ select option { background:#1c1c1c; }
 .no-data-hint { text-align:center; color:var(--sub); font-size:13px; padding:20px 0; }
 /* Sleep tap buttons */
 .sleep-track-row { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
-.sleep-btn { padding:7px 14px; border-radius:20px; border:1px solid var(--border); background:var(--card2); color:var(--text); font-size:13px; cursor:pointer; font-family:inherit; transition:all .15s; }
+.sleep-btn { padding:7px 14px; border-radius:20px; border:1px solid var(--border); background:var(--card2); color:var(--text); font-size:13px; cursor:pointer; font-family:inherit; transition:all .15s; outline:none; -webkit-tap-highlight-color:transparent; }
 .sleep-btn:hover { border-color:var(--accent2); color:var(--accent2); }
+.sleep-btn:focus,.sleep-btn:focus-visible { outline:none; }
 .sleep-btn.active { background:rgba(124,58,237,.2); border-color:var(--accent2); color:var(--accent2); }
 .sleep-info { font-size:13px; color:var(--text); font-weight:500; }
 /* Quick-Log intraday widget */
