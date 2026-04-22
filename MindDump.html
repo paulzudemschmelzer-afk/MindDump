@@ -834,11 +834,15 @@ select option { background:#1c1c1c; }
         <span class="te-saved" id="te-saved" style="display:none">✓ Gespeichert</span>
       </div>
 
-      <!-- Schlaf-Tap-Buttons -->
+      <!-- Schlaf + Routinen -->
       <div class="sleep-track-row" id="sleep-track-row">
         <button class="sleep-btn" id="btn-schlafen" onclick="tapSchlafen()">🌙 Schlafen</button>
         <button class="sleep-btn" id="btn-aufstehen" onclick="tapAufstehen()">🌅 Aufgestanden</button>
         <span class="sleep-info" id="sleep-info"></span>
+      </div>
+      <div class="sleep-track-row" id="routine-track-row">
+        <button class="sleep-btn" id="btn-abendroutine" onclick="tapRoutine('abend')">🌙 Abendroutine</button>
+        <button class="sleep-btn" id="btn-morgenroutine" onclick="tapRoutine('morgen')">🌅 Morgenroutine</button>
       </div>
 
       <div class="te-row">
@@ -856,11 +860,6 @@ select option { background:#1c1c1c; }
             <button class="te-btn" data-val="5" onclick="setTe('energie',5)" title="Sehr hoch">🚀</button>
           </div>
         </div>
-      </div>
-      <!-- Routinen -->
-      <div class="sleep-track-row" id="routine-track-row">
-        <button class="sleep-btn" id="btn-morgenroutine" onclick="tapRoutine('morgen')">🌅 Morgenroutine</button>
-        <button class="sleep-btn" id="btn-abendroutine" onclick="tapRoutine('abend')">🌙 Abendroutine</button>
       </div>
     </div>
 
