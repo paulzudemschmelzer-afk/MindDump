@@ -420,6 +420,7 @@ select option { background:#1c1c1c; }
 /* ── HABITS ── */
 .habit-grid { display:grid; gap:12px; }
 .habit-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
+.habit-card.recovery { border-color:rgba(245,158,11,.4); }
 .habit-top { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; margin-bottom:12px; }
 .habit-name { font-size:15px; font-weight:700; margin-bottom:3px; }
 .habit-statement { color:var(--sub); font-size:13px; line-height:1.5; }
@@ -437,9 +438,13 @@ select option { background:#1c1c1c; }
 .habit-check-btn { flex:1; padding:12px; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; border:none; font-family:inherit; background:rgba(124,58,237,.2); color:var(--accent2); transition:all .15s; }
 .habit-check-btn:active { transform:scale(.96); }
 .habit-check-btn.done { background:rgba(52,211,153,.18); color:#34d399; }
+.habit-check-btn.minimal-done { background:rgba(251,191,36,.15); color:#fbbf24; }
+.habit-check-btn-min { padding:10px 14px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; border:1px solid var(--border); font-family:inherit; background:none; color:var(--sub); white-space:nowrap; }
+.habit-check-btn-miss { padding:10px 14px; border-radius:10px; font-size:13px; cursor:pointer; border:1px solid var(--border); font-family:inherit; background:none; color:var(--sub); white-space:nowrap; }
 .habit-details-toggle { font-size:12px; color:var(--sub); cursor:pointer; background:none; border:none; padding:6px 0; font-family:inherit; }
 .habit-checkin { margin-top:10px; padding-top:10px; border-top:1px solid var(--border); display:grid; grid-template-columns:repeat(4,1fr); gap:8px; align-items:end; }
 .habit-checkin .wide { grid-column:span 2; }
+.habit-recovery { margin-top:10px; color:#fbbf24; background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.2); border-radius:8px; padding:9px 10px; font-size:12px; line-height:1.5; }
 .habit-milestones { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
 .milestone { font-size:11px; color:var(--sub); border:1px solid var(--border); border-radius:999px; padding:3px 8px; }
 .milestone.done { color:#34d399; border-color:rgba(16,185,129,.25); background:rgba(16,185,129,.08); }
@@ -454,6 +459,8 @@ select option { background:#1c1c1c; }
 .ha-matrix td.habit-label { text-align:left; font-size:12px; font-weight:600; padding-right:10px; white-space:nowrap; max-width:120px; overflow:hidden; text-overflow:ellipsis; }
 .ha-dot { width:22px; height:22px; border-radius:6px; margin:auto; }
 .ha-dot.full { background:rgba(52,211,153,.6); }
+.ha-dot.minimal { background:rgba(251,191,36,.5); }
+.ha-dot.miss { background:rgba(239,68,68,.35); }
 .ha-dot.empty { background:rgba(255,255,255,.06); }
 .ha-energy { font-weight:700; }
 .ha-corr-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
@@ -908,7 +915,7 @@ select option { background:#1c1c1c; }
   <!-- HABITS -->
   <div class="tab-panel" id="tab-habits">
     <div class="page-header header-row">
-      <div><h1>Habits</h1><p>Gewohnheiten tracken — mit Fortschritt und Klarheit.</p></div>
+      <div><h1>Habits</h1><p>Gewohnheiten tracken — mit Fortschritt, Decay und Recovery.</p></div>
       <button class="btn btn-ghost btn-sm" onclick="openHabitForm()">+ Gewohnheit</button>
     </div>
     <div class="add-form" id="add-habit-form" style="display:none">
@@ -3637,9 +3644,12 @@ function renderHeuteHabits() {
   const todayStr=dateKey();
   el.innerHTML=`<div class="heute-habits-title">🏆 Habits</div>`+habits.map(h=>{
     const todayCheckins=habitCheckins(h).filter(c=>c.date===todayStr);
-    const doneToday=todayCheckins.some(c=>(c.mode||'full')==='full');
-    const cls=doneToday?'done':'';
-    const label=doneToday?'Heute gemacht':'Gemacht';
+    const fullCount=todayCheckins.filter(c=>c.mode==='full').length;
+    const minCount=todayCheckins.filter(c=>c.mode==='minimal').length;
+    const totalDone=fullCount+minCount;
+    const isMiss=todayCheckins.some(c=>c.mode==='miss')&&totalDone===0;
+    const cls=totalDone>0?'done':isMiss?'minimal':'';
+    const label=totalDone>0?`✓ Nochmal (${totalDone}×)`:isMiss?'↩ Doch gemacht':'✓ Abhaken';
     return `<div class="heute-habit-row">
       <div style="flex:1;min-width:0">
         <div class="heute-habit-name">${esc(h.name)}</div>
@@ -3937,8 +3947,8 @@ function buildHabitsSection() {
       last7.push({dk,c});
     }
     const dots=last7.map(({dk,c})=>{
-      const col=!c||c.mode!=='full'?'var(--border)':'#34d399';
-      const title=!c||c.mode!=='full'?'Nicht gemacht':'Erledigt';
+      const col=!c?'var(--border)':c.mode==='miss'?'#f87171':c.mode==='minimal'?'#f59e0b':'#34d399';
+      const title=!c?dk:c.mode==='miss'?'Nicht gemacht':c.mode==='minimal'?'Minimalversion':'Erledigt';
       return `<div title="${title}" style="width:18px;height:18px;border-radius:4px;background:${col};flex-shrink:0"></div>`;
     }).join('');
     return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
@@ -4565,8 +4575,8 @@ function daysBetweenISO(a,b){
   return Math.floor((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000);
 }
 function habitCheckins(h){ return Array.isArray(h.checkins)?h.checkins:[]; }
-function habitSuccessCheckins(h){ return habitCheckins(h).filter(c=>(c.mode||'full')==='full'); }
-function habitWeighted(){ return 1; }
+function habitSuccessCheckins(h){ return habitCheckins(h).filter(c=>c.mode!=='miss'); }
+function habitWeighted(c){ if(c.mode==='miss')return 0; return c.mode==='minimal'?0.55:1; }
 function habitSinceDays(h){
   const last=habitSuccessCheckins(h).map(c=>c.date).sort().pop();
   return last?daysBetweenISO(last,todayISO()):999;
@@ -4582,15 +4592,18 @@ function habitScore(h){
   const recent=success.filter(c=>daysBetweenISO(c.date,now)<=6);
   const recentWeight=recent.reduce((s,c)=>s+habitWeighted(c),0);
   const totalWeight=success.reduce((s,c)=>s+habitWeighted(c),0);
+  const recentMisses=checkins.filter(c=>c.mode==='miss'&&daysBetweenISO(c.date,now)<=6).length;
   const warnDays=Math.max(1,Number(h.decayWarnDays)||7);
   const dangerDays=Math.max(warnDays+1,Number(h.decayDangerDays)||21);
   const since=habitSinceDays(h);
-  if(!checkins.length) return {hp:0,strength:0,goal:0,risk:20,since,recentWeight:0,totalWeight:0,solidWeeks:0,fresh:true};
+  if(!checkins.length) return {hp:0,strength:0,goal:0,risk:20,since,recentWeight:0,totalWeight:0,solidWeeks:0,recovery:false,fresh:true,recentMisses:0};
   let hp=clamp((recentWeight/target)*100);
+  hp=Math.max(0,hp-(recentMisses*22));
   if(since>=warnDays) hp=Math.min(hp,70);
   if(since>=dangerDays) hp=Math.min(hp,30);
   const strengthTarget=Math.max(18,target*12);
   let strength=clamp((1-Math.exp(-totalWeight/strengthTarget))*100);
+  strength=Math.max(0,strength-(recentMisses*4));
   if(since>=warnDays) strength=Math.max(0,strength-12);
   if(since>=dangerDays) strength=Math.max(0,strength-28);
   let goal=strength*0.65;
@@ -4599,14 +4612,18 @@ function habitScore(h){
   const solidWeeks=Object.values(weekScores).filter(v=>v>=target).length;
   let risk=15;
   if(recentWeight<target) risk+=Math.round((1-(recentWeight/target))*35);
+  if(recentMisses) risk+=recentMisses*18;
   if(since>=warnDays) risk+=25;
   if(since>=dangerDays) risk+=35;
   risk=clamp(risk);
-  return {hp,strength,goal:clamp(goal),risk,since,recentWeight,totalWeight,solidWeeks,fresh:false};
+  const plannedGap=Math.ceil(7/target);
+  const recovery=checkins.length&&(since>plannedGap*2||hp<50||recentMisses>0);
+  return {hp,strength,goal:clamp(goal),risk,since,recentWeight,totalWeight,solidWeeks,recovery,fresh:false,recentMisses};
 }
 function habitStatus(score){
   if(score.fresh) return {cls:'warn',text:'Startbereit'};
   if(score.risk>=75) return {cls:'bad',text:'Decay hoch'};
+  if(score.recovery) return {cls:'warn',text:'Recovery'};
   if(score.hp>=85) return {cls:'good',text:'Stabil'};
   return {cls:'warn',text:'Aufbau'};
 }
@@ -4628,17 +4645,22 @@ function renderHabitCard(h){
   const target=Math.max(1,Number(h.frequencyCount)||3);
   const todayStr=dateKey();
   const todayCheckins=habitCheckins(h).filter(c=>c.date===todayStr);
-  const doneCount=todayCheckins.filter(c=>(c.mode||'full')==='full').length;
-  const doneToday=doneCount>0;
-  const checkLabel=doneToday?'Heute gemacht':'Gemacht';
-  const checkCls=doneToday?'done':'';
-  return `<div class="habit-card">
+  const fullCount=todayCheckins.filter(c=>c.mode==='full').length;
+  const minCount=todayCheckins.filter(c=>c.mode==='minimal').length;
+  const totalDone=fullCount+minCount;
+  const missToday=todayCheckins.some(c=>c.mode==='miss')&&totalDone===0;
+  const doneToday=totalDone>0;
+  const minToday=totalDone===0&&minCount>0;
+  const checkLabel=totalDone>0?`✓ Nochmal (${totalDone}×)`:missToday?'〜 Minimal':'✓ Abhaken';
+  const checkCls=totalDone>0?'done':'';
+  return `<div class="habit-card ${score.recovery?'recovery':''}">
     <div class="habit-top">
       <div style="flex:1;min-width:0">
         <div class="habit-name">${esc(h.name)}</div>
         <div class="habit-meta" style="margin-top:4px">
           <span class="habit-chip ${status.cls}">${status.text}</span>
           <span class="habit-chip">${target}× / Woche</span>
+          ${score.recentMisses?`<span class="habit-chip warn">${score.recentMisses}× verpasst</span>`:''}
         </div>
       </div>
       <div class="card-actions">
@@ -4647,7 +4669,9 @@ function renderHabitCard(h){
       </div>
     </div>
     <div class="habit-quick-row">
-      <button class="habit-check-btn ${checkCls}" onclick="quickHabitCheckin('${h.id}')">${checkLabel}</button>
+      <button class="habit-check-btn ${checkCls}" onclick="quickHabitCheckin('${h.id}','full')">${checkLabel}</button>
+      ${totalDone===0&&!missToday?`<button class="habit-check-btn-min" onclick="quickHabitCheckin('${h.id}','minimal')">Minimal</button>`:''}
+      ${!missToday?`<button class="habit-check-btn-miss" onclick="quickHabitCheckin('${h.id}','miss')" title="Heute nicht gemacht">✗</button>`:''}
     </div>
     <button class="habit-details-toggle" onclick="toggleHabitDetails('${h.id}')">Details ▾</button>
     <div id="habit-details-${h.id}" style="display:none">
@@ -4661,10 +4685,11 @@ function renderHabitCard(h){
         ${habitMeter('Decay Risk',score.risk,'risk')}
       </div>
       <div class="habit-milestones">${milestones.map(m=>`<span class="milestone ${m.done?'done':''}">${esc(m.label)}</span>`).join('')}</div>
+      ${score.recovery?`<div class="habit-recovery"><b>Recovery Quest:</b> ${esc(h.minimumVersion||'Mach heute nur die Minimalversion.')}</div>`:''}
       <div class="habit-checkin" style="margin-top:10px">
         <label class="field"><span class="field-label">Dauer (min)</span><input type="number" id="hc-duration-${h.id}" placeholder="0" min="0" /></label>
         <label class="field wide"><span class="field-label">Notiz</span><input type="text" id="hc-note-${h.id}" placeholder="Was war auffällig?" /></label>
-        <button class="btn btn-primary btn-sm" onclick="addHabitCheckin('${h.id}')">✓ Mit Details speichern</button>
+        <button class="btn btn-primary btn-sm" onclick="addHabitCheckin('${h.id}','full')">✓ Mit Details speichern</button>
       </div>
     </div>
   </div>`;
@@ -4745,9 +4770,9 @@ async function saveHabitForm(){
   toast('Habit Quest erstellt');
 }
 async function addHabitManual(){ return saveHabitForm(); }
-async function addHabitCheckin(id){
+async function addHabitCheckin(id,mode='full'){
   const h=D.habits.find(x=>x.id===id); if(!h) return;
-  const checkin={id:uid(),date:todayISO(),mode:'full',
+  const checkin={id:uid(),date:todayISO(),mode,
     duration:Number(habitField(id,'duration')?.value)||null,
     note:habitField(id,'note')?.value.trim()||'',
     createdAt:Date.now()
@@ -4755,16 +4780,21 @@ async function addHabitCheckin(id){
   h.checkins=habitCheckins(h).filter(c=>c.date!==checkin.date);
   h.checkins.push(checkin);
   await fsUpdate('habits',h);
-  toast('Check-in gespeichert');
+  toast(mode==='miss'?'Heute als nicht gemacht markiert':mode==='minimal'?'Minimalversion zählt!':'Check-in gespeichert ✓');
 }
-async function quickHabitCheckin(id) {
+async function quickHabitCheckin(id, mode='full') {
   const h=D.habits.find(x=>x.id===id); if(!h) return;
   const today=todayISO();
-  const checkin={id:uid(),date:today,time:new Date().toTimeString().slice(0,5),mode:'full',createdAt:Date.now()};
+  const checkin={id:uid(),date:today,time:new Date().toTimeString().slice(0,5),mode,createdAt:Date.now()};
   const prev=habitCheckins(h);
-  h.checkins=[...prev.filter(c=>c.date!==today), checkin];
+  if(mode==='miss') {
+    h.checkins=[...prev.filter(c=>c.date!==today), checkin];
+  } else {
+    h.checkins=[...prev, checkin];
+  }
   await fsUpdate('habits',h);
-  toast('Erledigt');
+  const count=h.checkins.filter(c=>c.date===today&&(c.mode==='full'||c.mode==='minimal')).length;
+  toast(mode==='miss'?'Als nicht gemacht markiert':mode==='minimal'?`Minimal ✓ (${count}x heute)`:`Erledigt ✓ (${count}x heute)`);
 }
 function toggleHabitDetails(id) {
   const el=document.getElementById('habit-details-'+id); if(!el) return;
@@ -4802,8 +4832,8 @@ function renderHabitAnalysis() {
     matHtml+=`<tr><td class="habit-label" title="${esc(h.name)}">${esc(h.name)}</td>`;
     days.forEach(d=>{
       const m=cMap[d];
-      const cls=m==='full'?'full':'empty';
-      const title=m==='full'?'Erledigt':'Nicht gemacht';
+      const cls=m==='full'?'full':m==='minimal'?'minimal':m==='miss'?'miss':'empty';
+      const title=m==='full'?'Erledigt':m==='minimal'?'Minimal':m==='miss'?'Nicht gemacht':'–';
       matHtml+=`<td><div class="ha-dot ${cls}" title="${title}"></div></td>`;
     });
     matHtml+='</tr>';
@@ -4821,7 +4851,7 @@ function renderHabitAnalysis() {
   let corrHtml=`<div class="ha-section"><div class="ha-title">Energie-Korrelation — Tage mit vs. ohne Habit</div><div class="ha-corr-row">`;
   const log=D.dailyLog||{};
   habits.forEach(h=>{
-    const doneDates=new Set(habitCheckins(h).filter(c=>(c.mode||'full')==='full').map(c=>c.date));
+    const doneDates=new Set(habitCheckins(h).filter(c=>c.mode!=='miss').map(c=>c.date));
     const doneEnergy=[], notDoneEnergy=[];
     Object.entries(log).forEach(([date,entry])=>{
       if(entry.energie==null) return;
@@ -4834,7 +4864,7 @@ function renderHabitAnalysis() {
     const diffCls=diff==null?'neu':diff>0.2?'pos':diff<-0.2?'neg':'neu';
 
     // Time pattern
-    const times=habitCheckins(h).filter(c=>(c.mode||'full')==='full'&&c.time).map(c=>parseInt(c.time));
+    const times=habitCheckins(h).filter(c=>c.mode!=='miss'&&c.time).map(c=>parseInt(c.time));
     const morn=times.filter(t=>t>=5&&t<12).length;
     const aftn=times.filter(t=>t>=12&&t<17).length;
     const even=times.filter(t=>t>=17).length;
@@ -4856,8 +4886,8 @@ function renderHabitAnalysis() {
   if(habits.length>=2){
     const pairs=[];
     for(let i=0;i<habits.length;i++) for(let j=i+1;j<habits.length;j++){
-      const dA=new Set(habitCheckins(habits[i]).filter(c=>(c.mode||'full')==='full').map(c=>c.date));
-      const dB=new Set(habitCheckins(habits[j]).filter(c=>(c.mode||'full')==='full').map(c=>c.date));
+      const dA=new Set(habitCheckins(habits[i]).filter(c=>c.mode!=='miss').map(c=>c.date));
+      const dB=new Set(habitCheckins(habits[j]).filter(c=>c.mode!=='miss').map(c=>c.date));
       const both=[...dA].filter(d=>dB.has(d)).length;
       const total=new Set([...dA,...dB]).size;
       if(total>0) pairs.push({a:habits[i].name,b:habits[j].name,pct:Math.round(both/total*100),both,total});
