@@ -1178,23 +1178,6 @@ function loadLocal() {
   if(!Array.isArray(D.thoughts)) D.thoughts=[];
   if(!Array.isArray(D.snippets)) D.snippets=[];
   if(!D.dailyLog || typeof D.dailyLog!=='object') D.dailyLog={};
-  // Local migration: thoughts → notes (only for non-Firebase users, preserves thoughts for safety)
-  if(D.thoughts.length) {
-    let migrated=false;
-    D.thoughts.forEach(t=>{
-      if(D.notes.some(n=>n.migratedFrom===t.id)) return;
-      const title=(t.content||'').split('\n')[0].trim().slice(0,80)||'Notiz';
-      D.notes.push({id:uid(),title,migratedFrom:t.id,
-        category:t.topic||'Allgemein',subtopic:t.subtopic||null,
-        html:'<p>'+(t.content||'').replace(/\n/g,'</p><p>')+'</p>',
-        canvasData:null,
-        created:t.createdAt?new Date(t.createdAt).toISOString():new Date().toISOString(),
-        updated:t.createdAt?new Date(t.createdAt).toISOString():new Date().toISOString()
-      });
-      migrated=true;
-    });
-    if(migrated) saveLocal();
-  }
   ensureTaskCategorySettings();
 }
 function saveLocal() { localStorage.setItem('md_data',JSON.stringify(D)); badges(); }
@@ -1266,11 +1249,19 @@ function connectFirebase() {
 function subscribeFS() {
   unsubListeners.forEach(u=>u());
   unsubListeners=[];
+  let _migrating=false;
   ['tasks','thoughts','snippets','notes','habits','financeEntries','subscriptions'].forEach(name=>{
     unsubListeners.push(
       col(name).onSnapshot(snap=>{
-        D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
-        // Firebase migration: if thoughts exist but no notes, migrate thoughts → notes collection
+        const docs=snap.docs.map(d=>({id:d.id,...d.data()}));
+        if(name==='notes') {
+          // Deduplicate by migratedFrom: keep oldest, delete extras from Firestore
+          const seen=new Map();
+          docs.forEach(n=>{ if(n.migratedFrom){ if(!seen.has(n.migratedFrom)) seen.set(n.migratedFrom,n); else { const keep=seen.get(n.migratedFrom); const dup=new Date(n.created)<new Date(keep.created)?keep:n; col('notes').doc(dup.id).delete().catch(()=>{}); if(dup===keep) seen.set(n.migratedFrom,n); } } });
+          D[name]=docs.filter(n=>!n.migratedFrom||seen.get(n.migratedFrom)?.id===n.id);
+        } else {
+          D[name]=docs;
+        }
         if(name==='notes'||name==='thoughts') _migrateThoughtsToNotesFS();
         rerender(name);
         badges();
@@ -1278,21 +1269,26 @@ function subscribeFS() {
     );
   });
   async function _migrateThoughtsToNotesFS() {
-    if(!D.thoughts.length || !useFS()) return;
-    const migratedIds=new Set((D.notes||[]).map(n=>n.migratedFrom).filter(Boolean));
-    const toMigrate=D.thoughts.filter(t=>!migratedIds.has(t.id));
-    if(!toMigrate.length) return;
-    await Promise.all(toMigrate.map(t=>{
-      const title=(t.content||'').split('\n')[0].trim().slice(0,80)||'Notiz';
-      const note={id:uid(),title,migratedFrom:t.id,
-        category:t.topic||'Allgemein',subtopic:t.subtopic||null,
-        html:'<p>'+(t.content||'').replace(/\n/g,'</p><p>')+'</p>',
-        canvasData:null,
-        created:t.createdAt?new Date(t.createdAt).toISOString():new Date().toISOString(),
-        updated:t.createdAt?new Date(t.createdAt).toISOString():new Date().toISOString()
-      };
-      return col('notes').doc(note.id).set(omitId(note));
-    }));
+    if(_migrating || !D.thoughts.length || !useFS()) return;
+    _migrating=true;
+    try {
+      const migratedIds=new Set((D.notes||[]).map(n=>n.migratedFrom).filter(Boolean));
+      const toMigrate=D.thoughts.filter(t=>!migratedIds.has(t.id));
+      if(!toMigrate.length) return;
+      await Promise.all(toMigrate.map(t=>{
+        const title=(t.content||'').split('\n')[0].trim().slice(0,80)||'Notiz';
+        const note={id:uid(),title,migratedFrom:t.id,
+          category:t.topic||'Allgemein',subtopic:t.subtopic||null,
+          html:'<p>'+(t.content||'').replace(/\n/g,'</p><p>')+'</p>',
+          canvasData:null,
+          created:t.createdAt?new Date(t.createdAt).toISOString():new Date().toISOString(),
+          updated:t.createdAt?new Date(t.createdAt).toISOString():new Date().toISOString()
+        };
+        return col('notes').doc(note.id).set(omitId(note));
+      }));
+    } finally {
+      _migrating=false;
+    }
   }
   // Daily log (keyed by date)
   unsubListeners.push(
