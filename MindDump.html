@@ -3996,54 +3996,11 @@ function renderStats() {
         <div class="dash-title">📅 Schlaf — letzte 30 Tage <span style="font-size:10px;margin-left:6px;color:var(--green)">grün ≥8h</span> <span style="font-size:10px;color:var(--accent2)">lila 6-8h</span> <span style="font-size:10px;color:#f59e0b">gelb &lt;6h</span></div>
         <div class="month-strip">${monthStrip}</div>
       </div>
-      ${buildRoutineStats(last7, last30, log)}
     </div>
     ${buildHabitsSection()}`;
 }
 
-function buildRoutineStats(last7, last30, log) {
-  const morgenItems = S.morgenroutine || [];
-  const abendItems = S.abendroutine || [];
-  if(!morgenItems.length && !abendItems.length) return '';
 
-  function routineCompletion(days, key, items) {
-    if(!items.length) return {pct:0, dots:''};
-    let total=0, done=0;
-    const dots = days.map(d => {
-      const entry = log[d.date] || {};
-      const checked = entry[key] || [];
-      const dayDone = checked.length;
-      const dayTotal = items.length;
-      total += dayTotal; done += dayDone;
-      const pct = dayTotal ? dayDone/dayTotal : 0;
-      const col = pct>=1 ? '#34d399' : pct>=0.5 ? '#f59e0b' : pct>0 ? 'rgba(245,158,11,.4)' : 'var(--border)';
-      const title = `${d.label||d.date}: ${dayDone}/${dayTotal}`;
-      return `<div title="${title}" style="width:18px;height:18px;border-radius:4px;background:${col};flex-shrink:0"></div>`;
-    }).join('');
-    return {pct: total ? Math.round(done/total*100) : 0, dots};
-  }
-
-  const m7 = routineCompletion(last7, 'morgenroutine', morgenItems);
-  const a7 = routineCompletion(last7, 'abendroutine', abendItems);
-  const m30 = routineCompletion(last30, 'morgenroutine', morgenItems);
-  const a30 = routineCompletion(last30, 'abendroutine', abendItems);
-
-  let html = `<div class="dash-card full"><div class="dash-title">🌅🌙 Routinen — letzte 7 Tage</div>`;
-  if(morgenItems.length) html += `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
-    <span style="font-size:13px;font-weight:600;min-width:120px">🌅 Morgenroutine</span>
-    <div style="display:flex;gap:3px">${m7.dots}</div>
-    <span style="font-size:12px;color:var(--sub);margin-left:auto">${m7.pct}%</span></div>`;
-  if(abendItems.length) html += `<div style="display:flex;align-items:center;gap:10px;padding:7px 0">
-    <span style="font-size:13px;font-weight:600;min-width:120px">🌙 Abendroutine</span>
-    <div style="display:flex;gap:3px">${a7.dots}</div>
-    <span style="font-size:12px;color:var(--sub);margin-left:auto">${a7.pct}%</span></div>`;
-  html += `<div style="margin-top:10px;font-size:12px;color:var(--sub)">30-Tage-Schnitt: `;
-  if(morgenItems.length) html += `Morgen ${m30.pct}%`;
-  if(morgenItems.length && abendItems.length) html += ` · `;
-  if(abendItems.length) html += `Abend ${a30.pct}%`;
-  html += `</div></div>`;
-  return html;
-}
 
 function buildHabitsSection() {
   const habits=(D.habits||[]).filter(h=>!h.archived);
