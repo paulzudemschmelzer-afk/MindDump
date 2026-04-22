@@ -951,6 +951,7 @@ select option { background:#1c1c1c; }
           <button class="nt-btn" onclick="openNewNoteCategoryPrompt()" title="Neue Kategorie" style="flex-shrink:0">+</button>
           <input type="text" id="note-subtopic" placeholder="Unterkategorie…" list="note-subtopic-sugg" oninput="saveNoteMetaInline()" style="flex:1;min-width:0" />
           <datalist id="note-subtopic-sugg"></datalist>
+          <button class="nt-btn" id="note-title-ai-btn" onclick="generateNoteTitle()" title="Titel per KI generieren" style="flex-shrink:0">✨</button>
         </div>
         <div class="notes-toolbar" id="notes-toolbar" style="display:none">
           <select class="nt-select" onchange="noteExec('formatBlock',this.value);this.selectedIndex=0">
@@ -4595,6 +4596,35 @@ function saveNoteMetaInline() {
   note.updated=new Date().toISOString();
   fsUpdate('notes',note);
   renderNotesList();
+}
+async function generateNoteTitle() {
+  if(!activeNoteId) return;
+  if(!S.groqKey) { toast('Kein Groq API Key — bitte in Settings eintragen.','err'); return; }
+  const note=D.notes.find(n=>n.id===activeNoteId); if(!note) return;
+  const content=stripHtml(note.html).trim();
+  if(content.length<10) { toast('Notiz ist noch zu kurz für einen Titel.','err'); return; }
+  const btn=document.getElementById('note-title-ai-btn');
+  if(btn) { btn.disabled=true; btn.textContent='⏳'; }
+  try {
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.groqKey},
+      body:JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'user',content:`Schreibe einen kurzen, prägnanten Titel (max. 7 Wörter, keine Anführungszeichen) für folgende Notiz:\n\n${content.slice(0,600)}`}],temperature:0.4,max_tokens:30})
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    const title=(data.choices?.[0]?.message?.content||'').trim().replace(/^["'„]|["'"]$/g,'').slice(0,80);
+    if(!title) throw new Error('Keine Antwort');
+    note.title=title;
+    note.updated=new Date().toISOString();
+    fsUpdate('notes',note);
+    renderNotesList();
+    toast('Titel generiert');
+  } catch(e) {
+    toast('Fehler: '+e.message,'err');
+  } finally {
+    if(btn) { btn.disabled=false; btn.textContent='✨'; }
+  }
 }
 function initCanvas(note) {
   const canvas=document.getElementById('note-canvas');
