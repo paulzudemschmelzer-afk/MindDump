@@ -424,7 +424,15 @@ select option { background:#1c1c1c; }
 .habit-fill.goal { background:linear-gradient(90deg,#0ea5e9,#10b981); }
 .habit-fill.risk { background:linear-gradient(90deg,#10b981,#f59e0b,#ef4444); }
 .habit-meta { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-.habit-checkin { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); display:grid; grid-template-columns:repeat(4,1fr); gap:8px; align-items:end; }
+.habit-quick-row { display:flex; gap:8px; margin-top:12px; align-items:center; }
+.habit-check-btn { flex:1; padding:12px; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; border:none; font-family:inherit; background:rgba(124,58,237,.2); color:var(--accent2); transition:all .15s; }
+.habit-check-btn:active { transform:scale(.96); }
+.habit-check-btn.done { background:rgba(52,211,153,.18); color:#34d399; }
+.habit-check-btn.minimal-done { background:rgba(251,191,36,.15); color:#fbbf24; }
+.habit-check-btn-min { padding:10px 14px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; border:1px solid var(--border); font-family:inherit; background:none; color:var(--sub); white-space:nowrap; }
+.habit-check-btn-miss { padding:10px 14px; border-radius:10px; font-size:13px; cursor:pointer; border:1px solid var(--border); font-family:inherit; background:none; color:var(--sub); white-space:nowrap; }
+.habit-details-toggle { font-size:12px; color:var(--sub); cursor:pointer; background:none; border:none; padding:6px 0; font-family:inherit; }
+.habit-checkin { margin-top:10px; padding-top:10px; border-top:1px solid var(--border); display:grid; grid-template-columns:repeat(4,1fr); gap:8px; align-items:end; }
 .habit-checkin .wide { grid-column:span 2; }
 .habit-recovery { margin-top:10px; color:#fbbf24; background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.2); border-radius:8px; padding:9px 10px; font-size:12px; line-height:1.5; }
 .habit-milestones { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
@@ -4210,18 +4218,21 @@ function habitMeter(label,value,type){
 function renderHabitCard(h){
   const score=habitScore(h), status=habitStatus(score), milestones=habitMilestones(score);
   const target=Math.max(1,Number(h.frequencyCount)||3);
-  const last=habitSuccessCheckins(h).map(c=>c.date).sort().pop();
+  const todayStr=dateKey();
+  const todayCheckin=habitCheckins(h).find(c=>c.date===todayStr);
+  const doneToday=todayCheckin&&todayCheckin.mode==='full';
+  const minToday=todayCheckin&&todayCheckin.mode==='minimal';
+  const missToday=todayCheckin&&todayCheckin.mode==='miss';
+  const checkLabel=doneToday?'✓ Heute erledigt':minToday?'〜 Minimal erledigt':'✓ Abhaken';
+  const checkCls=doneToday?'done':minToday?'minimal-done':'';
   return `<div class="habit-card ${score.recovery?'recovery':''}">
     <div class="habit-top">
-      <div>
+      <div style="flex:1;min-width:0">
         <div class="habit-name">${esc(h.name)}</div>
-        <div class="habit-statement">${esc(h.statement||'')}</div>
-        <div class="habit-meta">
+        <div class="habit-meta" style="margin-top:4px">
           <span class="habit-chip ${status.cls}">${status.text}</span>
-          <span class="habit-chip">${target}x / Woche</span>
-          <span class="habit-chip">Letzter Check-in: ${last?esc(last):'noch keiner'}</span>
-          ${score.recentMisses?`<span class="habit-chip warn">${score.recentMisses}x ausgelassen</span>`:''}
-          ${h.cue?`<span class="habit-chip">Cue: ${esc(h.cue)}</span>`:''}
+          <span class="habit-chip">${target}× / Woche</span>
+          ${score.recentMisses?`<span class="habit-chip warn">${score.recentMisses}× verpasst</span>`:''}
         </div>
       </div>
       <div class="card-actions">
@@ -4229,26 +4240,32 @@ function renderHabitCard(h){
         <button class="icon-btn del" onclick="deleteHabit('${h.id}')" title="Löschen">×</button>
       </div>
     </div>
-    ${h.endGoal?`<div class="task-ctx" style="margin-bottom:4px"><b>Endziel:</b> ${esc(h.endGoal)}</div>`:''}
-    ${h.identityGoal?`<div class="task-ctx" style="margin-bottom:4px"><b>Identität:</b> ${esc(h.identityGoal)}</div>`:''}
-    <div class="habit-bars">
-      ${habitMeter('Consistency HP',score.hp,'hp')}
-      ${habitMeter('Habit Strength',score.strength,'strength')}
-      ${habitMeter('Goal Progress',score.goal,'goal')}
-      ${habitMeter('Decay Risk',score.risk,'risk')}
+    <div class="habit-quick-row">
+      <button class="habit-check-btn ${checkCls}" onclick="quickHabitCheckin('${h.id}','full')" ${doneToday?'disabled':''}>${checkLabel}</button>
+      ${!doneToday&&!minToday?`<button class="habit-check-btn-min" onclick="quickHabitCheckin('${h.id}','minimal')">Minimal</button>`:''}
+      ${!missToday?`<button class="habit-check-btn-miss" onclick="quickHabitCheckin('${h.id}','miss')" title="Heute nicht gemacht">✗</button>`:''}
     </div>
-    <div class="habit-milestones">${milestones.map(m=>`<span class="milestone ${m.done?'done':''}">${esc(m.label)}</span>`).join('')}</div>
-    ${score.recovery?`<div class="habit-recovery"><b>Recovery Quest:</b> ${esc(h.minimumVersion||'Mach heute nur die Minimalversion.')} Ein Ausfall ist normal — wichtig ist jetzt wieder einzusteigen.</div>`:''}
-    <div class="habit-checkin">
-      <label class="field"><span class="field-label">Dauer (min)</span><input type="number" id="hc-duration-${h.id}" placeholder="0" min="0" /></label>
-      <label class="field"><span class="field-label">Schmerz vorher</span><input type="number" id="hc-painBefore-${h.id}" placeholder="0-10" min="0" max="10" /></label>
-      <label class="field"><span class="field-label">Schmerz nachher</span><input type="number" id="hc-painAfter-${h.id}" placeholder="0-10" min="0" max="10" /></label>
-      <label class="field"><span class="field-label">Stabilität</span><input type="number" id="hc-stability-${h.id}" placeholder="0-10" min="0" max="10" /></label>
-      <label class="field"><span class="field-label">Energie</span><input type="number" id="hc-energy-${h.id}" placeholder="0-10" min="0" max="10" /></label>
-      <label class="field wide"><span class="field-label">Notiz</span><input type="text" id="hc-note-${h.id}" placeholder="Was war auffällig?" /></label>
-      <button class="btn btn-primary btn-sm" onclick="addHabitCheckin('${h.id}','full')">✓ Erledigt</button>
-      <button class="btn btn-ghost btn-sm" onclick="addHabitCheckin('${h.id}','minimal')">Minimalversion</button>
-      <button class="btn btn-ghost btn-sm" onclick="addHabitCheckin('${h.id}','miss')">Nicht gemacht</button>
+    <button class="habit-details-toggle" onclick="toggleHabitDetails('${h.id}')">Details ▾</button>
+    <div id="habit-details-${h.id}" style="display:none">
+      ${h.statement?`<div class="habit-statement" style="margin-bottom:6px">${esc(h.statement)}</div>`:''}
+      ${h.endGoal?`<div class="task-ctx" style="margin-bottom:4px"><b>Endziel:</b> ${esc(h.endGoal)}</div>`:''}
+      ${h.identityGoal?`<div class="task-ctx" style="margin-bottom:4px"><b>Identität:</b> ${esc(h.identityGoal)}</div>`:''}
+      <div class="habit-bars">
+        ${habitMeter('Consistency HP',score.hp,'hp')}
+        ${habitMeter('Habit Strength',score.strength,'strength')}
+        ${habitMeter('Goal Progress',score.goal,'goal')}
+        ${habitMeter('Decay Risk',score.risk,'risk')}
+      </div>
+      <div class="habit-milestones">${milestones.map(m=>`<span class="milestone ${m.done?'done':''}">${esc(m.label)}</span>`).join('')}</div>
+      ${score.recovery?`<div class="habit-recovery"><b>Recovery Quest:</b> ${esc(h.minimumVersion||'Mach heute nur die Minimalversion.')}</div>`:''}
+      <div class="habit-checkin" style="margin-top:10px">
+        <label class="field"><span class="field-label">Dauer (min)</span><input type="number" id="hc-duration-${h.id}" placeholder="0" min="0" /></label>
+        <label class="field"><span class="field-label">Schmerz vorher</span><input type="number" id="hc-painBefore-${h.id}" placeholder="0-10" min="0" max="10" /></label>
+        <label class="field"><span class="field-label">Schmerz nachher</span><input type="number" id="hc-painAfter-${h.id}" placeholder="0-10" min="0" max="10" /></label>
+        <label class="field"><span class="field-label">Energie</span><input type="number" id="hc-energy-${h.id}" placeholder="0-10" min="0" max="10" /></label>
+        <label class="field wide"><span class="field-label">Notiz</span><input type="text" id="hc-note-${h.id}" placeholder="Was war auffällig?" /></label>
+        <button class="btn btn-primary btn-sm" onclick="addHabitCheckin('${h.id}','full')">✓ Mit Details speichern</button>
+      </div>
     </div>
   </div>`;
 }
@@ -4302,6 +4319,22 @@ async function addHabitCheckin(id,mode='full'){
   h.checkins.push(checkin);
   await fsUpdate('habits',h);
   toast(mode==='miss'?'Heute als nicht gemacht markiert':mode==='minimal'?'Minimalversion zählt!':'Check-in gespeichert ✓');
+}
+async function quickHabitCheckin(id, mode='full') {
+  const h=D.habits.find(x=>x.id===id); if(!h) return;
+  const checkin={id:uid(),date:todayISO(),time:new Date().toTimeString().slice(0,5),mode,createdAt:Date.now()};
+  h.checkins=habitCheckins(h).filter(c=>c.date!==checkin.date);
+  h.checkins.push(checkin);
+  await fsUpdate('habits',h);
+  const msg=mode==='miss'?'Als nicht gemacht markiert':mode==='minimal'?'Minimalversion ✓':'Erledigt ✓';
+  toast(msg);
+}
+function toggleHabitDetails(id) {
+  const el=document.getElementById('habit-details-'+id); if(!el) return;
+  const open=el.style.display==='none';
+  el.style.display=open?'block':'none';
+  const btn=el.previousElementSibling;
+  if(btn) btn.textContent=open?'Details ▴':'Details ▾';
 }
 async function deleteHabit(id){
   if(!confirm('Habit wirklich löschen?')) return;
