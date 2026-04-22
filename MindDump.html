@@ -147,9 +147,14 @@ textarea::placeholder { color:#444; }
 .kat-icon { font-size:15px; }
 .kat-name { font-size:14px; font-weight:600; cursor:pointer; }
 .kat-count { background:var(--accent); color:#fff; font-size:11px; padding:1px 7px; border-radius:10px; font-weight:600; }
-.kat-actions { margin-left:auto; display:flex; gap:2px; }
+.kat-actions { margin-left:auto; display:flex; gap:2px; align-items:center; }
 .kat-edit-link { background:none; border:none; color:var(--sub); cursor:pointer; font:inherit; font-size:12px; padding:3px 6px; border-radius:6px; }
 .kat-edit-link:hover { color:var(--text); background:rgba(255,255,255,.05); }
+.kat-add-inline-btn { background:none; border:1px solid rgba(124,58,237,.3); color:var(--accent2); cursor:pointer; font:inherit; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; white-space:nowrap; }
+.kat-add-inline-btn:hover { background:rgba(124,58,237,.15); border-color:var(--accent2); }
+.kat-inline-add { display:none; align-items:center; gap:7px; padding:8px 12px; border-top:1px solid rgba(255,255,255,.05); }
+.kat-inline-add input { flex:1; min-width:0; background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:8px; padding:6px 10px; color:var(--text); font-size:13px; font-family:inherit; outline:none; }
+.kat-inline-add input:focus { border-color:var(--accent); background:rgba(124,58,237,.06); }
 .kat-edit-link:disabled { opacity:.35; cursor:default; pointer-events:none; }
 .subkat-group { margin:0 0 4px 18px; }
 .subkat-header { display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(124,58,237,.03); border:1px solid rgba(124,58,237,.08); border-radius:8px; cursor:pointer; margin-bottom:4px; font-size:13px; }
@@ -1945,6 +1950,39 @@ let katCollapsed = {};
 let subkatCollapsed = {};
 
 function toggleKatCollapse(k){ katCollapsed[k]=katCollapsed[k]===false?true:false; renderTasks(); }
+
+function toggleKatInlineAdd(btn) {
+  const katGroup = btn.closest('.kat-group');
+  const subkatGroup = btn.closest('.subkat-group');
+  const k = katGroup?.dataset.kat;
+  const sk = subkatGroup?.dataset.subkat || null;
+  // Expand collapsed groups first
+  let needsRender = false;
+  if (k && katCollapsed[k] !== false) { katCollapsed[k] = false; needsRender = true; }
+  if (sk && subkatCollapsed[k+'::'+sk] !== false) { subkatCollapsed[k+'::'+sk] = false; needsRender = true; }
+  if (needsRender) renderTasks();
+  // Find the inline-add row in the (possibly re-rendered) DOM
+  const topGroup = document.querySelector(`.kat-group[data-kat="${CSS.escape(k||'')}"]`);
+  const group = sk ? topGroup?.querySelector(`.subkat-group[data-subkat="${CSS.escape(sk)}"]`) : topGroup;
+  const row = group?.querySelector(':scope > .kat-inline-add');
+  if (!row) return;
+  const vis = row.style.display !== 'none';
+  row.style.display = vis ? 'none' : 'flex';
+  if (!vis) { const inp = row.querySelector('input'); inp.value = ''; inp.focus(); }
+}
+
+async function saveKatInlineTask(el) {
+  const row = el.closest('.kat-inline-add');
+  const kat = row.closest('.kat-group')?.dataset.kat || 'sonstiges';
+  const subkat = row.closest('.subkat-group')?.dataset.subkat || null;
+  const input = row.querySelector('input');
+  const title = input?.value.trim();
+  if (!title) { input?.focus(); return; }
+  await fsAdd('tasks', { id:uid(), title, kategorie:kat, subkategorie:subkat, priority:'mittel', done:false, createdAt:Date.now() });
+  input.value = '';
+  input.focus();
+  toast('Task hinzugefügt ✓');
+}
 function toggleSubkatCollapse(k,sk){ const key=k+'::'+sk; subkatCollapsed[key]=subkatCollapsed[key]===false?true:false; renderTasks(); }
 function decodeDataValue(v){ try { return decodeURIComponent(v||''); } catch(e){ return v||''; } }
 function toggleSubkatCollapseFromEl(el){ if(!el) return; toggleSubkatCollapse(el.dataset.parentKey, decodeDataValue(el.dataset.subkey)); }
@@ -2744,6 +2782,7 @@ function renderSubcategoryGroup(k, sk, subItems, childKey='') {
       <span class="subkat-name">${esc(sk)}</span>
       <span class="subkat-count">${subItems.length}</span>
       <span class="subkat-actions">
+        <button class="kat-add-inline-btn" onclick="event.stopPropagation();toggleKatInlineAdd(this)" title="Task direkt hinzufügen">+ Task</button>
         <button class="kat-edit-link" onclick="event.stopPropagation();renameSubcategoryFromEl(this.parentElement.parentElement)" title="Umbenennen">Bearbeiten</button>
         <button class="kat-edit-link" onclick="event.stopPropagation();restoreSubToKatFromEl(this.parentElement.parentElement)" title="Als eigene Kategorie wiederherstellen">↑ Raus</button>
         <button class="icon-btn del" onclick="event.stopPropagation();deleteSubcategoryFromEl(this.parentElement.parentElement)" title="Aufloesen">×</button>
@@ -2751,6 +2790,7 @@ function renderSubcategoryGroup(k, sk, subItems, childKey='') {
     </div>`;
   if(!skCollapsed){
     html+=subItems.length ? subItems.map(t=>renderTaskCard(t)).join('') : `<div class="kat-empty">Keine Tasks in dieser Subkategorie.</div>`;
+    html+=`<div class="kat-inline-add" style="display:none"><input type="text" class="kat-inline-input" placeholder="Task Titel..." onkeydown="if(event.key==='Enter')saveKatInlineTask(this);if(event.key==='Escape'){this.value='';this.closest('.kat-inline-add').style.display='none';}" /><button class="icon-btn" onclick="saveKatInlineTask(this)" title="Speichern">✓</button><button class="icon-btn" style="color:var(--sub)" onclick="this.closest('.kat-inline-add').style.display='none';this.previousElementSibling.previousElementSibling.value=''">✕</button></div>`;
   }
   html+='</div>';
   return html;
@@ -2817,6 +2857,7 @@ function renderTasks() {
         <span class="kat-name" onclick="renameTaskCategory('${k}')" title="Klicken zum Umbenennen">${esc(getTaskCategoryLabel(k))}</span>
         <span class="kat-count" onclick="toggleKatCollapse('${k}')">${items.length}</span>
         <span class="kat-actions">
+          <button class="kat-add-inline-btn" onclick="event.stopPropagation();toggleKatInlineAdd(this)" title="Task direkt hinzufügen">+ Task</button>
           <button class="kat-edit-link" onclick="event.stopPropagation();renameTaskCategory('${k}')" title="Kategorie umbenennen">Bearbeiten</button>
           <button class="icon-btn del" onclick="event.stopPropagation();deleteKat('${k}')" title="Loeschen">×</button>
         </span>
@@ -2835,6 +2876,7 @@ function renderTasks() {
     } else if(showSubsWhileCollapsed && subNames.length){
       subNames.forEach(sk=>{ html+=renderSubcategoryGroup(k, sk, subGroups[sk]||[], findChildCategoryKey(k, sk)||''); });
     }
+    html+=`<div class="kat-inline-add" style="display:none"><input type="text" class="kat-inline-input" placeholder="Task Titel..." onkeydown="if(event.key==='Enter')saveKatInlineTask(this);if(event.key==='Escape'){this.value='';this.closest('.kat-inline-add').style.display='none';}" /><button class="icon-btn" onclick="saveKatInlineTask(this)" title="Speichern">✓</button><button class="icon-btn" style="color:var(--sub)" onclick="this.closest('.kat-inline-add').style.display='none';this.previousElementSibling.previousElementSibling.value=''">✕</button></div>`;
     html+='</div>';
   });
   // Drop-Zone zum Wiederherstellen von Subkategorien als eigene Kategorien
