@@ -725,7 +725,7 @@ select option { background:#1c1c1c; }
     <button class="nav-btn" onclick="go('braindump')"><span class="nav-icon">⚡</span>Brain Dump</button>
     <button class="nav-btn" onclick="go('tasks')"><span class="nav-icon">✓</span>Tasks<span class="badge" id="b-tasks">0</span></button>
     <button class="nav-btn active" onclick="go('heute')"><span class="nav-icon">☀</span>Heute<span class="badge" id="b-heute" style="background:#f59e0b">0</span></button>
-    <button class="nav-btn" onclick="go('stats')"><span class="nav-icon">📊</span>Dashboard</button>
+    <button class="nav-btn" onclick="go('stats')"><span class="nav-icon">📊</span>Statistik</button>
     <button class="nav-btn" onclick="go('week')"><span class="nav-icon">📅</span>Woche</button>
     <button class="nav-btn" onclick="go('snippets')"><span class="nav-icon">⌨</span>Snippets<span class="badge" id="b-snippets">0</span></button>
     <button class="nav-btn" onclick="go('habits')"><span class="nav-icon">🏆</span>Habits<span class="badge" id="b-habits" style="background:#10b981">0</span></button>
@@ -924,7 +924,7 @@ select option { background:#1c1c1c; }
 
   <!-- DASHBOARD / STATS -->
   <div class="tab-panel" id="tab-stats">
-    <div class="page-header"><h1>Dashboard</h1><p>Deine Statistiken & Auswertungen.</p></div>
+    <div class="page-header"><h1>Statistik</h1><p>Deine Statistiken & Auswertungen.</p></div>
     <div id="stats-content"></div>
   </div>
 
@@ -1600,7 +1600,7 @@ function nextDueDate(dueDate, recurrence) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
-const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',stats:'Dashboard',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',habits:'Habits',finance:'Finanzen',notes:'Notizen',settings:'Settings'};
+const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',stats:'Statistik',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',habits:'Habits',finance:'Finanzen',notes:'Notizen',settings:'Settings'};
 const TAB_ACTIONS = {
   tasks:    `<button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">+ Hinzufügen</button>`,
   heute:    `<button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>`,
