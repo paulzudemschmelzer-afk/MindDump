@@ -608,10 +608,13 @@ select option { background:#1c1c1c; }
   /* Finance on mobile */
   .finance-grid { grid-template-columns:1fr; }
   .finance-summary-grid { grid-template-columns:1fr 1fr; }
-  /* Notes on mobile */
-  .notes-layout { flex-direction:column; height:auto; min-height:calc(100vh - 54px); }
-  .notes-sidebar { width:100%; min-width:100%; max-height:180px; border-right:none; border-bottom:1px solid var(--border); }
-  .notes-editor-area { min-height:calc(100vh - 280px); }
+  /* Notes on mobile: Apple Notes style — full-screen list, full-screen editor */
+  .notes-layout { position:relative; height:calc(100vh - 54px); overflow:hidden; }
+  .notes-sidebar { position:absolute; inset:0; width:100%; min-width:100%; border-right:none; transition:transform .22s ease; }
+  .notes-editor-area { position:absolute; inset:0; width:100%; transform:translateX(100%); transition:transform .22s ease; }
+  .notes-layout.note-open .notes-sidebar { transform:translateX(-100%); }
+  .notes-layout.note-open .notes-editor-area { transform:translateX(0); }
+  .notes-back-btn { display:flex !important; }
 }
 
 </style>
@@ -937,6 +940,7 @@ select option { background:#1c1c1c; }
         <div class="notes-list" id="notes-list"></div>
       </div>
       <div class="notes-editor-area" id="notes-editor-area">
+        <div class="notes-back-btn" style="display:none"><button class="nt-btn" onclick="closeNoteOnMobile()" style="margin:8px 12px 0;align-self:flex-start">← Zurück</button></div>
         <div class="notes-empty" id="notes-empty">Erstelle eine Notiz um loszulegen</div>
         <div class="notes-mode-bar" id="notes-mode-bar" style="display:none">
           <button class="notes-mode-btn active" onclick="setNoteMode('type')" id="mode-type-btn">✏️ Tippen</button>
@@ -4415,6 +4419,7 @@ async function createNote() {
   activeNoteId=note.id;
   await fsAdd('notes',note);
   renderNotes();
+  if(window.innerWidth<=600) document.querySelector('.notes-layout')?.classList.add('note-open');
   setTimeout(()=>document.getElementById('note-editor')?.focus(),100);
 }
 async function deleteNote(id) {
@@ -4490,6 +4495,11 @@ function openNote(id) {
   if(activeNoteId&&activeNoteId!==id) saveCurrentNote();
   activeNoteId=id; noteMode='type'; canvasHistory=[];
   renderNotes();
+  if(window.innerWidth<=600) document.querySelector('.notes-layout')?.classList.add('note-open');
+}
+function closeNoteOnMobile() {
+  saveCurrentNote();
+  document.querySelector('.notes-layout')?.classList.remove('note-open');
 }
 function renderNoteEditor() {
   const empty=document.getElementById('notes-empty');
@@ -4499,6 +4509,7 @@ function renderNoteEditor() {
   const drawBar=document.getElementById('draw-toolbar');
   const contentWrap=document.getElementById('note-content-wrap');
   const canvasWrap=document.getElementById('note-canvas-wrap');
+  const backBtn=document.querySelector('.notes-back-btn');
   if(!activeNoteId||!D.notes.find(n=>n.id===activeNoteId)){
     activeNoteId=null;
     if(empty) empty.style.display='flex';
@@ -4508,10 +4519,12 @@ function renderNoteEditor() {
     if(drawBar) drawBar.classList.remove('active');
     if(contentWrap) contentWrap.style.display='none';
     if(canvasWrap) canvasWrap.classList.remove('active');
+    if(backBtn) backBtn.style.display='none';
     return;
   }
   const note=D.notes.find(n=>n.id===activeNoteId);
   if(empty) empty.style.display='none';
+  if(backBtn) backBtn.style.display=window.innerWidth<=600?'block':'none';
   if(modeBar) modeBar.style.display='flex';
   if(metaBar) {
     metaBar.style.display='flex';
