@@ -1255,7 +1255,7 @@ select option { background:#1c1c1c; }
 <script>
 // ── STATE ─────────────────────────────────────────────────────
 let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[], financeEntries:[], subscriptions:[], calEvents:[], dailyLog:{} };
-let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{}, morgenroutine:['Wasser trinken','Bett machen','Zähne putzen','Gesicht waschen'], abendroutine:['Zähne putzen','Handy weg','Tagebuch'] };
+let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{}, morgenroutine:[], abendroutine:[] };
 let pendingResult = null;
 let taskFilter = 'all';
 let taskTagFilter = null;
@@ -1322,8 +1322,8 @@ function loadLocal() {
   } catch(e){}
   try { const s=localStorage.getItem('md_settings'); if(s) { const parsed=JSON.parse(s); S={...S,...parsed}; } } catch(e){}
   // Ensure routine defaults
-  if(!Array.isArray(S.morgenroutine)) S.morgenroutine=['Wasser trinken','Bett machen','Zähne putzen','Gesicht waschen'];
-  if(!Array.isArray(S.abendroutine)) S.abendroutine=['Zähne putzen','Handy weg','Tagebuch'];
+  if(!Array.isArray(S.morgenroutine)) S.morgenroutine=[];
+  if(!Array.isArray(S.abendroutine)) S.abendroutine=[];
   // Ensure all collections are arrays
   if(!Array.isArray(D.notes)) D.notes=[];
   if(!Array.isArray(D.habits)) D.habits=[];
@@ -3297,7 +3297,6 @@ function renderRoutine(key, title) {
   const el = document.getElementById('te-'+key);
   if(!el) return;
   const items = S[key] || [];
-  if(!items.length) { el.innerHTML=''; return; }
   const today = new Date().toISOString().slice(0,10);
   const done = (D.dailyLog && D.dailyLog[today] && D.dailyLog[today][key]) || [];
   el.innerHTML = `<div class="te-routine-header">
