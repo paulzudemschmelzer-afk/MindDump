@@ -5882,20 +5882,7 @@ function toggleSidebar() {
 
 // ── INIT ─────────────────────────────────────────────────────
 function init() {
-  loadLocal();
-  renderTaskCategoryInputs();
-  if(S.groqKey) document.getElementById('api-key-in').value=S.groqKey;
-  updateApiIndicator();
-  badges();
-  renderUserArea();
-  renderHeute();
-  // Sidebar auf Mobile geschlossen starten
-  if(window.innerWidth <= 600) document.querySelector('.sidebar').classList.add('collapsed');
-
-  // Taurus init
-  loadTaurusSettings();
-
-  // Auto-connect Firebase (hardcoded config)
+  // Auto-connect Firebase FIRST so auth is available for renderUserArea
   try {
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyB6SVkNsSi6wEIGC1-z4oNbxgHb3hm-Pp4",
@@ -5917,6 +5904,19 @@ function init() {
     });
     updateFBStatus(true);
   } catch(e) { console.warn('Firebase auto-init failed:', e.message); }
+
+  loadLocal();
+  renderTaskCategoryInputs();
+  if(S.groqKey) document.getElementById('api-key-in').value=S.groqKey;
+  updateApiIndicator();
+  badges();
+  renderUserArea();
+  renderHeute();
+  // Sidebar auf Mobile geschlossen starten
+  if(window.innerWidth <= 600) document.querySelector('.sidebar').classList.add('collapsed');
+
+  // Taurus init
+  loadTaurusSettings();
 }
 
 // ── GOOGLE CALENDAR ──────────────────────────────────────────
