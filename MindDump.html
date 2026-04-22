@@ -852,7 +852,6 @@ select option { background:#1c1c1c; }
           </div>
         </div>
       </div>
-      <input type="text" id="te-notiz" class="te-notiz" placeholder="Wie startest du heute? (optional)" oninput="saveTageseinstieg()" />
     </div>
 
     <!-- Habits Schnellcheck -->
@@ -3218,8 +3217,6 @@ function renderTageseinstieg() {
   const btnSchlafen = document.getElementById('btn-schlafen');
   const btnAufstehen = document.getElementById('btn-aufstehen');
   const sleepInfo = document.getElementById('sleep-info');
-  if(btnSchlafen) btnSchlafen.classList.toggle('active', !!(start && !ende));
-  if(btnAufstehen) btnAufstehen.classList.toggle('active', !!ende);
   if(sleepInfo) {
     if(entry.schlaf != null) {
       const startStr = start ? fmtHHMM(start) : '?';
@@ -3236,10 +3233,6 @@ function renderTageseinstieg() {
   const schlafEl = document.getElementById('te-schlaf');
   if(schlafEl) schlafEl.value = entry.schlaf != null ? entry.schlaf : '';
 
-  document.querySelectorAll('#te-energie-btns .te-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.val) === entry.energie));
-  const notizEl = document.getElementById('te-notiz');
-  if(notizEl) notizEl.value = entry.notiz || '';
-
 }
 
 function setTe(field, val) {
@@ -3247,7 +3240,6 @@ function setTe(field, val) {
   if(!D.dailyLog) D.dailyLog = {};
   if(!D.dailyLog[today]) D.dailyLog[today] = {};
   D.dailyLog[today][field] = val;
-  document.querySelectorAll(`#te-${field}-btns .te-btn`).forEach(b => b.classList.toggle('active', Number(b.dataset.val) === val));
   saveTageseinstieg();
 }
 
@@ -3259,7 +3251,6 @@ function saveTageseinstieg() {
   const schlaf = parseFloat(document.getElementById('te-schlaf')?.value);
   if(!isNaN(schlaf) && schlaf >= 0) D.dailyLog[today].schlaf = schlaf;
   else delete D.dailyLog[today].schlaf;
-  D.dailyLog[today].notiz = document.getElementById('te-notiz')?.value || '';
   D.dailyLog[today].updatedAt = Date.now();
   clearTimeout(_teSaveTimer);
   _teSaveTimer = setTimeout(async () => {
