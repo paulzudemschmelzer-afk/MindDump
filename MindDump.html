@@ -1067,6 +1067,17 @@ select option { background:#1c1c1c; }
             <option value="h3">Überschrift 3</option>
             <option value="p">Normal</option>
           </select>
+          <select class="nt-select" onchange="noteSetFontSize(this.value);this.selectedIndex=0" title="Schriftgröße">
+            <option value="">Größe</option>
+            <option value="11px">11</option>
+            <option value="13px">13</option>
+            <option value="15px">15</option>
+            <option value="18px">18</option>
+            <option value="22px">22</option>
+            <option value="26px">26</option>
+            <option value="32px">32</option>
+            <option value="42px">42</option>
+          </select>
           <div class="nt-sep"></div>
           <button class="nt-btn" onclick="noteExec('bold')"><b>F</b></button>
           <button class="nt-btn" onclick="noteExec('italic')"><i>K</i></button>
@@ -5113,6 +5124,19 @@ function renderNoteEditor() {
 }
 function setNoteMode(mode) { saveCurrentNote(); noteMode=mode; renderNoteEditor(); }
 function noteExec(cmd,val) { document.execCommand(cmd,false,val||null); document.getElementById('note-editor')?.focus(); }
+function noteSetFontSize(px) {
+  const editor=document.getElementById('note-editor'); if(!editor) return;
+  editor.focus();
+  document.execCommand('fontSize',false,'7');
+  editor.querySelectorAll('font[size="7"]').forEach(font=>{
+    const span=document.createElement('span');
+    span.style.fontSize=px;
+    span.innerHTML=font.innerHTML;
+    font.replaceWith(span);
+  });
+  autoSaveNote();
+  editor.focus();
+}
 function autoSaveNote() {
   clearTimeout(noteAutoSaveTimer);
   noteAutoSaveTimer=setTimeout(()=>saveCurrentNote(),800);
