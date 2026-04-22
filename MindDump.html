@@ -914,6 +914,7 @@ select option { background:#1c1c1c; }
   <div class="tab-panel" id="tab-stats">
     <div class="page-header"><h1>Statistik</h1><p>Deine Statistiken & Auswertungen.</p></div>
     <div id="stats-content"></div>
+    <div id="habit-analysis" style="margin-top:16px"></div>
   </div>
 
   <!-- HABITS -->
@@ -953,10 +954,6 @@ select option { background:#1c1c1c; }
       </div>
     </div>
     <div id="habits-list" class="habit-grid"></div>
-    <div style="margin-top:24px">
-      <button class="btn btn-ghost btn-sm" onclick="toggleHabitAnalysis()" id="habit-analysis-toggle">📊 Wochenanalyse</button>
-    </div>
-    <div id="habit-analysis" style="display:none;margin-top:16px"></div>
   </div>
 
   <!-- WEEK CALENDAR -->
@@ -1616,7 +1613,7 @@ function go(tab) {
   if(tab==='tasks') renderTasks();
   if(tab==='heute') renderHeute();
   if(tab==='snippets') renderSnips();
-  if(tab==='stats') renderStats();
+  if(tab==='stats') { renderStats(); renderHabitAnalysis(); }
   if(tab==='week') renderWeek();
   if(tab==='habits') renderHabits();
   if(tab==='finance') renderFinance();
@@ -4731,9 +4728,6 @@ function renderHabits(){
     return;
   }
   el.innerHTML=habits.map(renderHabitCard).join('');
-  // Refresh analysis if it's open
-  const analysisEl=document.getElementById('habit-analysis');
-  if(analysisEl&&analysisEl.style.display!=='none') renderHabitAnalysis();
 }
 function habitField(id,field){ return document.getElementById(`hc-${field}-${id}`); }
 function setHabitFormMode(editing){
@@ -4831,15 +4825,6 @@ function toggleHabitDetails(id) {
   el.style.display=open?'block':'none';
   const btn=el.previousElementSibling;
   if(btn) btn.textContent=open?'Details ▴':'Details ▾';
-}
-function toggleHabitAnalysis() {
-  const el=document.getElementById('habit-analysis');
-  const btn=document.getElementById('habit-analysis-toggle');
-  if(!el) return;
-  const open=el.style.display==='none';
-  el.style.display=open?'block':'none';
-  if(btn) btn.textContent=open?'📊 Wochenanalyse schließen':'📊 Wochenanalyse';
-  if(open) renderHabitAnalysis();
 }
 
 function renderHabitAnalysis() {
