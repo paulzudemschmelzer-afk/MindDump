@@ -742,6 +742,7 @@ select option { background:#1c1c1c; }
     <div class="btn-row">
       <button class="btn btn-primary" id="process-btn" onclick="processDump()">⚡ Verarbeiten</button>
       <button class="btn btn-ghost" onclick="saveDumpAsOneTask()">📋 Als ganzen Task</button>
+      <button class="btn btn-ghost" onclick="saveDumpAsOneNote()">📝 Als Notiz</button>
       <button class="btn btn-ghost" onclick="document.getElementById('dump-input').value=''">Leeren</button>
       <span class="hint">Ctrl+Enter</span>
     </div>
@@ -1693,17 +1694,19 @@ async function processDump() {
 
   const prompt=`Du bist ein persönlicher Assistent. Analysiere diesen Brain Dump auf Deutsch und extrahiere:
 
-1. TASKS: Actionable Aufgaben.
+1. TASKS: Actionable Aufgaben — Dinge die getan werden müssen.
    - title: Kurzer Titel
    - context: Ausführlicher Kontext — Warum, Wie, Details, Deadline wenn erwähnt
    - priority: "hoch", "mittel" oder "niedrig"
    - dueDate: Datum als "YYYY-MM-DD" falls erwähnt, sonst null. Heute ist ${dateKey()}.
-   - estimatedTime: Geschätzte Dauer als String (z.B. "30min", "2h", "1h 30min") falls erwähnbar oder schätzbar, sonst null.
+   - estimatedTime: Geschätzte Dauer als String (z.B. "30min", "2h", "1h 30min") falls schätzbar, sonst null.
 
-2. THOUGHTS: Ideen/Gedanken die KEINE Aufgaben sind.
+2. NOTIZEN: Ideen, Gedanken, Informationen die KEINE Aufgaben sind — als strukturierte Notiz festhalten.
+   - title: Kurzer prägnanter Titel für die Notiz
+   - content: Der vollständige Inhalt der Notiz
 
 Antworte NUR mit validem JSON:
-{"tasks":[{"title":"...","context":"...","priority":"hoch|mittel|niedrig","dueDate":"YYYY-MM-DD|null","estimatedTime":"..."|null}],"thoughts":[{"content":"..."}]}
+{"tasks":[{"title":"...","context":"...","priority":"hoch|mittel|niedrig","dueDate":"YYYY-MM-DD|null","estimatedTime":"..."|null}],"notizen":[{"title":"...","content":"..."}]}
 
 Brain Dump:
 ${text}`;
@@ -1794,13 +1797,57 @@ async function saveDumpOneConfirm() {
   toast('Task gespeichert!');
 }
 
+function saveDumpAsOneNote() {
+  const text=document.getElementById('dump-input').value.trim();
+  if(!text){ toast('Bitte erst etwas eintippen!','err'); return; }
+  const firstLine=text.split('\n')[0].trim();
+  const title=firstLine.length>80?firstLine.slice(0,77)+'...':firstLine;
+  const catOpts=getKnownNotesCategories().map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  document.getElementById('dump-result').innerHTML=`<div class="result-block">
+    <div class="section-label" style="margin-top:24px">📝 Als Notiz speichern</div>
+    <div class="task-card" style="margin-bottom:0">
+      <div class="task-body" style="width:100%">
+        <div class="form-row" style="margin-bottom:6px">
+          <input type="text" id="dump-note-title" value="${esc(title)}" placeholder="Titel" style="font-weight:600" />
+        </div>
+        <div class="form-row" style="margin-bottom:6px">
+          <textarea class="form-ta" id="dump-note-content" style="min-height:120px;font-size:13px">${esc(text)}</textarea>
+        </div>
+        <div class="dump-task-routing">
+          <label>Kategorie:</label>
+          <select class="topic-inp-sm" id="dump-note-cat" style="min-width:160px">${catOpts}</select>
+          <input class="topic-inp-sm" id="dump-note-subtopic" placeholder="Unterkategorie (optional)" style="min-width:150px" />
+        </div>
+      </div>
+    </div>
+    <div class="save-sel-row">
+      <button class="btn btn-primary" onclick="saveDumpNoteConfirm()">✓ Notiz speichern</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('dump-result').innerHTML=''">Abbrechen</button>
+    </div>
+  </div>`;
+}
+
+async function saveDumpNoteConfirm() {
+  const title=document.getElementById('dump-note-title')?.value.trim();
+  if(!title){ toast('Bitte Titel eingeben','err'); return; }
+  const content=document.getElementById('dump-note-content')?.value.trim()||'';
+  const category=document.getElementById('dump-note-cat')?.value||'Allgemein';
+  const subtopic=document.getElementById('dump-note-subtopic')?.value.trim()||null;
+  const html='<p>'+content.replace(/\n/g,'</p><p>')+'</p>';
+  await fsAdd('notes',{id:uid(),title,category,subtopic,html,canvasData:null,created:new Date().toISOString(),updated:new Date().toISOString()});
+  document.getElementById('dump-result').innerHTML='';
+  document.getElementById('dump-input').value='';
+  toast('Notiz gespeichert!');
+}
+
 function getExistingTopics() {
   const topics = [...new Set(D.thoughts.map(t=>t.topic).filter(Boolean))];
   return topics.sort();
 }
 
 function renderDumpResult(p) {
-  const tasks=p.tasks||[], thoughts=p.thoughts||[];
+  const tasks=p.tasks||[], notizen=p.notizen||p.thoughts||[];
+  const noteCats=getKnownNotesCategories().map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
 
   let html='<div class="result-block">';
 
@@ -1838,28 +1885,30 @@ function renderDumpResult(p) {
     });
   }
 
-  if(thoughts.length){
-    html+=`<div class="section-label" style="margin-top:20px">💡 ${thoughts.length} Thought${thoughts.length>1?'s':''} — bearbeiten & Kategorie zuweisen</div>`;
-    thoughts.forEach((t,i)=>{
+  if(notizen.length){
+    html+=`<div class="section-label" style="margin-top:20px">📝 ${notizen.length} Notiz${notizen.length>1?'en':''} — bearbeiten & speichern</div>`;
+    notizen.forEach((n,i)=>{
+      const title=n.title||(n.content||'').split('\n')[0].slice(0,60)||'Notiz';
+      const content=n.content||n.text||'';
       html+=`<div class="dump-check">
-        <input type="checkbox" id="dth-${i}" checked onchange="updateSelCount()">
+        <input type="checkbox" id="dn-${i}" checked onchange="updateSelCount()">
         <div style="flex:1">
           <div class="form-row" style="margin-bottom:6px">
-            <textarea class="form-ta" id="dth-text-${i}" style="min-height:50px;font-size:13px">${esc(t.content)}</textarea>
+            <input type="text" id="dn-title-${i}" value="${esc(title)}" placeholder="Titel" style="font-weight:600;font-size:13px" />
+          </div>
+          <div class="form-row" style="margin-bottom:6px">
+            <textarea class="form-ta" id="dn-content-${i}" style="min-height:60px;font-size:13px">${esc(content)}</textarea>
           </div>
           <div class="dump-task-routing">
             <label>Kategorie:</label>
-            <select class="topic-inp-sm" id="dth-topic-${i}" onchange="updateDumpThoughtSubtopic(${i})" style="min-width:150px">${renderThoughtCategoryOptions('Allgemein')}</select>
-            <label>Sub:</label>
-            <input class="topic-inp-sm" id="dth-subtopic-${i}" list="dth-subtopic-list-${i}" placeholder="optional" style="min-width:130px" />
-            <datalist id="dth-subtopic-list-${i}"></datalist>
+            <select class="topic-inp-sm" id="dn-cat-${i}" style="min-width:150px">${noteCats}</select>
           </div>
         </div>
       </div><div style="margin-bottom:10px"></div>`;
     });
   }
 
-  const total=tasks.length+thoughts.length;
+  const total=tasks.length+notizen.length;
   if(total>0){
     html+=`<div class="save-sel-row">
       <button class="btn btn-primary" id="save-sel-btn" onclick="saveSelected()">✓ Ausgewählte speichern (<span id="sel-count">${total}</span>)</button>
@@ -1875,10 +1924,10 @@ function renderDumpResult(p) {
 
 function updateSelCount() {
   const tasks=(pendingResult?.tasks||[]).length;
-  const thoughts=(pendingResult?.thoughts||[]).length;
+  const notizen=(pendingResult?.notizen||pendingResult?.thoughts||[]).length;
   let count=0;
   for(let i=0;i<tasks;i++) if(document.getElementById('dt-'+i)?.checked) count++;
-  for(let i=0;i<thoughts;i++) if(document.getElementById('dth-'+i)?.checked) count++;
+  for(let i=0;i<notizen;i++) if(document.getElementById('dn-'+i)?.checked) count++;
   const el=document.getElementById('sel-count');
   if(el) el.textContent=count;
 }
@@ -1919,12 +1968,13 @@ async function saveSelected() {
       nt++;
     }
   });
-  (pendingResult.thoughts||[]).forEach((t,i)=>{
-    if(document.getElementById('dth-'+i)?.checked){
-      const content=document.getElementById('dth-text-'+i)?.value.trim()||t.content;
-      const topic=document.getElementById('dth-topic-'+i)?.value||'Allgemein';
-      const subtopic=document.getElementById('dth-subtopic-'+i)?.value.trim()||null;
-      ps.push(fsAdd('thoughts',{id:uid(),content,topic,subtopic,createdAt:Date.now()}));
+  (pendingResult.notizen||pendingResult.thoughts||[]).forEach((n,i)=>{
+    if(document.getElementById('dn-'+i)?.checked){
+      const title=document.getElementById('dn-title-'+i)?.value.trim()||n.title||'Notiz';
+      const content=document.getElementById('dn-content-'+i)?.value.trim()||n.content||'';
+      const category=document.getElementById('dn-cat-'+i)?.value||'Allgemein';
+      const html='<p>'+content.replace(/\n/g,'</p><p>')+'</p>';
+      ps.push(fsAdd('notes',{id:uid(),title,category,subtopic:null,html,canvasData:null,created:new Date().toISOString(),updated:new Date().toISOString()}));
       nth++;
     }
   });
@@ -1932,7 +1982,7 @@ async function saveSelected() {
   pendingResult=null;
   document.getElementById('dump-result').innerHTML='';
   document.getElementById('dump-input').value='';
-  toast(`Gespeichert: ${nt} Task${nt!==1?'s':''}, ${nth} Thought${nth!==1?'s':''}`);
+  toast(`Gespeichert: ${nt} Task${nt!==1?'s':''}, ${nth} Notiz${nth!==1?'en':''}`);
 }
 
 // ── TASKS ─────────────────────────────────────────────────────
