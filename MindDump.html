@@ -439,6 +439,28 @@ select option { background:#1c1c1c; }
 .milestone { font-size:11px; color:var(--sub); border:1px solid var(--border); border-radius:999px; padding:3px 8px; }
 .milestone.done { color:#34d399; border-color:rgba(16,185,129,.25); background:rgba(16,185,129,.08); }
 .habit-empty { background:var(--card); border:1px dashed var(--border); border-radius:10px; padding:28px 18px; text-align:center; color:var(--sub); }
+/* Habit analysis */
+.ha-section { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:14px; }
+.ha-title { font-size:13px; font-weight:700; margin-bottom:12px; color:var(--text); }
+.ha-matrix { overflow-x:auto; }
+.ha-matrix table { border-collapse:collapse; width:100%; font-size:11px; }
+.ha-matrix th { color:var(--sub); font-weight:500; padding:4px 6px; text-align:center; white-space:nowrap; }
+.ha-matrix td { padding:4px 6px; text-align:center; }
+.ha-matrix td.habit-label { text-align:left; font-size:12px; font-weight:600; padding-right:10px; white-space:nowrap; max-width:120px; overflow:hidden; text-overflow:ellipsis; }
+.ha-dot { width:22px; height:22px; border-radius:6px; margin:auto; }
+.ha-dot.full { background:rgba(52,211,153,.6); }
+.ha-dot.minimal { background:rgba(251,191,36,.5); }
+.ha-dot.miss { background:rgba(239,68,68,.35); }
+.ha-dot.empty { background:rgba(255,255,255,.06); }
+.ha-energy { font-weight:700; }
+.ha-corr-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.ha-corr-card { flex:1; min-width:140px; background:var(--sidebar); border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
+.ha-corr-name { font-size:12px; font-weight:700; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ha-corr-stat { font-size:11px; color:var(--sub); line-height:1.6; }
+.ha-corr-diff { font-size:13px; font-weight:700; }
+.ha-corr-diff.pos { color:#34d399; }
+.ha-corr-diff.neg { color:#f87171; }
+.ha-corr-diff.neu { color:var(--sub); }
 
 /* ── FINANCE ── */
 .finance-layout { display:grid; gap:14px; }
@@ -849,6 +871,10 @@ select option { background:#1c1c1c; }
       </div>
     </div>
     <div id="habits-list" class="habit-grid"></div>
+    <div style="margin-top:24px">
+      <button class="btn btn-ghost btn-sm" onclick="toggleHabitAnalysis()" id="habit-analysis-toggle">📊 Wochenanalyse</button>
+    </div>
+    <div id="habit-analysis" style="display:none;margin-top:16px"></div>
   </div>
 
   <!-- WEEK CALENDAR -->
@@ -4280,6 +4306,9 @@ function renderHabits(){
     return;
   }
   el.innerHTML=habits.map(renderHabitCard).join('');
+  // Refresh analysis if it's open
+  const analysisEl=document.getElementById('habit-analysis');
+  if(analysisEl&&analysisEl.style.display!=='none') renderHabitAnalysis();
 }
 function habitField(id,field){ return document.getElementById(`hc-${field}-${id}`); }
 async function addHabitManual(){
@@ -4339,6 +4368,110 @@ function toggleHabitDetails(id) {
   const btn=el.previousElementSibling;
   if(btn) btn.textContent=open?'Details ▴':'Details ▾';
 }
+function toggleHabitAnalysis() {
+  const el=document.getElementById('habit-analysis');
+  const btn=document.getElementById('habit-analysis-toggle');
+  if(!el) return;
+  const open=el.style.display==='none';
+  el.style.display=open?'block':'none';
+  if(btn) btn.textContent=open?'📊 Wochenanalyse schließen':'📊 Wochenanalyse';
+  if(open) renderHabitAnalysis();
+}
+
+function renderHabitAnalysis() {
+  const el=document.getElementById('habit-analysis'); if(!el) return;
+  const habits=(D.habits||[]).filter(h=>!h.archived);
+  if(!habits.length){ el.innerHTML='<div style="color:var(--sub);font-size:13px">Noch keine Habits.</div>'; return; }
+
+  // Build last 14 days list
+  const days=[];
+  for(let i=13;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); days.push(d.toISOString().slice(0,10)); }
+  const dayLabels=['So','Mo','Di','Mi','Do','Fr','Sa'];
+
+  // ── Matrix: habits × days ──
+  let matHtml=`<div class="ha-section"><div class="ha-title">14-Tage-Übersicht</div><div class="ha-matrix"><table>
+    <tr><th></th>${days.map(d=>`<th>${dayLabels[new Date(d+'T12:00:00').getDay()]}<br><span style="font-weight:400">${d.slice(8)}</span></th>`).join('')}</tr>`;
+  habits.forEach(h=>{
+    const cMap={};
+    habitCheckins(h).forEach(c=>{ cMap[c.date]=c.mode; });
+    matHtml+=`<tr><td class="habit-label" title="${esc(h.name)}">${esc(h.name)}</td>`;
+    days.forEach(d=>{
+      const m=cMap[d];
+      const cls=m==='full'?'full':m==='minimal'?'minimal':m==='miss'?'miss':'empty';
+      const title=m==='full'?'Erledigt':m==='minimal'?'Minimal':m==='miss'?'Nicht gemacht':'–';
+      matHtml+=`<td><div class="ha-dot ${cls}" title="${title}"></div></td>`;
+    });
+    matHtml+='</tr>';
+  });
+  // Energy row
+  matHtml+='<tr><td class="habit-label" style="color:var(--sub)">⚡ Energie</td>';
+  const energyEmoji=['','😵','😴','🙂','⚡','🚀'];
+  days.forEach(d=>{
+    const e=(D.dailyLog||{})[d]?.energie;
+    matHtml+=`<td class="ha-energy" style="font-size:14px">${e?energyEmoji[e]??e:''}</td>`;
+  });
+  matHtml+='</tr></table></div></div>';
+
+  // ── Correlation per habit ──
+  let corrHtml=`<div class="ha-section"><div class="ha-title">Energie-Korrelation — Tage mit vs. ohne Habit</div><div class="ha-corr-row">`;
+  const log=D.dailyLog||{};
+  habits.forEach(h=>{
+    const doneDates=new Set(habitCheckins(h).filter(c=>c.mode!=='miss').map(c=>c.date));
+    const doneEnergy=[], notDoneEnergy=[];
+    Object.entries(log).forEach(([date,entry])=>{
+      if(entry.energie==null) return;
+      (doneDates.has(date)?doneEnergy:notDoneEnergy).push(entry.energie);
+    });
+    const avg=arr=>arr.length?(arr.reduce((s,v)=>s+v,0)/arr.length):null;
+    const d=avg(doneEnergy), nd=avg(notDoneEnergy);
+    const diff=d!=null&&nd!=null?d-nd:null;
+    const diffStr=diff!=null?(diff>0?`+${diff.toFixed(1)}`:`${diff.toFixed(1)}`):null;
+    const diffCls=diff==null?'neu':diff>0.2?'pos':diff<-0.2?'neg':'neu';
+
+    // Time pattern
+    const times=habitCheckins(h).filter(c=>c.mode!=='miss'&&c.time).map(c=>parseInt(c.time));
+    const morn=times.filter(t=>t>=5&&t<12).length;
+    const aftn=times.filter(t=>t>=12&&t<17).length;
+    const even=times.filter(t=>t>=17).length;
+    const maxT=Math.max(morn,aftn,even);
+    const timeLabel=times.length===0?'Keine Zeitdaten':maxT===morn?`🌅 Morgens (${morn}×)`:maxT===aftn?`☀️ Nachmittags (${aftn}×)`:`🌙 Abends (${even}×)`;
+
+    corrHtml+=`<div class="ha-corr-card">
+      <div class="ha-corr-name">${esc(h.name)}</div>
+      <div class="ha-corr-stat">${timeLabel}</div>
+      ${diff!=null?`<div class="ha-corr-stat">Energie mit Habit: <b>${d.toFixed(1)}</b> / ohne: <b>${nd.toFixed(1)}</b></div>
+      <div class="ha-corr-diff ${diffCls}">${diffStr} Energie-Punkte</div>`
+      :`<div class="ha-corr-stat" style="color:var(--sub);font-size:11px">Noch zu wenig Daten für Korrelation</div>`}
+    </div>`;
+  });
+  corrHtml+='</div></div>';
+
+  // ── Co-occurrence ──
+  let coHtml='';
+  if(habits.length>=2){
+    const pairs=[];
+    for(let i=0;i<habits.length;i++) for(let j=i+1;j<habits.length;j++){
+      const dA=new Set(habitCheckins(habits[i]).filter(c=>c.mode!=='miss').map(c=>c.date));
+      const dB=new Set(habitCheckins(habits[j]).filter(c=>c.mode!=='miss').map(c=>c.date));
+      const both=[...dA].filter(d=>dB.has(d)).length;
+      const total=new Set([...dA,...dB]).size;
+      if(total>0) pairs.push({a:habits[i].name,b:habits[j].name,pct:Math.round(both/total*100),both,total});
+    }
+    pairs.sort((a,b)=>b.pct-a.pct);
+    if(pairs.length){
+      coHtml=`<div class="ha-section"><div class="ha-title">Habit-Kombis</div>`;
+      coHtml+=pairs.slice(0,4).map(p=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="flex:1;font-size:12px">${esc(p.a)} + ${esc(p.b)}</div>
+        <div style="font-size:12px;color:var(--sub)">${p.both} gemeins. Tage</div>
+        <div style="font-weight:700;font-size:13px;color:${p.pct>=60?'#34d399':p.pct>=30?'#fbbf24':'var(--sub)'}">${p.pct}%</div>
+      </div>`).join('');
+      coHtml+='</div>';
+    }
+  }
+
+  el.innerHTML=matHtml+corrHtml+coHtml;
+}
+
 async function deleteHabit(id){
   if(!confirm('Habit wirklich löschen?')) return;
   await fsDel('habits',id);
