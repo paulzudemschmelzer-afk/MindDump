@@ -127,6 +127,18 @@ textarea::placeholder { color:#444; }
 .te-btn.active { background:rgba(124,58,237,.2); border-color:var(--accent2); color:var(--accent2); }
 .te-notiz { width:100%; background:none; border:none; border-bottom:1px solid var(--border); color:var(--text); font-size:13px; padding-bottom:5px; outline:none; font-family:inherit; box-sizing:border-box; }
 .te-notiz:focus-visible { border-bottom-color:var(--accent); }
+/* Routinen */
+.te-routine { margin-top:12px; padding-top:10px; border-top:1px solid rgba(96,165,250,.12); }
+.te-routine-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.te-routine-title { font-size:11px; font-weight:700; color:#9fc6ff; text-transform:uppercase; letter-spacing:.5px; }
+.te-routine-items { display:flex; flex-wrap:wrap; gap:6px; }
+.te-routine-item { display:flex; align-items:center; gap:6px; padding:5px 10px; border-radius:8px; border:1px solid rgba(96,165,250,.16); background:rgba(96,165,250,.06); cursor:pointer; font-size:13px; color:#c5dcff; transition:all .15s; user-select:none; -webkit-tap-highlight-color:transparent; }
+.te-routine-item:hover { border-color:var(--today-intro-accent); background:rgba(96,165,250,.12); }
+.te-routine-item.checked { background:rgba(52,211,153,.15); border-color:rgba(52,211,153,.3); color:#34d399; }
+.te-routine-item .ri-check { width:14px; height:14px; border-radius:4px; border:1.5px solid currentColor; display:flex; align-items:center; justify-content:center; font-size:9px; flex-shrink:0; }
+.te-routine-item.checked .ri-check { background:rgba(52,211,153,.3); }
+.te-routine-edit { background:none; border:none; color:#555; cursor:pointer; font-size:12px; padding:2px 4px; }
+.te-routine-edit:hover { color:var(--text); }
 .heute-drag-handle { width:28px; height:28px; min-width:28px; border-radius:7px; border:1px solid transparent; color:#3a3a3a; cursor:grab; padding:0; font-size:17px; display:flex; align-items:center; justify-content:center; flex-shrink:0; touch-action:none; user-select:none; line-height:1; margin-top:-1px; background:transparent; }
 .heute-drag-handle:hover { color:#666; background:rgba(255,255,255,.03); border-color:#2f2f2f; }
 .heute-drag-handle:active { cursor:grabbing; color:var(--accent2); border-color:rgba(124,58,237,.28); background:rgba(124,58,237,.08); }
@@ -857,6 +869,10 @@ select option { background:#1c1c1c; }
           </div>
         </div>
       </div>
+      <!-- Morgenroutine -->
+      <div class="te-routine" id="te-morgenroutine"></div>
+      <!-- Abendroutine -->
+      <div class="te-routine" id="te-abendroutine"></div>
     </div>
 
     <!-- Habits Schnellcheck -->
@@ -1239,7 +1255,7 @@ select option { background:#1c1c1c; }
 <script>
 // ── STATE ─────────────────────────────────────────────────────
 let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[], financeEntries:[], subscriptions:[], calEvents:[], dailyLog:{} };
-let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{} };
+let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{}, morgenroutine:['Wasser trinken','Bett machen','Zähne putzen','Gesicht waschen'], abendroutine:['Zähne putzen','Handy weg','Tagebuch'] };
 let pendingResult = null;
 let taskFilter = 'all';
 let taskTagFilter = null;
@@ -3238,6 +3254,7 @@ function renderTageseinstieg() {
   const schlafEl = document.getElementById('te-schlaf');
   if(schlafEl) schlafEl.value = entry.schlaf != null ? entry.schlaf : '';
 
+  renderRoutinen();
 }
 
 function setTe(field, val) {
@@ -3266,6 +3283,55 @@ function saveTageseinstieg() {
     const s = document.getElementById('te-saved');
     if(s){ s.style.display='inline'; setTimeout(()=>s.style.display='none',1500); }
   }, 700);
+}
+
+// ── ROUTINEN ─────────────────────────────────────────────────
+function renderRoutinen() {
+  renderRoutine('morgenroutine','🌅 Morgenroutine');
+  renderRoutine('abendroutine','🌙 Abendroutine');
+}
+function renderRoutine(key, title) {
+  const el = document.getElementById('te-'+key);
+  if(!el) return;
+  const items = S[key] || [];
+  if(!items.length) { el.innerHTML=''; return; }
+  const today = new Date().toISOString().slice(0,10);
+  const done = (D.dailyLog && D.dailyLog[today] && D.dailyLog[today][key]) || [];
+  el.innerHTML = `<div class="te-routine-header">
+    <span class="te-routine-title">${title}</span>
+    <button class="te-routine-edit" onclick="editRoutine('${key}')" title="Bearbeiten">✏</button>
+  </div>
+  <div class="te-routine-items">${items.map(item => {
+    const checked = done.includes(item);
+    return `<div class="te-routine-item ${checked?'checked':''}" onclick="toggleRoutineItem('${key}',${JSON.stringify(item).replace(/'/g,"\\'")})" >
+      <span class="ri-check">${checked?'✓':''}</span>${esc(item)}</div>`;
+  }).join('')}</div>`;
+}
+function toggleRoutineItem(key, item) {
+  const today = new Date().toISOString().slice(0,10);
+  if(!D.dailyLog) D.dailyLog = {};
+  if(!D.dailyLog[today]) D.dailyLog[today] = {};
+  const done = D.dailyLog[today][key] || [];
+  if(done.includes(item)) D.dailyLog[today][key] = done.filter(i=>i!==item);
+  else D.dailyLog[today][key] = [...done, item];
+  saveTageseinstieg();
+  renderRoutinen();
+}
+function editRoutine(key) {
+  const title = key==='morgenroutine' ? 'Morgenroutine bearbeiten' : 'Abendroutine bearbeiten';
+  const items = S[key] || [];
+  modalMode = 'routine-'+key;
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = `
+    <p style="color:var(--sub);font-size:12px;margin-bottom:10px">Ein Item pro Zeile</p>
+    <textarea id="routine-edit-input" style="min-height:120px">${items.join('\n')}</textarea>`;
+  document.getElementById('modal-overlay').style.display = 'flex';
+}
+function saveRoutineEdit(key) {
+  const raw = document.getElementById('routine-edit-input')?.value || '';
+  S[key] = raw.split('\n').map(s=>s.trim()).filter(Boolean);
+  saveSettings();
+  renderRoutinen();
 }
 
 // ── INTRADAY QUICK-LOG ────────────────────────────────────────
@@ -5545,6 +5611,10 @@ function openEditSnip(id){
 function closeModal(){ document.getElementById('modal').style.display='none'; modalMode=null; }
 async function saveModal(){
   if(!modalMode) return;
+  if(typeof modalMode==='string' && modalMode.startsWith('routine-')){
+    saveRoutineEdit(modalMode.replace('routine-',''));
+    closeModal(); return;
+  }
   if(modalMode.type==='task'){
     const t=D.tasks.find(x=>x.id===modalMode.id); if(!t) return;
     const title=document.getElementById('m-title').value.trim();
