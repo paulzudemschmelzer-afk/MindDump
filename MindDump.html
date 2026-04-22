@@ -911,6 +911,7 @@ select option { background:#1c1c1c; }
   <div class="tab-panel" id="tab-habits">
     <div class="page-header header-row">
       <div><h1>Habits</h1><p>Gewohnheiten tracken — mit Fortschritt, Decay und Recovery.</p></div>
+      <button class="btn btn-ghost btn-sm" onclick="toggleForm('add-habit-form')">+ Gewohnheit</button>
     </div>
     <div class="add-form" id="add-habit-form" style="display:none">
       <div class="form-row">
@@ -3643,19 +3644,20 @@ function renderHeuteHabits() {
   if(!habits.length){el.innerHTML='';return;}
   const todayStr=dateKey();
   el.innerHTML=`<div class="heute-habits-title">Habits</div>`+habits.map(h=>{
-    const todayC=habitCheckins(h).find(c=>c.date===todayStr);
-    const done=todayC&&todayC.mode==='full';
-    const min=todayC&&todayC.mode==='minimal';
-    const miss=todayC&&todayC.mode==='miss';
-    const cls=done?'done':min?'minimal':'';
-    const label=done?'✓ Erledigt':min?'〜 Minimal':miss?'✗ Nicht gemacht':'✓ Abhaken';
+    const todayCheckins=habitCheckins(h).filter(c=>c.date===todayStr);
+    const fullCount=todayCheckins.filter(c=>c.mode==='full').length;
+    const minCount=todayCheckins.filter(c=>c.mode==='minimal').length;
+    const totalDone=fullCount+minCount;
+    const isMiss=todayCheckins.some(c=>c.mode==='miss')&&totalDone===0;
+    const cls=totalDone>0?'done':isMiss?'minimal':'';
+    const label=totalDone>0?`✓ Nochmal (${totalDone}×)`:isMiss?'↩ Doch gemacht':'✓ Abhaken';
     return `<div class="heute-habit-row">
       <div style="flex:1;min-width:0">
         <div class="heute-habit-name">${esc(h.name)}</div>
         ${h.why?`<div class="heute-habit-why">${esc(h.why)}</div>`:''}
       </div>
-      <button class="heute-habit-check ${cls}" onclick="quickHabitCheckin('${h.id}','full')" ${done?'disabled':''}>${label}</button>
-      ${!done&&!min&&!miss?`<button class="heute-habit-check" style="background:none;border:1px solid var(--border);color:var(--sub);font-size:11px;padding:6px 8px" onclick="quickHabitCheckin('${h.id}','minimal')">Minimal</button>`:''}
+      <button class="heute-habit-check ${cls}" onclick="quickHabitCheckin('${h.id}','full')">${label}</button>
+      ${totalDone===0&&!isMiss?`<button class="heute-habit-check" style="background:none;border:1px solid var(--border);color:var(--sub);font-size:11px;padding:6px 8px" onclick="quickHabitCheckin('${h.id}','minimal')">Minimal</button>`:''}
     </div>`;
   }).join('');
 }
@@ -4643,12 +4645,15 @@ function renderHabitCard(h){
   const score=habitScore(h), status=habitStatus(score), milestones=habitMilestones(score);
   const target=Math.max(1,Number(h.frequencyCount)||3);
   const todayStr=dateKey();
-  const todayCheckin=habitCheckins(h).find(c=>c.date===todayStr);
-  const doneToday=todayCheckin&&todayCheckin.mode==='full';
-  const minToday=todayCheckin&&todayCheckin.mode==='minimal';
-  const missToday=todayCheckin&&todayCheckin.mode==='miss';
-  const checkLabel=doneToday?'✓ Heute erledigt':minToday?'〜 Minimal erledigt':'✓ Abhaken';
-  const checkCls=doneToday?'done':minToday?'minimal-done':'';
+  const todayCheckins=habitCheckins(h).filter(c=>c.date===todayStr);
+  const fullCount=todayCheckins.filter(c=>c.mode==='full').length;
+  const minCount=todayCheckins.filter(c=>c.mode==='minimal').length;
+  const totalDone=fullCount+minCount;
+  const missToday=todayCheckins.some(c=>c.mode==='miss')&&totalDone===0;
+  const doneToday=totalDone>0;
+  const minToday=totalDone===0&&minCount>0;
+  const checkLabel=totalDone>0?`✓ Nochmal (${totalDone}×)`:missToday?'〜 Minimal':'✓ Abhaken';
+  const checkCls=totalDone>0?'done':'';
   return `<div class="habit-card ${score.recovery?'recovery':''}">
     <div class="habit-top">
       <div style="flex:1;min-width:0">
@@ -4665,8 +4670,8 @@ function renderHabitCard(h){
       </div>
     </div>
     <div class="habit-quick-row">
-      <button class="habit-check-btn ${checkCls}" onclick="quickHabitCheckin('${h.id}','full')" ${doneToday?'disabled':''}>${checkLabel}</button>
-      ${!doneToday&&!minToday?`<button class="habit-check-btn-min" onclick="quickHabitCheckin('${h.id}','minimal')">Minimal</button>`:''}
+      <button class="habit-check-btn ${checkCls}" onclick="quickHabitCheckin('${h.id}','full')">${checkLabel}</button>
+      ${totalDone===0&&!missToday?`<button class="habit-check-btn-min" onclick="quickHabitCheckin('${h.id}','minimal')">Minimal</button>`:''}
       ${!missToday?`<button class="habit-check-btn-miss" onclick="quickHabitCheckin('${h.id}','miss')" title="Heute nicht gemacht">✗</button>`:''}
     </div>
     <button class="habit-details-toggle" onclick="toggleHabitDetails('${h.id}')">Details ▾</button>
@@ -4749,12 +4754,17 @@ async function addHabitCheckin(id,mode='full'){
 }
 async function quickHabitCheckin(id, mode='full') {
   const h=D.habits.find(x=>x.id===id); if(!h) return;
-  const checkin={id:uid(),date:todayISO(),time:new Date().toTimeString().slice(0,5),mode,createdAt:Date.now()};
-  h.checkins=habitCheckins(h).filter(c=>c.date!==checkin.date);
-  h.checkins.push(checkin);
+  const today=todayISO();
+  const checkin={id:uid(),date:today,time:new Date().toTimeString().slice(0,5),mode,createdAt:Date.now()};
+  const prev=habitCheckins(h);
+  if(mode==='miss') {
+    h.checkins=[...prev.filter(c=>c.date!==today), checkin];
+  } else {
+    h.checkins=[...prev, checkin];
+  }
   await fsUpdate('habits',h);
-  const msg=mode==='miss'?'Als nicht gemacht markiert':mode==='minimal'?'Minimalversion ✓':'Erledigt ✓';
-  toast(msg);
+  const count=h.checkins.filter(c=>c.date===today&&(c.mode==='full'||c.mode==='minimal')).length;
+  toast(mode==='miss'?'Als nicht gemacht markiert':mode==='minimal'?`Minimal ✓ (${count}x heute)`:`Erledigt ✓ (${count}x heute)`);
 }
 function toggleHabitDetails(id) {
   const el=document.getElementById('habit-details-'+id); if(!el) return;
