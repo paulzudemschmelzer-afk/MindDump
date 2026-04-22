@@ -1412,15 +1412,17 @@ function subscribeFS() {
     unsubListeners.push(
       col(name).onSnapshot(snap=>{
         D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
-        // Firebase migration: if thoughts exist but no notes, migrate thoughts → notes collection
-        if(name==='notes'||name==='thoughts') _migrateThoughtsToNotesFS();
+        // Firebase migration: only run once after both collections loaded
+        if((name==='notes'||name==='thoughts') && !_fsMigrationDone && D.notes && D.thoughts) _migrateThoughtsToNotesFS();
         rerender(name);
         badges();
       }, err=>console.error(name,err))
     );
   });
+  let _fsMigrationDone = false;
   async function _migrateThoughtsToNotesFS() {
     if(!D.thoughts.length || !useFS()) return;
+    _fsMigrationDone = true;
     const migratedIds=new Set((D.notes||[]).map(n=>n.migratedFrom).filter(Boolean));
     const toMigrate=D.thoughts.filter(t=>!migratedIds.has(t.id));
     if(!toMigrate.length) return;
