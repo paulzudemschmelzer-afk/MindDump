@@ -1320,7 +1320,10 @@ function loadLocal() {
       D={...D,...parsed};
     }
   } catch(e){}
-  try { const s=localStorage.getItem('md_settings'); if(s) S=JSON.parse(s); } catch(e){}
+  try { const s=localStorage.getItem('md_settings'); if(s) { const parsed=JSON.parse(s); S={...S,...parsed}; } } catch(e){}
+  // Ensure routine defaults
+  if(!Array.isArray(S.morgenroutine)) S.morgenroutine=['Wasser trinken','Bett machen','Zähne putzen','Gesicht waschen'];
+  if(!Array.isArray(S.abendroutine)) S.abendroutine=['Zähne putzen','Handy weg','Tagebuch'];
   // Ensure all collections are arrays
   if(!Array.isArray(D.notes)) D.notes=[];
   if(!Array.isArray(D.habits)) D.habits=[];
