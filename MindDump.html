@@ -222,8 +222,21 @@ textarea::placeholder { color:#444; }
 .ap-add-btn { display:none; }
 .unscheduled-area { background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:16px; box-shadow:0 2px 8px rgba(0,0,0,.15); }
 .unsched-tasks { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-.unsched-task { background:rgba(124,58,237,.08); border:1px solid rgba(124,58,237,.15); border-radius:8px; padding:7px 12px; font-size:12px; display:flex; align-items:center; gap:6px; cursor:grab; transition:background .15s; }
+.unsched-task { background:rgba(124,58,237,.08); border:1px solid rgba(124,58,237,.15); border-radius:8px; padding:7px 12px; font-size:12px; display:flex; align-items:center; gap:6px; cursor:grab; transition:background .15s; max-width:260px; }
 .unsched-task:hover { background:rgba(124,58,237,.18); }
+.unsched-kats { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+.unsched-kat { border-radius:8px; overflow:hidden; border:1px solid rgba(255,255,255,.06); }
+.unsched-kat-header { display:flex; align-items:center; justify-content:space-between; padding:7px 12px; font-size:12px; font-weight:600; cursor:pointer; background:rgba(255,255,255,.04); user-select:none; }
+.unsched-kat-header:hover { background:rgba(255,255,255,.08); }
+.unsched-kat-count { background:rgba(255,255,255,.1); border-radius:10px; padding:1px 6px; font-size:10px; font-weight:400; }
+.unsched-kat-tasks { display:flex; flex-wrap:wrap; gap:6px; padding:8px 10px; }
+.unsched-kat.collapsed .unsched-kat-tasks { display:none; }
+.ap-calevent { border-left-width:4px; }
+.cal-assign-kat { margin-bottom:4px; border-radius:8px; overflow:hidden; border:1px solid rgba(255,255,255,.06); }
+.cal-assign-kat-header { display:flex; align-items:center; justify-content:space-between; padding:7px 12px; font-size:12px; font-weight:600; cursor:pointer; background:rgba(255,255,255,.04); user-select:none; }
+.cal-assign-kat-header:hover { background:rgba(255,255,255,.08); }
+.cal-assign-kat-tasks { padding:4px 0; }
+.cal-assign-kat.collapsed .cal-assign-kat-tasks { display:none; }
 /* Quick-add overlay for calendar */
 .cal-assign-list { max-height:200px; overflow-y:auto; margin:8px 0; }
 .cal-assign-item { padding:8px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:8px; transition:background .1s; font-size:13px; }
@@ -889,6 +902,9 @@ select option { background:#1c1c1c; }
           <button class="icon-btn" onclick="heuteCalOffset--;renderHeuteCalendar()">←</button>
           <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 8px" onclick="heuteCalOffset=0;renderHeuteCalendar()">Heute</button>
           <button class="icon-btn" onclick="heuteCalOffset++;renderHeuteCalendar()">→</button>
+          <span style="width:1px;height:16px;background:var(--border);margin:0 2px"></span>
+          <button class="icon-btn" onclick="hcalZoom(-1)" title="Kleiner">−</button>
+          <button class="icon-btn" onclick="hcalZoom(1)" title="Größer">+</button>
         </div>
       </div>
       <div class="hcal-container">
@@ -1247,7 +1263,10 @@ let noteMode = 'type';
 let notesCategoryFilter = 'Alle';
 let heuteCalView = 'day';
 let heuteCalOffset = 0;
-const HCAL_START = 6, HCAL_END = 23, HCAL_PX = 1.1;
+const HCAL_START = 6, HCAL_END = 23;
+let HCAL_PX = 1.1;
+const HCAL_ZOOM_LEVELS = [0.6, 0.8, 1.1, 1.4, 1.8, 2.5];
+let hcalZoomIdx = 2;
 const CALEVENT_COLORS = {
   meal:   {bg:'rgba(16,185,129,.7)',  border:'#34d399', label:'🍽 Essen'},
   travel: {bg:'rgba(245,158,11,.75)', border:'#fbbf24', label:'🚗 Fahrt'},
@@ -3566,6 +3585,17 @@ function renderHeuteCalendar() {
   }
 }
 
+function hcalZoom(dir) {
+  hcalZoomIdx=Math.max(0,Math.min(HCAL_ZOOM_LEVELS.length-1,hcalZoomIdx+dir));
+  const oldPx=HCAL_PX;
+  HCAL_PX=HCAL_ZOOM_LEVELS[hcalZoomIdx];
+  const body=document.getElementById('hcal-scrollbody');
+  const oldScroll=body?body.scrollTop:0;
+  renderHeuteCalendar();
+  const newBody=document.getElementById('hcal-scrollbody');
+  if(newBody){newBody.scrollTop=oldScroll*(HCAL_PX/oldPx);newBody.dataset.scrolled='1';}
+}
+
 let _hcalScrolling=false;
 function hcalColClick(e, ds, colEl) {
   if(e.target.closest('.hcal-event')) return;
@@ -3714,10 +3744,9 @@ function calStartMinutes(t) {
 
 let draggedTaskId=null, dragSourceDay=null, dragGrabOffsetMin=0;
 function dragTask(e,id){
-  draggedTaskId=id;
+  draggedTaskId=id; _dragCalEventId=null;
   const t=D.tasks.find(x=>x.id===id);
   dragSourceDay=t?.dueDate||null;
-  // Record how far down inside the block the user grabbed it
   const blockRect=e.currentTarget.getBoundingClientRect();
   dragGrabOffsetMin=Math.round((e.clientY-blockRect.top)/CAL_PX_PER_MIN);
   e.dataTransfer.effectAllowed='move';
@@ -3737,6 +3766,22 @@ function dropYToTime(e, colEl) {
 
 async function dropTask(e,ds){
   e.preventDefault();
+  if(_dragCalEventId) {
+    const ev=(D.calEvents||[]).find(x=>x.id===_dragCalEventId); if(!ev) return;
+    const col=e.currentTarget;
+    const startTime=dropYToTime(e, col);
+    const [sh,sm]=(ev.startTime||'09:00').split(':').map(Number);
+    const [eh,em]=(ev.endTime||'10:00').split(':').map(Number);
+    const dur=(eh*60+em)-(sh*60+sm);
+    const [nh,nm]=startTime.split(':').map(Number);
+    const newEndMins=nh*60+nm+Math.max(dur,30);
+    ev.date=ds;
+    ev.startTime=startTime;
+    ev.endTime=String(Math.floor(newEndMins/60)).padStart(2,'0')+':'+String(newEndMins%60).padStart(2,'0');
+    await fsUpdate('calEvents',ev);
+    _dragCalEventId=null;
+    return;
+  }
   if(!draggedTaskId) return;
   const t=D.tasks.find(x=>x.id===draggedTaskId);
   if(!t) return;
@@ -4037,7 +4082,7 @@ function renderWeek() {
       ondragover="event.preventDefault();this.classList.add('drag-over')"
       ondragleave="this.classList.remove('drag-over')"
       ondrop="dropTask(event,'${ds}');this.classList.remove('drag-over')"
-      ondblclick="calColClick(event,'${ds}')"
+      onclick="calColClick(event,'${ds}')"
       ontouchstart="calColTouchStart(event,'${ds}')"
       ontouchmove="calColTouchMove(event)"
       ontouchend="calColTouchEnd(event)">`;
@@ -4097,6 +4142,26 @@ function renderWeek() {
       }
     });
 
+    // Place calEvents (D.calEvents for this day)
+    (D.calEvents||[]).filter(ev=>ev.date===ds).forEach(ev=>{
+      const c=CALEVENT_COLORS[ev.type]||CALEVENT_COLORS.event;
+      const [sh,sm]=(ev.startTime||'09:00').split(':').map(Number);
+      const [eh,em]=(ev.endTime||'10:00').split(':').map(Number);
+      const startMins=sh*60+sm, endMins=eh*60+em;
+      const top=(startMins-SH*60)*PX;
+      const h=Math.max(20,(endMins-startMins)*PX);
+      const icon=c.label.split(' ')[0];
+      html+=`<div class="ap-event ap-calevent"
+        style="top:${top}px;height:${h}px;left:2px;right:18px;background:${c.bg};border-color:${c.border}"
+        draggable="true"
+        ondragstart="hcalDragCalEvent(event,'${ev.id}')"
+        onclick="editCalEvent('${ev.id}');event.stopPropagation()"
+        title="${esc(ev.title)}">
+        <div class="ap-event-title">${icon} ${esc(ev.title)}</div>
+        ${h>32?`<div class="ap-event-time">${ev.startTime||''}–${ev.endTime||''}</div>`:''}
+      </div>`;
+    });
+
     html+='</div>';
   });
 
@@ -4113,18 +4178,28 @@ function renderWeek() {
     body.dataset.scrolled='1';
   }
 
-  const allOpen=D.tasks.filter(t=>!t.done).sort((a,b)=>{const o={hoch:0,mittel:1,niedrig:2};return(o[a.priority]??1)-(o[b.priority]??1);});
+  const allOpen=D.tasks.filter(t=>!t.done);
   const ua=document.getElementById('unscheduled-area');
   if(allOpen.length){
+    const byKat={};
+    allOpen.forEach(t=>{ const k=t.kategorie||'Sonstiges'; if(!byKat[k])byKat[k]=[]; byKat[k].push(t); });
+    const sortedKats=Object.keys(byKat).sort();
+    const katHtml=sortedKats.map(k=>{
+      const tasks=byKat[k].sort((a,b)=>{const o={hoch:0,mittel:1,niedrig:2};return(o[a.priority]??1)-(o[b.priority]??1);});
+      const katCol=getKatColor(k);
+      return `<div class="unsched-kat">
+        <div class="unsched-kat-header" onclick="this.closest('.unsched-kat').classList.toggle('collapsed')" style="border-left:3px solid ${katCol.border}">
+          <span>${esc(k)}</span><span class="unsched-kat-count">${tasks.length}</span>
+        </div>
+        <div class="unsched-kat-tasks">${tasks.map(t=>`<div class="unsched-task" draggable="true" ondragstart="dragTask(event,'${t.id}')" title="${esc(t.title)}">
+          <span style="font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.title)}</span>
+          ${t.estimatedTime?`<span style="font-size:10px;color:var(--sub);white-space:nowrap">${t.estimatedTime}</span>`:''}
+        </div>`).join('')}</div>
+      </div>`;
+    }).join('');
     ua.innerHTML=`<div class="unscheduled-area" style="margin-top:16px">
       <div class="section-label">Tasks — in Kalender ziehen (${allOpen.length})</div>
-      <div class="unsched-tasks">
-        ${allOpen.map(t=>`<div class="unsched-task" draggable="true" ondragstart="dragTask(event,'${t.id}')" title="${esc(t.title)}">
-          <span style="font-size:12px">${esc(t.title)}</span>
-          ${t.dueDate?`<span style="font-size:10px;color:var(--accent2)">📅 ${t.dueDate}</span>`:''}
-          ${t.estimatedTime?`<span style="font-size:10px;color:var(--sub)">${t.estimatedTime}</span>`:''}
-        </div>`).join('')}
-      </div>
+      <div class="unsched-kats">${katHtml}</div>
     </div>`;
   } else {
     ua.innerHTML='';
@@ -4224,10 +4299,13 @@ function openQuickAddCal(ds, time) {
   modalMode={type:'cal-quick-add',date:ds,time:time};
   const dayLabel=new Date(ds+'T00:00').toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short'});
   document.getElementById('modal-title').textContent=`${dayLabel} · ${time}`;
+  const endTime=`${String(Math.floor((parseInt(time.split(':')[0])*60+parseInt(time.split(':')[1])+60)/60)%24).padStart(2,'0')}:${String((parseInt(time.split(':')[1])+60)%60).padStart(2,'0')}`;
+  const typeOpts=Object.entries(CALEVENT_COLORS).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('');
   document.getElementById('modal-body').innerHTML=`
     <div class="cal-assign-tabs">
       <button class="cal-assign-tab active" onclick="switchCalTab('assign')">Bestehender Task</button>
       <button class="cal-assign-tab" onclick="switchCalTab('new')">Neuer Task</button>
+      <button class="cal-assign-tab" onclick="switchCalTab('event')">Kalender Event</button>
     </div>
     <div id="cal-tab-assign">
       <input type="text" class="cal-assign-search" id="cal-assign-search" placeholder="Task suchen…" oninput="filterCalAssign()" />
@@ -4247,6 +4325,18 @@ function openQuickAddCal(ds, time) {
         </select>
         <select id="m-qa-kat" style="max-width:160px">${renderTaskCategoryOptions('sonstiges')}</select>
       </div>
+    </div>
+    <div id="cal-tab-event" style="display:none">
+      <div class="form-row"><input type="text" id="m-qe-title" placeholder="Titel…" /></div>
+      <div class="form-row">
+        <label style="font-size:12px;color:var(--sub);min-width:40px">Von:</label>
+        <input type="time" id="m-qe-start" value="${time}" style="max-width:120px" />
+        <label style="font-size:12px;color:var(--sub);min-width:30px;margin-left:8px">Bis:</label>
+        <input type="time" id="m-qe-end" value="${endTime}" style="max-width:120px" />
+      </div>
+      <div class="form-row">
+        <select id="m-qe-type" style="max-width:160px">${typeOpts}</select>
+      </div>
     </div>`;
   document.getElementById('modal').style.display='flex';
   filterCalAssign();
@@ -4254,40 +4344,55 @@ function openQuickAddCal(ds, time) {
 }
 
 function switchCalTab(tab) {
-  document.querySelectorAll('.cal-assign-tab').forEach((el,i)=>el.classList.toggle('active',i===(tab==='assign'?0:1)));
-  document.getElementById('cal-tab-assign').style.display=tab==='assign'?'':'none';
-  document.getElementById('cal-tab-new').style.display=tab==='new'?'':'none';
+  const tabs=['assign','new','event'];
+  document.querySelectorAll('.cal-assign-tab').forEach((el,i)=>el.classList.toggle('active',tabs[i]===tab));
+  tabs.forEach(t=>{ const el=document.getElementById('cal-tab-'+t); if(el) el.style.display=t===tab?'':'none'; });
   if(tab==='new') setTimeout(()=>document.getElementById('m-qa-title').focus(),50);
   if(tab==='assign') setTimeout(()=>document.getElementById('cal-assign-search').focus(),50);
+  if(tab==='event') setTimeout(()=>document.getElementById('m-qe-title').focus(),50);
 }
 
 function filterCalAssign() {
   const q=(document.getElementById('cal-assign-search')?.value||'').toLowerCase();
-  const todayStr=dateKey();
-  const isToday=modalMode&&modalMode.date===todayStr;
-  const list=D.tasks.filter(t=>!t.done&&t.title.toLowerCase().includes(q))
-    .sort((a,b)=>{
-      if(isToday){
-        const aH=a.forToday||a.dueDate===todayStr?1:0;
-        const bH=b.forToday||b.dueDate===todayStr?1:0;
-        if(aH!==bH) return bH-aH;
-      }
-      return 0;
-    }).slice(0,20);
   const el=document.getElementById('cal-assign-list');
-  if(!list.length){el.innerHTML='<div style="padding:12px;color:var(--sub);font-size:13px">Keine Tasks gefunden</div>';return;}
+  if(!el) return;
   const prioIcon={hoch:'🔴',mittel:'🟡',niedrig:'🟢'};
-  el.innerHTML=list.map(t=>{
-    const kat=t.kategorie||'sonstiges';
-    const katCol=getKatColor(kat);
-    return `<div class="cal-assign-item" onclick="assignTaskToCal('${t.id}')">
-      <div style="width:4px;height:24px;border-radius:2px;background:${katCol.border};flex-shrink:0"></div>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.title)}</div>
-        <div style="font-size:11px;color:var(--sub)">${prioIcon[t.priority]||'🟡'} ${t.estimatedTime||'1h'}${t.dueDate?' · '+t.dueDate:''}</div>
-      </div>
-    </div>`;
-  }).join('');
+  const openTasks=D.tasks.filter(t=>!t.done);
+  if(!q) {
+    // Show by category
+    const byKat={};
+    openTasks.forEach(t=>{ const k=t.kategorie||'Sonstiges'; if(!byKat[k])byKat[k]=[]; byKat[k].push(t); });
+    const sortedKats=Object.keys(byKat).sort();
+    if(!sortedKats.length){el.innerHTML='<div style="padding:12px;color:var(--sub);font-size:13px">Keine Tasks vorhanden</div>';return;}
+    el.innerHTML=sortedKats.map(k=>{
+      const tasks=byKat[k];
+      const katCol=getKatColor(k);
+      return `<div class="cal-assign-kat">
+        <div class="cal-assign-kat-header" onclick="this.closest('.cal-assign-kat').classList.toggle('collapsed')" style="border-left:3px solid ${katCol.border}">${esc(k)} <span class="unsched-kat-count">${tasks.length}</span></div>
+        <div class="cal-assign-kat-tasks">${tasks.map(t=>`<div class="cal-assign-item" onclick="assignTaskToCal('${t.id}')">
+          <div style="width:4px;height:24px;border-radius:2px;background:${katCol.border};flex-shrink:0"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.title)}</div>
+            <div style="font-size:11px;color:var(--sub)">${prioIcon[t.priority]||'🟡'} ${t.estimatedTime||'1h'}</div>
+          </div>
+        </div>`).join('')}</div>
+      </div>`;
+    }).join('');
+  } else {
+    const list=openTasks.filter(t=>t.title.toLowerCase().includes(q)).slice(0,20);
+    if(!list.length){el.innerHTML='<div style="padding:12px;color:var(--sub);font-size:13px">Keine Tasks gefunden</div>';return;}
+    el.innerHTML=list.map(t=>{
+      const kat=t.kategorie||'sonstiges';
+      const katCol=getKatColor(kat);
+      return `<div class="cal-assign-item" onclick="assignTaskToCal('${t.id}')">
+        <div style="width:4px;height:24px;border-radius:2px;background:${katCol.border};flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.title)}</div>
+          <div style="font-size:11px;color:var(--sub)">${prioIcon[t.priority]||'🟡'} ${t.estimatedTime||'1h'}${t.dueDate?' · '+t.dueDate:''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
 }
 
 async function assignTaskToCal(id) {
@@ -5577,19 +5682,34 @@ async function saveModal(){
     t.dueDate=document.getElementById('m-cal-date').value||null;
     await fsUpdate('tasks',t); closeModal(); toast('Event aktualisiert!');
   } else if(modalMode.type==='cal-quick-add'){
-    // Check if we're on the "new task" tab
+    const eventTab=document.getElementById('cal-tab-event');
     const newTab=document.getElementById('cal-tab-new');
-    if(!newTab||newTab.style.display==='none'){toast('Wähle einen Task aus der Liste','err');return;}
-    const title=document.getElementById('m-qa-title').value.trim();
-    if(!title){toast('Titel eingeben','err');return;}
-    const task={id:uid(),title,context:'',priority:document.getElementById('m-qa-prio').value,
-      kategorie:document.getElementById('m-qa-kat').value,subkategorie:null,
-      dueDate:modalMode.date,
-      calStartTime:document.getElementById('m-qa-time').value||modalMode.time,
-      estimatedTime:document.getElementById('m-qa-est').value.trim()||'1h',
-      done:false,createdAt:Date.now(),tags:[],recurrence:null};
-    D.tasks.push(task); await fsUpdate('tasks',task);
-    closeModal(); renderWeek(); toast('Task erstellt!');
+    if(eventTab&&eventTab.style.display!=='none'){
+      // Save as calEvent
+      const title=document.getElementById('m-qe-title')?.value.trim();
+      if(!title){toast('Titel eingeben','err');return;}
+      const ev={id:uid(),date:modalMode.date,title,
+        type:document.getElementById('m-qe-type')?.value||'event',
+        startTime:document.getElementById('m-qe-start')?.value||modalMode.time,
+        endTime:document.getElementById('m-qe-end')?.value||'',
+        createdAt:Date.now()};
+      if(!D.calEvents) D.calEvents=[];
+      D.calEvents.push(ev); await fsUpdate('calEvents',ev);
+      closeModal(); renderWeek(); renderHeuteCalendar(); toast('Event erstellt!');
+    } else {
+      // Save as new task
+      if(!newTab||newTab.style.display==='none'){toast('Wähle einen Task aus der Liste','err');return;}
+      const title=document.getElementById('m-qa-title').value.trim();
+      if(!title){toast('Titel eingeben','err');return;}
+      const task={id:uid(),title,context:'',priority:document.getElementById('m-qa-prio').value,
+        kategorie:document.getElementById('m-qa-kat').value,subkategorie:null,
+        dueDate:modalMode.date,
+        calStartTime:document.getElementById('m-qa-time').value||modalMode.time,
+        estimatedTime:document.getElementById('m-qa-est').value.trim()||'1h',
+        done:false,createdAt:Date.now(),tags:[],recurrence:null};
+      D.tasks.push(task); await fsUpdate('tasks',task);
+      closeModal(); renderWeek(); toast('Task erstellt!');
+    }
   }
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
