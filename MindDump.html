@@ -1700,13 +1700,13 @@ function go(tab) {
 }
 
 function badges() {
-  document.getElementById('b-tasks').textContent=D.tasks.filter(t=>!t.done).length;
+  const bTasks=document.getElementById('b-tasks'); if(bTasks) bTasks.textContent=D.tasks.filter(t=>!t.done).length;
   const bThoughts=document.getElementById('b-thoughts'); if(bThoughts) bThoughts.style.display='none';
-  document.getElementById('b-snippets').textContent=D.snippets.length;
+  const bSnip=document.getElementById('b-snippets'); if(bSnip) bSnip.textContent=D.snippets.length;
   const bNotes=document.getElementById('b-notes'); if(bNotes) bNotes.textContent=D.notes.length;
   const bHabits=document.getElementById('b-habits'); if(bHabits) bHabits.textContent=(D.habits||[]).filter(h=>!h.archived).length;
   const todayStr=dateKey();
-  document.getElementById('b-heute').textContent=D.tasks.filter(t=>!t.done&&(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr).length;
+  const bHeute=document.getElementById('b-heute'); if(bHeute) bHeute.textContent=D.tasks.filter(t=>!t.done&&(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr).length;
 }
 
 // ── TAGS ──────────────────────────────────────────────────────
@@ -6088,9 +6088,9 @@ function init() {
   renderTaskCategoryInputs();
   if(S.groqKey) document.getElementById('api-key-in').value=S.groqKey;
   updateApiIndicator();
-  badges();
-  renderUserArea();
   renderNav();
+  renderUserArea();
+  badges();
   const _startId=(S.navOrder&&S.navOrder.length)?S.navOrder[0]:'heute';
   const _startTab=NAV_ITEMS.find(i=>i.id===_startId)?.tab||'heute';
   go(_startTab);
