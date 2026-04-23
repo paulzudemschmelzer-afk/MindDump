@@ -745,7 +745,34 @@ select option { background:#1c1c1c; }
   .notes-layout.note-open .notes-editor-area { transform:translateX(0); }
   .notes-back-btn { display:flex !important; }
 }
-
+/* ── UNI TRACKER ── */
+.uni-cat-label { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 6px;display:flex;align-items:center;gap:8px; }
+.uni-cat-label.anspruchsvoll { color:#f87171; }
+.uni-cat-label.normal { color:#fbbf24; }
+.uni-cat-label.leicht { color:#34d399; }
+.uni-subj-card { background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px 15px;margin-bottom:7px;cursor:pointer;transition:border-color .15s; }
+.uni-subj-card:hover { border-color:var(--accent2); }
+.uni-subj-card.active-timer { border-color:#34d399;background:rgba(52,211,153,.06); }
+.uni-subj-card.warn { border-color:rgba(248,113,113,.35); }
+.uni-subj-name { font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px; }
+.uni-warn-dot { width:7px;height:7px;border-radius:50%;background:#f87171;flex-shrink:0; }
+.uni-progress-bar { height:4px;background:var(--card2);border-radius:3px;margin-top:8px;overflow:hidden; }
+.uni-progress-fill { height:100%;border-radius:3px;transition:width .3s; }
+.uni-meta { font-size:11px;color:var(--sub);margin-top:5px;display:flex;gap:10px; }
+.uni-rec-box { background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.22);border-radius:10px;padding:12px 14px;margin-bottom:14px; }
+.uni-rec-title { font-size:11px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px; }
+.uni-rec-item { font-size:13px;padding:4px 0;color:var(--text);display:flex;align-items:center;gap:8px; }
+.uni-back-btn { background:none;border:none;color:var(--accent2);font-size:13px;cursor:pointer;padding:0;font-family:inherit;margin-bottom:14px;display:flex;align-items:center;gap:6px; }
+.uni-timer-bar { background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px; }
+.uni-timer-display { font-size:22px;font-weight:700;color:#34d399;font-variant-numeric:tabular-nums;flex:1; }
+.uni-bookmark-box { background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px; }
+.uni-bookmark-label { font-size:10px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px; }
+.uni-task-item { display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04); }
+.uni-task-item:last-child { border-bottom:none; }
+.uni-session-row { padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px; }
+.uni-session-row:last-child { border-bottom:none; }
+.uni-stats-bar { height:12px;background:var(--card2);border-radius:6px;overflow:hidden;flex:1; }
+.uni-stats-fill { height:100%;border-radius:6px; }
 </style>
 </head>
 <body>
@@ -1149,6 +1176,11 @@ select option { background:#1c1c1c; }
     </div>
   </div>
 
+  <!-- UNI -->
+  <div class="tab-panel" id="tab-uni">
+    <div id="uni-main"></div>
+  </div>
+
   <!-- SETTINGS -->
   <div class="tab-panel" id="tab-settings">
     <div class="page-header"><h1>Settings</h1></div>
@@ -1261,7 +1293,7 @@ select option { background:#1c1c1c; }
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────
-let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[], financeEntries:[], subscriptions:[], calEvents:[], dailyLog:{} };
+let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[], financeEntries:[], subscriptions:[], calEvents:[], dailyLog:{}, uniSubjects:[], uniSessions:[], uniTasks:[] };
 let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{}, navOrder:[] };
 let pendingResult = null;
 let taskFilter = 'all';
@@ -1428,7 +1460,7 @@ function connectFirebase() {
 function subscribeFS() {
   unsubListeners.forEach(u=>u());
   unsubListeners=[];
-  ['tasks','thoughts','snippets','notes','habits','financeEntries','subscriptions','calEvents'].forEach(name=>{
+  ['tasks','thoughts','snippets','notes','habits','financeEntries','subscriptions','calEvents','uniSubjects','uniSessions','uniTasks'].forEach(name=>{
     unsubListeners.push(
       col(name).onSnapshot(snap=>{
         D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1621,6 +1653,7 @@ const NAV_ITEMS = [
   {id:'habits',    tab:'habits',    icon:'🏆', label:'Habits',   badge:'b-habits',  badgeStyle:'background:#10b981'},
   {id:'finance',   tab:'finance',   icon:'€',  label:'Finanzen'},
   {id:'notes',     tab:'notes',     icon:'📝', label:'Notizen',  badge:'b-notes'},
+  {id:'uni',       tab:'uni',       icon:'🎓', label:'Uni'},
 ];
 const DEFAULT_NAV_ORDER = NAV_ITEMS.map(i=>i.id);
 
@@ -1680,7 +1713,7 @@ function navTouchEnd(e) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
-const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',stats:'Dashboard',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',habits:'Habits',finance:'Finanzen',notes:'Notizen',settings:'Settings'};
+const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',stats:'Dashboard',week:'Woche',thoughts:'Thoughts',snippets:'Snippets',habits:'Habits',finance:'Finanzen',notes:'Notizen',settings:'Settings',uni:'Uni'};
 const TAB_ACTIONS = {
   tasks:    `<button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">+ Hinzufügen</button>`,
   heute:    `<button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>`,
@@ -1710,6 +1743,7 @@ function go(tab) {
   if(tab==='habits') renderHabits();
   if(tab==='finance') renderFinance();
   if(tab==='notes') renderNotes();
+  if(tab==='uni') renderUni();
   if(tab==='taurus') { renderTaurusChat(); checkTaurusStatus(); }
 }
 
@@ -6343,6 +6377,369 @@ async function gcalSyncAll(){
 setTimeout(()=>{ if(window.google?.accounts) initGCal(); else { const s=document.querySelector('script[src*="gsi"]'); if(s) s.onload=initGCal; } },1000);
 
 init();
+
+// ══════════════════════════════════════════════════════════════
+// UNI TRACKER
+// ══════════════════════════════════════════════════════════════
+const UNI_WEEKLY={leicht:5,normal:10,anspruchsvoll:15};
+const UNI_WARN_DAYS={anspruchsvoll:1,normal:2,leicht:3.5};
+const UNI_CAT_COLOR={anspruchsvoll:'#f87171',normal:'#fbbf24',leicht:'#34d399'};
+let _uniView={page:'list',subjectId:null};
+let _uniTimer=null;
+let _uniTimerInterval=null;
+
+function uniWeekHours(subjectId){
+  const now=new Date(); const day=now.getDay(); const mon=new Date(now);
+  mon.setDate(now.getDate()-(day===0?6:day-1)); mon.setHours(0,0,0,0);
+  return (D.uniSessions||[]).filter(s=>s.subjectId===subjectId&&new Date(s.startTs)>=mon)
+    .reduce((sum,s)=>sum+(s.duration||0),0)/3600000;
+}
+function uniLastStudied(subjectId){
+  const sessions=(D.uniSessions||[]).filter(s=>s.subjectId===subjectId).sort((a,b)=>b.startTs-a.startTs);
+  return sessions[0]?.startTs||null;
+}
+function uniDaysSince(subjectId){
+  const last=uniLastStudied(subjectId); if(!last) return 999;
+  return (Date.now()-last)/86400000;
+}
+function uniIsWarn(s){
+  const days=uniDaysSince(s.id);
+  return days>UNI_WARN_DAYS[s.category||'normal'];
+}
+function uniExamWeeks(s){
+  if(!s.examDate) return null;
+  return (new Date(s.examDate)-Date.now())/(7*86400000);
+}
+function uniRecommendations(){
+  const subjects=(D.uniSubjects||[]).filter(s=>!s.archived);
+  return subjects.map(s=>{
+    let score=0;
+    const days=uniDaysSince(s.id);
+    const warn=uniIsWarn(s);
+    const weeks=uniExamWeeks(s);
+    if(warn) score+=10;
+    score+=days*2;
+    if(weeks!=null&&weeks<3) score+=Math.max(0,(3-weeks)*5);
+    if(s.category==='anspruchsvoll') score+=3;
+    else if(s.category==='normal') score+=1;
+    return {s,score,days,warn,weeks};
+  }).sort((a,b)=>b.score-a.score).slice(0,4);
+}
+function fmtDur(ms){
+  const h=Math.floor(ms/3600000); const m=Math.floor((ms%3600000)/60000);
+  return h>0?`${h}h ${m}min`:`${m}min`;
+}
+function fmtTimer(ms){
+  const h=Math.floor(ms/3600000); const m=Math.floor((ms%3600000)/60000); const s=Math.floor((ms%60000)/1000);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function renderUni(){
+  if(_uniView.page==='subject'&&_uniView.subjectId) renderUniSubject(_uniView.subjectId);
+  else if(_uniView.page==='stats') renderUniStats();
+  else renderUniList();
+}
+
+function renderUniList(){
+  const el=document.getElementById('uni-main'); if(!el) return;
+  const subjects=(D.uniSubjects||[]).filter(s=>!s.archived);
+  const recs=uniRecommendations();
+  let html=`<div class="page-header header-row">
+    <div><h1>Uni</h1><p>Lerntracker & Fortschritt</p></div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-ghost btn-sm" onclick="uniGoStats()">📊 Stats</button>
+      <button class="btn btn-ghost btn-sm" onclick="openAddUniSubject()">+ Fach</button>
+    </div>
+  </div>`;
+
+  if(recs.length){
+    html+=`<div class="uni-rec-box"><div class="uni-rec-title">🎯 Heute lernen</div>`;
+    recs.forEach(({s,days,warn,weeks})=>{
+      const why=warn?`seit ${days<1?'heute':Math.round(days)+'d'} nicht gelernt`:weeks!=null&&weeks<3?`Klausur in ${Math.round(weeks*7)} Tagen`:'';
+      html+=`<div class="uni-rec-item" onclick="uniGoSubject('${s.id}')"><span style="color:${UNI_CAT_COLOR[s.category||'normal']};font-size:9px">●</span>${esc(s.name)}${why?`<span style="color:var(--sub);font-size:11px"> — ${why}</span>`:''}${_uniTimer?.subjectId===s.id?'<span style="color:#34d399;font-size:11px"> ⏱ aktiv</span>':''}</div>`;
+    });
+    html+='</div>';
+  }
+
+  if(!subjects.length){
+    html+='<div class="kat-empty">Noch keine Fächer — tippe "+ Fach" um anzufangen.</div>';
+    el.innerHTML=html; return;
+  }
+
+  ['anspruchsvoll','normal','leicht'].forEach(cat=>{
+    const group=subjects.filter(s=>s.category===cat);
+    if(!group.length) return;
+    const labels={anspruchsvoll:'Anspruchsvoll',normal:'Normal',leicht:'Leicht'};
+    const budget=UNI_WEEKLY[cat];
+    const spent=group.reduce((s,sub)=>s+uniWeekHours(sub.id),0);
+    html+=`<div class="uni-cat-label ${cat}">${labels[cat]} <span style="font-weight:400;color:var(--sub)">${spent.toFixed(1)}h / ${budget}h diese Woche</span></div>`;
+    group.forEach(s=>{
+      const hours=uniWeekHours(s.id);
+      const pct=Math.min(100,(hours/UNI_WEEKLY[cat])*100);
+      const warn=uniIsWarn(s);
+      const days=uniDaysSince(s.id);
+      const isTimer=_uniTimer?.subjectId===s.id;
+      const tasks=(D.uniTasks||[]).filter(t=>t.subjectId===s.id&&!t.done).length;
+      const lastSession=(D.uniSessions||[]).filter(s2=>s2.subjectId===s.id).sort((a,b)=>b.startTs-a.startTs)[0];
+      const bookmark=lastSession?.bookmark;
+      html+=`<div class="uni-subj-card${isTimer?' active-timer':warn?' warn':''}" onclick="uniGoSubject('${s.id}')">
+        <div class="uni-subj-name">
+          ${warn?'<div class="uni-warn-dot"></div>':''}
+          ${esc(s.name)}
+          ${isTimer?'<span style="color:#34d399;font-size:12px">⏱</span>':''}
+          ${tasks?`<span style="background:var(--accent);color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px">${tasks}</span>`:''}
+        </div>
+        <div class="uni-meta">
+          <span>${hours.toFixed(1)}h diese Woche</span>
+          <span>${days<1?'Heute':days<2?'Gestern':Math.round(days)+'d'}${days<1?'':' zuletzt'}</span>
+          ${s.examDate?`<span>📅 ${new Date(s.examDate).toLocaleDateString('de-DE',{day:'numeric',month:'short'})}</span>`:''}
+        </div>
+        <div class="uni-progress-bar"><div class="uni-progress-fill" style="width:${pct}%;background:${UNI_CAT_COLOR[cat]}"></div></div>
+        ${bookmark?`<div style="font-size:11px;color:var(--sub);margin-top:5px">📌 ${esc(bookmark)}</div>`:''}
+      </div>`;
+    });
+  });
+  el.innerHTML=html;
+}
+
+function uniGoSubject(id){ _uniView={page:'subject',subjectId:id}; renderUniSubject(id); }
+function uniGoList(){ _uniView={page:'list',subjectId:null}; renderUniList(); }
+function uniGoStats(){ _uniView={page:'stats'}; renderUniStats(); }
+
+function renderUniSubject(id){
+  const el=document.getElementById('uni-main'); if(!el) return;
+  const s=(D.uniSubjects||[]).find(x=>x.id===id); if(!s){uniGoList();return;}
+  const sessions=(D.uniSessions||[]).filter(x=>x.subjectId===id).sort((a,b)=>b.startTs-a.startTs);
+  const tasks=(D.uniTasks||[]).filter(t=>t.subjectId===id);
+  const lastSession=sessions[0];
+  const isTimer=_uniTimer?.subjectId===id;
+  const hours=uniWeekHours(id);
+  let html=`<button class="uni-back-btn" onclick="uniGoList()">← Zurück</button>
+    <div class="page-header header-row" style="margin-bottom:14px">
+      <div><h2 style="font-size:18px;font-weight:700">${esc(s.name)}</h2>
+        <span style="font-size:12px;color:${UNI_CAT_COLOR[s.category||'normal']}">${s.category||'normal'} · ${hours.toFixed(1)}h diese Woche</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="openEditUniSubject('${id}')">✏</button>
+    </div>`;
+
+  // Bookmark
+  if(lastSession?.bookmark){
+    html+=`<div class="uni-bookmark-box"><div class="uni-bookmark-label">📌 Weiter machen</div>${esc(lastSession.bookmark)}</div>`;
+  }
+
+  // Timer
+  if(isTimer){
+    const elapsed=Date.now()-_uniTimer.startTs;
+    html+=`<div class="uni-timer-bar">
+      <span class="uni-timer-display" id="uni-timer-display">${fmtTimer(elapsed)}</span>
+      <button class="btn btn-primary btn-sm" onclick="uniStopTimer()">■ Stop</button>
+    </div>`;
+  } else {
+    html+=`<div style="margin-bottom:14px"><button class="btn btn-primary btn-sm" onclick="uniStartTimer('${id}')">▶ Lernen starten</button></div>`;
+  }
+
+  // Tasks
+  const openTasks=tasks.filter(t=>!t.done);
+  const doneTasks=tasks.filter(t=>t.done);
+  html+=`<div class="dash-card" style="margin-bottom:12px">
+    <div class="dash-title" style="margin-bottom:10px">✓ Tasks <span style="font-weight:400;color:var(--sub);font-size:12px">${openTasks.length} offen</span></div>
+    ${tasks.map(t=>`<div class="uni-task-item">
+      <div class="checkbox ${t.done?'checked':''}" onclick="toggleUniTask('${t.id}')" style="flex-shrink:0">${t.done?'✓':''}</div>
+      <div style="flex:1;font-size:13px;${t.done?'color:var(--sub);text-decoration:line-through':''}">${esc(t.text)}</div>
+      <button class="icon-btn del" onclick="deleteUniTask('${t.id}')">×</button>
+    </div>`).join('')}
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <input id="uni-task-input-${id}" class="dump-input" placeholder="Neuer Task..." style="flex:1;padding:7px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);color:var(--text);font-size:13px;font-family:inherit;outline:none"
+        onkeydown="if(event.key==='Enter')addUniTask('${id}')"/>
+      <button class="btn btn-ghost btn-sm" onclick="addUniTask('${id}')">+</button>
+    </div>
+  </div>`;
+
+  // Sessions
+  html+=`<div class="dash-card">
+    <div class="dash-title" style="margin-bottom:10px">📖 Sessions <span style="font-weight:400;color:var(--sub);font-size:12px">${sessions.length} gesamt</span></div>
+    ${sessions.length?sessions.slice(0,10).map(sess=>`<div class="uni-session-row">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-weight:600">${esc(sess.topic||'Kein Thema')}</span>
+        <span style="color:var(--sub);font-size:12px">${new Date(sess.startTs).toLocaleDateString('de-DE',{day:'numeric',month:'short'})} · ${fmtDur(sess.duration||0)}</span>
+      </div>
+      ${sess.learnings?`<div style="color:var(--sub);font-size:12px;margin-top:3px">${esc(sess.learnings)}</div>`:''}
+      ${sess.bookmark?`<div style="font-size:11px;color:#fbbf24;margin-top:2px">📌 ${esc(sess.bookmark)}</div>`:''}
+    </div>`).join(''):'<div style="color:var(--sub);font-size:13px">Noch keine Sessions.</div>'}
+  </div>`;
+
+  el.innerHTML=html;
+  if(isTimer) _startUniClock();
+}
+
+function _startUniClock(){
+  clearInterval(_uniTimerInterval);
+  _uniTimerInterval=setInterval(()=>{
+    const disp=document.getElementById('uni-timer-display');
+    if(!disp||!_uniTimer){clearInterval(_uniTimerInterval);return;}
+    disp.textContent=fmtTimer(Date.now()-_uniTimer.startTs);
+  },1000);
+}
+
+function uniStartTimer(subjectId){
+  if(_uniTimer){toast('Erst laufenden Timer stoppen','err');return;}
+  _uniTimer={subjectId,startTs:Date.now()};
+  renderUniSubject(subjectId);
+  toast('Timer gestartet ▶');
+}
+
+function uniStopTimer(){
+  if(!_uniTimer) return;
+  clearInterval(_uniTimerInterval);
+  const dur=Date.now()-_uniTimer.startTs;
+  const subjectId=_uniTimer.subjectId;
+  const startTs=_uniTimer.startTs;
+  _uniTimer=null;
+  modalMode={type:'uniSession',subjectId,startTs,dur};
+  document.getElementById('modal-title').textContent='Session speichern';
+  document.getElementById('modal-body').innerHTML=`
+    <div style="color:var(--sub);font-size:13px;margin-bottom:12px">Dauer: <b style="color:var(--text)">${fmtDur(dur)}</b></div>
+    <div class="form-row"><label class="field"><span class="field-label">Thema *</span><input type="text" id="uni-sess-topic" placeholder="z.B. Kapitel 3 – Thermodynamik" /></label></div>
+    <div class="form-row"><label class="field"><span class="field-label">Was habe ich gelernt?</span><textarea class="form-ta" id="uni-sess-learnings" placeholder="Kernerkenntnisse, Fragen, Aha-Momente..."></textarea></label></div>
+    <div class="form-row"><label class="field"><span class="field-label">📌 Wo aufgehört?</span><input type="text" id="uni-sess-bookmark" placeholder="z.B. Kapitel 4, Seite 82 — Thema X" /></label></div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('uni-sess-topic')?.focus(),50);
+}
+
+// saveModal handles type==='uniSession'
+const _origSaveModal=typeof saveModal==='function'?saveModal:null;
+
+async function openAddUniSubject(){
+  modalMode={type:'uniSubjectAdd'};
+  document.getElementById('modal-title').textContent='Fach hinzufügen';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><label class="field"><span class="field-label">Name</span><input type="text" id="uni-sub-name" placeholder="z.B. Mathematik II" /></label></div>
+    <div class="form-row"><label class="field"><span class="field-label">Kategorie</span>
+      <select id="uni-sub-cat" class="form-sel">
+        <option value="anspruchsvoll">Anspruchsvoll (15h/Woche)</option>
+        <option value="normal" selected>Normal (10h/Woche)</option>
+        <option value="leicht">Leicht (5h/Woche)</option>
+      </select></label></div>
+    <div class="form-row"><label class="field"><span class="field-label">Klausurdatum (optional)</span><input type="date" id="uni-sub-exam" /></label></div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('uni-sub-name')?.focus(),50);
+}
+
+async function openEditUniSubject(id){
+  const s=(D.uniSubjects||[]).find(x=>x.id===id); if(!s) return;
+  modalMode={type:'uniSubjectEdit',id};
+  document.getElementById('modal-title').textContent='Fach bearbeiten';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><label class="field"><span class="field-label">Name</span><input type="text" id="uni-sub-name" value="${esc(s.name)}" /></label></div>
+    <div class="form-row"><label class="field"><span class="field-label">Kategorie</span>
+      <select id="uni-sub-cat" class="form-sel">
+        <option value="anspruchsvoll"${s.category==='anspruchsvoll'?' selected':''}>Anspruchsvoll</option>
+        <option value="normal"${s.category==='normal'?' selected':''}>Normal</option>
+        <option value="leicht"${s.category==='leicht'?' selected':''}>Leicht</option>
+      </select></label></div>
+    <div class="form-row"><label class="field"><span class="field-label">Klausurdatum</span><input type="date" id="uni-sub-exam" value="${s.examDate||''}" /></label></div>
+    <div class="form-row"><button class="btn btn-ghost btn-sm" style="color:#f87171" onclick="archiveUniSubject('${id}')">Fach entfernen</button></div>`;
+  document.getElementById('modal').style.display='flex';
+}
+
+async function archiveUniSubject(id){
+  const s=(D.uniSubjects||[]).find(x=>x.id===id); if(!s) return;
+  s.archived=true; await fsUpdate('uniSubjects',s); closeModal(); uniGoList(); toast('Fach entfernt');
+}
+
+async function addUniTask(subjectId){
+  const inp=document.getElementById(`uni-task-input-${subjectId}`); if(!inp) return;
+  const text=inp.value.trim(); if(!text){toast('Bitte Text eingeben','err');return;}
+  await fsAdd('uniTasks',{id:uid(),subjectId,text,done:false,createdAt:Date.now()});
+  inp.value='';
+}
+
+async function toggleUniTask(id){
+  const t=(D.uniTasks||[]).find(x=>x.id===id); if(!t) return;
+  t.done=!t.done; await fsUpdate('uniTasks',t);
+}
+
+async function deleteUniTask(id){
+  await fsDel('uniTasks',id);
+}
+
+function renderUniStats(){
+  const el=document.getElementById('uni-main'); if(!el) return;
+  const subjects=(D.uniSubjects||[]).filter(s=>!s.archived);
+  const sessions=D.uniSessions||[];
+  let html=`<button class="uni-back-btn" onclick="uniGoList()">← Zurück</button>
+    <div class="page-header" style="margin-bottom:14px"><h2 style="font-size:18px;font-weight:700">📊 Uni-Statistik</h2></div>`;
+
+  // Total hours per subject (all time)
+  const maxH=Math.max(1,...subjects.map(s=>sessions.filter(x=>x.subjectId===s.id).reduce((sum,x)=>sum+(x.duration||0),0)/3600000));
+  html+=`<div class="dash-card" style="margin-bottom:14px"><div class="dash-title" style="margin-bottom:12px">Stunden gesamt pro Fach</div>`;
+  ['anspruchsvoll','normal','leicht'].forEach(cat=>{
+    subjects.filter(s=>s.category===cat).forEach(s=>{
+      const h=sessions.filter(x=>x.subjectId===s.id).reduce((sum,x)=>sum+(x.duration||0),0)/3600000;
+      const pct=Math.min(100,(h/maxH)*100);
+      html+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:600;min-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${UNI_CAT_COLOR[cat]}">${esc(s.name)}</div>
+        <div class="uni-stats-bar"><div class="uni-stats-fill" style="width:${pct}%;background:${UNI_CAT_COLOR[cat]}"></div></div>
+        <div style="font-size:12px;color:var(--sub);min-width:36px;text-align:right">${h.toFixed(1)}h</div>
+      </div>`;
+    });
+  });
+  html+='</div>';
+
+  // Last 7 sessions
+  const recent=sessions.sort((a,b)=>b.startTs-a.startTs).slice(0,7);
+  if(recent.length){
+    html+=`<div class="dash-card"><div class="dash-title" style="margin-bottom:10px">Letzte Sessions</div>`;
+    recent.forEach(sess=>{
+      const sub=subjects.find(s=>s.id===sess.subjectId);
+      html+=`<div class="uni-session-row">
+        <div style="display:flex;justify-content:space-between">
+          <span style="font-weight:600;color:${UNI_CAT_COLOR[sub?.category||'normal']}">${esc(sub?.name||'?')}</span>
+          <span style="color:var(--sub);font-size:12px">${new Date(sess.startTs).toLocaleDateString('de-DE',{day:'numeric',month:'short'})} · ${fmtDur(sess.duration||0)}</span>
+        </div>
+        ${sess.topic?`<div style="font-size:12px;color:var(--sub)">${esc(sess.topic)}</div>`:''}
+      </div>`;
+    });
+    html+='</div>';
+  }
+  el.innerHTML=html;
+}
+
+// Extend saveModal for uni types
+const __origSaveModal=window.saveModal;
+window.saveModal=async function(){
+  if(modalMode?.type==='uniSession'){
+    const topic=document.getElementById('uni-sess-topic')?.value.trim();
+    if(!topic){toast('Bitte Thema eingeben','err');return;}
+    const learnings=document.getElementById('uni-sess-learnings')?.value.trim()||'';
+    const bookmark=document.getElementById('uni-sess-bookmark')?.value.trim()||'';
+    const {subjectId,startTs,dur}=modalMode;
+    await fsAdd('uniSessions',{id:uid(),subjectId,startTs,endTs:startTs+dur,duration:dur,
+      date:new Date(startTs).toISOString().slice(0,10),topic,learnings,bookmark,createdAt:Date.now()});
+    closeModal();
+    toast('Session gespeichert ✓');
+    renderUniSubject(subjectId);
+    return;
+  }
+  if(modalMode?.type==='uniSubjectAdd'){
+    const name=document.getElementById('uni-sub-name')?.value.trim();
+    if(!name){toast('Bitte Name eingeben','err');return;}
+    const cat=document.getElementById('uni-sub-cat')?.value||'normal';
+    const exam=document.getElementById('uni-sub-exam')?.value||null;
+    await fsAdd('uniSubjects',{id:uid(),name,category:cat,examDate:exam,archived:false,createdAt:Date.now()});
+    closeModal(); renderUni(); toast('Fach hinzugefügt');
+    return;
+  }
+  if(modalMode?.type==='uniSubjectEdit'){
+    const s=(D.uniSubjects||[]).find(x=>x.id===modalMode.id); if(!s) return;
+    s.name=document.getElementById('uni-sub-name')?.value.trim()||s.name;
+    s.category=document.getElementById('uni-sub-cat')?.value||s.category;
+    s.examDate=document.getElementById('uni-sub-exam')?.value||null;
+    await fsUpdate('uniSubjects',s); closeModal(); renderUni(); toast('Gespeichert');
+    return;
+  }
+  if(__origSaveModal) return __origSaveModal();
+};
 </script>
 </body>
 </html>
