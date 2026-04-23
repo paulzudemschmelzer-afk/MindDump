@@ -953,6 +953,9 @@ select option { background:#1c1c1c; }
   <div class="tab-panel" id="tab-stats">
     <div class="page-header"><h1>Dashboard</h1><p>Deine Statistiken & Auswertungen.</p></div>
     <div id="stats-content"></div>
+    <div id="habit-heatmap-section" style="margin-top:16px"></div>
+    <div id="sleep-chart-section" style="margin-top:16px"></div>
+    <div id="energy-chart-section" style="margin-top:16px"></div>
     <div id="habit-analysis" style="margin-top:16px"></div>
   </div>
 
@@ -964,27 +967,8 @@ select option { background:#1c1c1c; }
     </div>
     <div class="add-form" id="add-habit-form" style="display:none">
       <div class="form-row">
-        <label class="field"><span class="field-label">Name</span><input type="text" id="h-name" placeholder="z.B. Kniestabilität" /></label>
-        <label class="field" style="max-width:140px"><span class="field-label">Ziel / Woche</span><input type="number" id="h-frequency" min="1" max="14" value="3" /></label>
-      </div>
-      <div class="form-row">
-        <label class="field"><span class="field-label">Habit Statement</span><input type="text" id="h-statement" placeholder="Ich mache [Aktion] [Frequenz]" /></label>
-      </div>
-      <div class="form-row">
-        <label class="field"><span class="field-label">Endziel</span><input type="text" id="h-end-goal" placeholder="z.B. langfristig weniger Schmerzen" /></label>
-        <label class="field"><span class="field-label">Identität</span><input type="text" id="h-identity" placeholder="Ich bin jemand, der ..." /></label>
-      </div>
-      <div class="form-row">
-        <label class="field"><span class="field-label">Trigger</span><input type="text" id="h-cue" placeholder="z.B. nach dem Zähneputzen" /></label>
-        <label class="field"><span class="field-label">Belohnung</span><input type="text" id="h-reward" placeholder="z.B. kurzer Check-in" /></label>
-      </div>
-      <div class="form-row">
-        <label class="field"><span class="field-label">Minimalversion</span><input type="text" id="h-minimum" placeholder="z.B. 2 Minuten Aktivierung" /></label>
-        <label class="field"><span class="field-label">Warum</span><input type="text" id="h-why" placeholder="Warum ist das wichtig?" /></label>
-      </div>
-      <div class="form-row">
-        <label class="field" style="max-width:180px"><span class="field-label">Warnung nach Tagen</span><input type="number" id="h-warn-days" min="1" max="60" value="7" /></label>
-        <label class="field" style="max-width:180px"><span class="field-label">Hoher Decay nach Tagen</span><input type="number" id="h-danger-days" min="2" max="120" value="21" /></label>
+        <label class="field"><span class="field-label">Name</span><input type="text" id="h-name" placeholder="z.B. Meditation" /></label>
+        <label class="field" style="max-width:160px"><span class="field-label">Ziel / Woche</span><input type="number" id="h-frequency" min="1" max="14" value="3" /></label>
       </div>
       <div class="form-row">
         <button class="btn btn-primary btn-sm" onclick="addHabitManual()">Speichern</button>
@@ -1266,7 +1250,7 @@ select option { background:#1c1c1c; }
   <div class="modal">
     <h3 id="modal-title">Bearbeiten</h3>
     <div id="modal-body"></div>
-    <div class="modal-btns">
+    <div class="modal-btns" id="modal-btns">
       <button class="btn btn-primary btn-sm" onclick="saveModal()">Speichern</button>
       <button class="btn btn-ghost btn-sm" onclick="closeModal()">Abbrechen</button>
     </div>
@@ -1721,7 +1705,7 @@ function go(tab) {
   if(tab==='tasks') renderTasks();
   if(tab==='heute') renderHeute();
   if(tab==='snippets') renderSnips();
-  if(tab==='stats') { renderStats(); renderHabitAnalysis(); }
+  if(tab==='stats') { renderStats(); renderHabitHeatmap(); renderSleepChart(); renderEnergyChart(); renderHabitAnalysis(); }
   if(tab==='week') renderWeek();
   if(tab==='habits') renderHabits();
   if(tab==='finance') renderFinance();
@@ -4967,26 +4951,16 @@ async function addHabitManual(){
   const name=document.getElementById('h-name').value.trim();
   if(!name){toast('Bitte Habit-Namen eingeben','err');return;}
   const habit={id:uid(),name,
-    statement:document.getElementById('h-statement').value.trim()||name,
-    endGoal:document.getElementById('h-end-goal').value.trim(),
-    identityGoal:document.getElementById('h-identity').value.trim(),
-    why:document.getElementById('h-why').value.trim(),
-    cue:document.getElementById('h-cue').value.trim(),
-    reward:document.getElementById('h-reward').value.trim(),
-    minimumVersion:document.getElementById('h-minimum').value.trim()||'2 Minuten Minimalversion',
     frequencyCount:Math.max(1,Number(document.getElementById('h-frequency').value)||3),
     frequencyPeriod:'week',
-    decayWarnDays:Math.max(1,Number(document.getElementById('h-warn-days').value)||7),
-    decayDangerDays:Math.max(2,Number(document.getElementById('h-danger-days').value)||21),
+    decayWarnDays:7,decayDangerDays:21,
     checkins:[],archived:false,createdAt:Date.now()
   };
   await fsAdd('habits',habit);
-  ['h-name','h-statement','h-end-goal','h-identity','h-why','h-cue','h-reward','h-minimum'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('h-name').value='';
   document.getElementById('h-frequency').value=3;
-  document.getElementById('h-warn-days').value=7;
-  document.getElementById('h-danger-days').value=21;
   toggleForm('add-habit-form');
-  toast('Habit Quest erstellt');
+  toast('Habit erstellt');
 }
 async function addHabitCheckin(id,mode='full'){
   const h=D.habits.find(x=>x.id===id); if(!h) return;
@@ -5025,6 +4999,148 @@ function toggleHabitDetails(id) {
   el.style.display=open?'block':'none';
   const btn=el.previousElementSibling;
   if(btn) btn.textContent=open?'Details ▴':'Details ▾';
+}
+
+// ── HABIT HEATMAP ─────────────────────────────────────────────
+const HABIT_COLORS=['#a78bfa','#34d399','#f59e0b','#60a5fa','#f472b6','#fb923c','#4ade80','#e879f9'];
+function renderHabitHeatmap() {
+  const el=document.getElementById('habit-heatmap-section'); if(!el) return;
+  const habits=(D.habits||[]).filter(h=>!h.archived);
+  if(!habits.length){el.innerHTML='';return;}
+  const days=[];
+  for(let i=29;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
+  const dl=['So','Mo','Di','Mi','Do','Fr','Sa'];
+  let html=`<div class="ha-section"><div class="ha-title">🏆 Habits — letzte 30 Tage <span style="font-weight:400;font-size:11px;color:var(--sub)">(Zelle tippen zum Bearbeiten)</span></div><div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%"><tr><td style="min-width:90px"></td>${days.map(d=>`<td style="text-align:center;padding:1px;font-size:9px;color:var(--sub);min-width:22px">${dl[new Date(d+'T12:00:00').getDay()]}<br>${d.slice(8)}</td>`).join('')}</tr>`;
+  habits.forEach((h,hi)=>{
+    const color=HABIT_COLORS[hi%HABIT_COLORS.length];
+    const cMap={};
+    habitCheckins(h).forEach(c=>{if(!cMap[c.date]||c.mode==='full')cMap[c.date]=c.mode;});
+    html+=`<tr><td style="padding:3px 6px;font-size:11px;font-weight:600;white-space:nowrap;color:${color}">${esc(h.name)}</td>`;
+    days.forEach(d=>{
+      const m=cMap[d];
+      const bg=m==='full'?'#34d399':m==='minimal'?'#f59e0b':m==='miss'?'#f87171':'rgba(255,255,255,.07)';
+      html+=`<td style="padding:1px;text-align:center"><div onclick="editHabitDay('${h.id}','${d}')" style="width:18px;height:18px;border-radius:4px;background:${bg};cursor:pointer;margin:auto"></div></td>`;
+    });
+    html+='</tr>';
+  });
+  html+=`</table></div><div style="display:flex;gap:10px;margin-top:10px;font-size:11px;color:var(--sub)">
+    <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:10px;border-radius:2px;background:#34d399;display:inline-block"></span>Erledigt</span>
+    <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:10px;border-radius:2px;background:#f59e0b;display:inline-block"></span>Minimal</span>
+    <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:10px;border-radius:2px;background:#f87171;display:inline-block"></span>Skip</span>
+    <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:10px;border-radius:2px;background:rgba(255,255,255,.07);display:inline-block"></span>Kein Eintrag</span>
+  </div></div>`;
+  el.innerHTML=html;
+}
+
+function editHabitDay(habitId, date) {
+  const h=D.habits.find(x=>x.id===habitId); if(!h) return;
+  const existing=habitCheckins(h).find(c=>c.date===date);
+  modalMode={type:'habitDay',habitId,date};
+  document.getElementById('modal-title').textContent=`${h.name} — ${date}`;
+  document.getElementById('modal-body').innerHTML=`
+    <p style="font-size:13px;color:var(--sub);margin-bottom:12px">Eintrag für ${date}:</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-primary btn-sm" onclick="setHabitDayMode('full')">✅ Erledigt</button>
+      <button class="btn btn-ghost btn-sm" style="background:rgba(251,191,36,.14);border-color:rgba(251,191,36,.3);color:#fbbf24" onclick="setHabitDayMode('minimal')">➖ Minimal</button>
+      <button class="btn btn-ghost btn-sm" style="background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.3);color:#f87171" onclick="setHabitDayMode('miss')">✗ Skip</button>
+      ${existing?`<button class="btn btn-ghost btn-sm" style="color:var(--sub);margin-top:4px" onclick="setHabitDayMode('delete')">🗑 Eintrag löschen</button>`:''}
+    </div>`;
+  document.getElementById('modal-btns').style.display='none';
+  document.getElementById('modal').style.display='flex';
+}
+
+async function setHabitDayMode(mode) {
+  const {habitId,date}=modalMode||{};
+  const h=D.habits.find(x=>x.id===habitId); if(!h) return;
+  const prev=habitCheckins(h);
+  if(mode==='delete'){
+    h.checkins=prev.filter(c=>c.date!==date);
+  } else {
+    const existing=prev.find(c=>c.date===date);
+    if(existing){existing.mode=mode;}
+    else{h.checkins=[...prev,{id:uid(),date,mode,createdAt:Date.now()}];}
+  }
+  await fsUpdate('habits',h);
+  document.getElementById('modal-btns').style.display='';
+  closeModal();
+  renderHabitHeatmap();
+  renderHabitAnalysis();
+  toast(mode==='delete'?'Gelöscht':mode==='full'?'Erledigt':mode==='minimal'?'Minimal':'Skip');
+}
+
+// ── SCHLAF-CHART ───────────────────────────────────────────────
+function renderSleepChart() {
+  const el=document.getElementById('sleep-chart-section'); if(!el) return;
+  const log=D.dailyLog||{};
+  const days=[];
+  for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
+  const hasData=days.some(d=>log[d]?.schlafStart||log[d]?.abendRoutine||log[d]?.morgenRoutine);
+  if(!hasData){el.innerHTML='';return;}
+  const W=520,H=200,PL=38,PR=8,PT=10,PB=22;
+  const CW=W-PL-PR, CH=H-PT-PB, colW=CW/days.length;
+  const YMN=18,YMX=32;
+  const toH=ts=>{const h=new Date(ts).getHours()+new Date(ts).getMinutes()/60;return h<14?h+24:h;};
+  const yS=h=>CH-(h-YMN)/(YMX-YMN)*CH;
+  let svg='';
+  for(let h=18;h<=32;h+=2){
+    const y=PT+yS(h);
+    const lbl=h>=24?('0'+(h-24)).slice(-2)+':00':h+':00';
+    svg+=`<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="rgba(255,255,255,.05)" stroke-width="1"/><text x="${PL-3}" y="${y+4}" text-anchor="end" font-size="9" fill="#555">${lbl}</text>`;
+  }
+  days.forEach((date,i)=>{
+    const e=log[date]||{};
+    const x=PL+i*colW;
+    const mx=x+colW*0.15, bw=colW*0.7, cx=x+colW/2;
+    if(e.schlafStart){
+      const sh=Math.min(toH(e.schlafStart),YMX);
+      if(e.schlafEnde){
+        const eh=Math.min(toH(e.schlafEnde),YMX);
+        const y1=PT+yS(Math.max(sh,YMN)), y2=PT+yS(Math.max(eh,YMN));
+        const ry=Math.min(y1,y2), rh=Math.max(4,Math.abs(y2-y1));
+        svg+=`<rect x="${mx}" y="${ry}" width="${bw}" height="${rh}" fill="rgba(124,58,237,.45)" rx="3"/>`;
+      } else {
+        svg+=`<circle cx="${cx}" cy="${PT+yS(Math.min(sh,YMX-0.1))}" r="5" fill="rgba(124,58,237,.7)"/>`;
+      }
+    }
+    if(e.abendRoutine){const h=toH(e.abendRoutine);if(h>=YMN&&h<=YMX)svg+=`<circle cx="${cx}" cy="${PT+yS(h)}" r="4" fill="#60a5fa"/>"`;}
+    if(e.morgenRoutine){const h=toH(e.morgenRoutine);if(h>=YMN&&h<=YMX)svg+=`<circle cx="${cx}" cy="${PT+yS(h)}" r="4" fill="#34d399"/>`;}
+    const dl=['So','Mo','Di','Mi','Do','Fr','Sa'];
+    if(i%3===0||i===days.length-1)svg+=`<text x="${cx}" y="${H-5}" text-anchor="middle" font-size="9" fill="#555">${dl[new Date(date+'T12:00:00').getDay()]} ${date.slice(8)}</text>`;
+  });
+  el.innerHTML=`<div class="ha-section"><div class="ha-title">😴 Schlaf & Routinen — letzte 14 Tage</div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;overflow:visible">${svg}</svg>
+    <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:var(--sub)">
+      <span style="display:flex;gap:4px;align-items:center"><span style="width:12px;height:12px;border-radius:2px;background:rgba(124,58,237,.45);display:inline-block"></span>Schlaf</span>
+      <span style="display:flex;gap:4px;align-items:center"><span style="width:8px;height:8px;border-radius:50%;background:#60a5fa;display:inline-block"></span>Abendroutine</span>
+      <span style="display:flex;gap:4px;align-items:center"><span style="width:8px;height:8px;border-radius:50%;background:#34d399;display:inline-block"></span>Morgenroutine</span>
+    </div></div>`;
+}
+
+// ── ENERGIE-CHART ──────────────────────────────────────────────
+function renderEnergyChart() {
+  const el=document.getElementById('energy-chart-section'); if(!el) return;
+  const log=D.dailyLog||{};
+  const days=[];
+  for(let i=29;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
+  const pts=days.map((date,i)=>({date,i,e:log[date]?.energie??null})).filter(x=>x.e!=null);
+  if(pts.length<2){el.innerHTML='';return;}
+  const W=520,H=120,PL=25,PR=8,PT=10,PB=22;
+  const CW=W-PL-PR,CH=H-PT-PB,colW=CW/days.length;
+  const yS=v=>CH-(v-1)/4*CH;
+  let svg='';
+  [1,2,3,4,5].forEach(v=>{
+    const y=PT+yS(v);
+    svg+=`<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="rgba(255,255,255,.05)" stroke-width="1"/><text x="${PL-3}" y="${y+4}" text-anchor="end" font-size="9" fill="#555">${v}</text>`;
+  });
+  const pathD=pts.map((p,idx)=>`${idx===0?'M':'L'}${PL+p.i*colW+colW/2},${PT+yS(p.e)}`).join(' ');
+  svg+=`<path d="${pathD}" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  pts.forEach(p=>{svg+=`<circle cx="${PL+p.i*colW+colW/2}" cy="${PT+yS(p.e)}" r="3.5" fill="#fbbf24"/>`;});
+  const dl=['So','Mo','Di','Mi','Do','Fr','Sa'];
+  days.forEach((date,i)=>{
+    if(i%7===0||i===days.length-1)svg+=`<text x="${PL+i*colW+colW/2}" y="${H-5}" text-anchor="middle" font-size="9" fill="#555">${dl[new Date(date+'T12:00:00').getDay()]} ${date.slice(8)}</text>`;
+  });
+  el.innerHTML=`<div class="ha-section"><div class="ha-title">⚡ Energie — letzte 30 Tage</div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;overflow:visible">${svg}</svg></div>`;
 }
 
 function renderHabitAnalysis() {
@@ -5131,23 +5247,8 @@ function openEditHabit(id){
   modalMode={type:'habit',id};
   document.getElementById('modal-title').textContent='Habit bearbeiten';
   document.getElementById('modal-body').innerHTML=`
-    <div class="form-row"><input type="text" id="m-h-name" value="${esc(h.name)}" placeholder="Name" /></div>
-    <div class="form-row"><input type="text" id="m-h-statement" value="${esc(h.statement||'')}" placeholder="Habit Statement" /></div>
-    <div class="form-row">
-      <input type="text" id="m-h-end-goal" value="${esc(h.endGoal||'')}" placeholder="Endziel" />
-      <input type="text" id="m-h-identity" value="${esc(h.identityGoal||'')}" placeholder="Identitätsziel" />
-    </div>
-    <div class="form-row">
-      <input type="text" id="m-h-cue" value="${esc(h.cue||'')}" placeholder="Trigger/Cue" />
-      <input type="text" id="m-h-reward" value="${esc(h.reward||'')}" placeholder="Belohnung" />
-    </div>
-    <div class="form-row"><input type="text" id="m-h-minimum" value="${esc(h.minimumVersion||'')}" placeholder="Minimalversion" /></div>
-    <div class="form-row">
-      <input type="number" id="m-h-frequency" min="1" max="14" value="${esc(h.frequencyCount||3)}" style="max-width:130px" title="Ziel / Woche" />
-      <input type="number" id="m-h-warn-days" min="1" max="60" value="${esc(h.decayWarnDays||7)}" style="max-width:140px" title="Warn nach Tagen" />
-      <input type="number" id="m-h-danger-days" min="2" max="120" value="${esc(h.decayDangerDays||21)}" style="max-width:140px" title="Danger nach Tagen" />
-    </div>
-    <div class="form-row"><textarea class="form-ta" id="m-h-why" placeholder="Warum?">${esc(h.why||'')}</textarea></div>`;
+    <div class="form-row"><label class="field"><span class="field-label">Name</span><input type="text" id="m-h-name" value="${esc(h.name)}" placeholder="Name" /></label></div>
+    <div class="form-row"><label class="field"><span class="field-label">Ziel / Woche</span><input type="number" id="m-h-frequency" min="1" max="14" value="${h.frequencyCount||3}" /></label></div>`;
   document.getElementById('modal').style.display='flex';
   setTimeout(()=>document.getElementById('m-h-name')?.focus(),50);
 }
@@ -5736,7 +5837,7 @@ function openEditSnip(id){
 }
 
 // ── MODAL ─────────────────────────────────────────────────────
-function closeModal(){ document.getElementById('modal').style.display='none'; modalMode=null; }
+function closeModal(){ document.getElementById('modal').style.display='none'; const mb=document.getElementById('modal-btns'); if(mb) mb.style.display=''; modalMode=null; }
 async function saveModal(){
   if(!modalMode) return;
   if(modalMode.type==='task'){
@@ -5778,16 +5879,7 @@ async function saveModal(){
     const name=document.getElementById('m-h-name').value.trim();
     if(!name){toast('Name darf nicht leer sein','err');return;}
     h.name=name;
-    h.statement=document.getElementById('m-h-statement').value.trim();
-    h.endGoal=document.getElementById('m-h-end-goal').value.trim();
-    h.identityGoal=document.getElementById('m-h-identity').value.trim();
-    h.cue=document.getElementById('m-h-cue').value.trim();
-    h.reward=document.getElementById('m-h-reward').value.trim();
-    h.minimumVersion=document.getElementById('m-h-minimum').value.trim();
     h.frequencyCount=Math.max(1,Number(document.getElementById('m-h-frequency').value)||3);
-    h.decayWarnDays=Math.max(1,Number(document.getElementById('m-h-warn-days').value)||7);
-    h.decayDangerDays=Math.max(h.decayWarnDays+1,Number(document.getElementById('m-h-danger-days').value)||21);
-    h.why=document.getElementById('m-h-why').value.trim();
     await fsUpdate('habits',h); closeModal(); toast('Habit aktualisiert!');
   } else if(modalMode.type==='finance-entry'){
     const item=(D.financeEntries||[]).find(x=>x.id===modalMode.id); if(!item) return;
