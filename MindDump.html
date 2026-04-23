@@ -126,6 +126,11 @@ textarea::placeholder { color:#444; }
 .te-btn:hover { border-color:var(--today-intro-accent); color:#eef6ff; background:rgba(96,165,250,.14); }
 .te-btn:focus,.te-btn:focus-visible { outline:none; }
 .te-btn.active { background:rgba(96,165,250,.06); border-color:rgba(96,165,250,.16); color:#c5dcff; }
+@keyframes btn-confirm-flash {
+  0%,65% { border-color:var(--today-intro-accent); box-shadow:0 0 0 2px rgba(96,165,250,.18); }
+  100%   { border-color:rgba(96,165,250,.16); box-shadow:none; }
+}
+.btn-confirm-flash { animation:btn-confirm-flash 1.5s ease-out forwards; }
 .te-notiz { width:100%; background:none; border:none; border-bottom:1px solid var(--border); color:var(--text); font-size:13px; padding-bottom:5px; outline:none; font-family:inherit; box-sizing:border-box; }
 .te-notiz:focus-visible { border-bottom-color:var(--accent); }
 .heute-drag-handle { width:28px; height:28px; min-width:28px; border-radius:7px; border:1px solid transparent; color:#3a3a3a; cursor:grab; padding:0; font-size:17px; display:flex; align-items:center; justify-content:center; flex-shrink:0; touch-action:none; user-select:none; line-height:1; margin-top:-1px; background:transparent; }
@@ -3260,6 +3265,7 @@ async function tapSchlafen() {
   if(!D.dailyLog[today]) D.dailyLog[today]={};
   D.dailyLog[today].schlafStart = Date.now();
   await _saveDailyLogDay(today);
+  flashBtn(document.getElementById('btn-schlafen'));
   renderTageseinstieg();
   toast('Gute Nacht 🌙 ' + fmtHHMM(Date.now()));
 }
@@ -3283,9 +3289,20 @@ async function tapAufstehen() {
     }
   }
   await _saveDailyLogDay(today);
+  flashBtn(document.getElementById('btn-aufstehen'));
   renderTageseinstieg();
   const h = D.dailyLog[today].schlaf;
   toast('Guten Morgen 🌅' + (h ? ' — ' + h + 'h Schlaf' : ''));
+}
+
+async function tapRoutine(type) {
+  const today = new Date().toISOString().slice(0,10);
+  if(!D.dailyLog) D.dailyLog={};
+  if(!D.dailyLog[today]) D.dailyLog[today]={};
+  D.dailyLog[today][type+'Routine'] = Date.now();
+  await _saveDailyLogDay(today);
+  flashBtn(document.getElementById('btn-'+type+'routine'));
+  toast(type==='abend'?'Abendroutine ✓ 🌙':'Morgenroutine ✓ 🌅');
 }
 
 async function _saveDailyLogDay(dateKey) {
@@ -3336,12 +3353,21 @@ function renderTageseinstieg() {
 
 }
 
+function flashBtn(el) {
+  if(!el) return;
+  el.classList.remove('btn-confirm-flash');
+  void el.offsetWidth;
+  el.classList.add('btn-confirm-flash');
+}
 function setTe(field, val) {
   const today = new Date().toISOString().slice(0,10);
   if(!D.dailyLog) D.dailyLog = {};
   if(!D.dailyLog[today]) D.dailyLog[today] = {};
   D.dailyLog[today][field] = val;
-  document.querySelectorAll(`#te-${field}-btns .te-btn`).forEach(b => b.classList.toggle('active', Number(b.dataset.val) === val));
+  document.querySelectorAll(`#te-${field}-btns .te-btn`).forEach(b => {
+    b.classList.toggle('active', Number(b.dataset.val) === val);
+    if(Number(b.dataset.val) === val) flashBtn(b);
+  });
   saveTageseinstieg();
 }
 
