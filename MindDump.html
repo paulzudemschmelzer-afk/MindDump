@@ -6167,6 +6167,7 @@ function clearAll(){
 }
 
 // ── DUPLIKAT-ERKENNUNG ───────────────────────────────────────
+let _pendingDupTaskIds=[], _pendingDupNoteIds=[];
 function findDuplicates() {
   const taskDups = [];
   const noteDups = [];
@@ -6217,8 +6218,11 @@ function findDuplicates() {
     html += '</div>';
   }
   html += `<div style="color:var(--sub);font-size:11px;margin-top:8px">Jeweils der älteste Eintrag bleibt erhalten. Diese Aktion kann nicht rückgängig gemacht werden.</div>`;
+  _pendingDupTaskIds = taskDups.map(d=>d.del.id);
+  _pendingDupNoteIds = noteDups.map(d=>d.del.id);
+
   html += `<div class="form-row" style="margin-top:14px;gap:8px">
-    <button class="btn btn-primary btn-sm" style="background:#ef4444;border-color:#ef4444" onclick="deleteDuplicates(${JSON.stringify(taskDups.map(d=>d.del.id))},${JSON.stringify(noteDups.map(d=>d.del.id))})">🗑 ${totalDups} Duplikat${totalDups>1?'e':''} löschen</button>
+    <button class="btn btn-primary btn-sm" style="background:#ef4444;border-color:#ef4444" onclick="deleteDuplicates()">🗑 ${totalDups} Duplikat${totalDups>1?'e':''} löschen</button>
     <button class="btn btn-ghost btn-sm" onclick="closeModal()">Abbrechen</button>
   </div>`;
 
@@ -6229,11 +6233,12 @@ function findDuplicates() {
   document.getElementById('modal').style.display='flex';
 }
 
-async function deleteDuplicates(taskIds, noteIds) {
+async function deleteDuplicates() {
   closeModal();
   let count = 0;
-  for(const id of taskIds) { await fsDel('tasks', id); count++; }
-  for(const id of noteIds) { await fsDel('notes', id); count++; }
+  for(const id of _pendingDupTaskIds) { await fsDel('tasks', id); count++; }
+  for(const id of _pendingDupNoteIds) { await fsDel('notes', id); count++; }
+  _pendingDupTaskIds=[]; _pendingDupNoteIds=[];
   toast(`${count} Duplikat${count>1?'e':''} gelöscht ✓`);
 }
 
