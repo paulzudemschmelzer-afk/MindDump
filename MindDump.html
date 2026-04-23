@@ -842,11 +842,15 @@ select option { background:#1c1c1c; }
         <span class="te-saved" id="te-saved" style="display:none">✓ Gespeichert</span>
       </div>
 
-      <!-- Schlaf-Tap-Buttons -->
+      <!-- Schlaf + Routinen -->
       <div class="sleep-track-row" id="sleep-track-row">
         <button class="sleep-btn" id="btn-schlafen" onclick="tapSchlafen()">🌙 Schlafen</button>
         <button class="sleep-btn" id="btn-aufstehen" onclick="tapAufstehen()">🌅 Aufgestanden</button>
         <span class="sleep-info" id="sleep-info"></span>
+      </div>
+      <div class="sleep-track-row" id="routine-track-row">
+        <button class="sleep-btn" id="btn-abendroutine" onclick="tapRoutine('abend')">🌙 Abendroutine</button>
+        <button class="sleep-btn" id="btn-morgenroutine" onclick="tapRoutine('morgen')">🌅 Morgenroutine</button>
       </div>
 
       <div class="te-row">
@@ -922,6 +926,7 @@ select option { background:#1c1c1c; }
   <div class="tab-panel" id="tab-stats">
     <div class="page-header"><h1>Dashboard</h1><p>Deine Statistiken & Auswertungen.</p></div>
     <div id="stats-content"></div>
+    <div id="habit-analysis" style="margin-top:16px"></div>
   </div>
 
   <!-- HABITS -->
@@ -960,10 +965,6 @@ select option { background:#1c1c1c; }
       </div>
     </div>
     <div id="habits-list" class="habit-grid"></div>
-    <div style="margin-top:24px">
-      <button class="btn btn-ghost btn-sm" onclick="toggleHabitAnalysis()" id="habit-analysis-toggle">📊 Wochenanalyse</button>
-    </div>
-    <div id="habit-analysis" style="display:none;margin-top:16px"></div>
   </div>
 
   <!-- WEEK CALENDAR -->
@@ -1421,13 +1422,15 @@ function subscribeFS() {
       col(name).onSnapshot(snap=>{
         D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
         // Firebase migration: if thoughts exist but no notes, migrate thoughts → notes collection
-        if(name==='notes'||name==='thoughts') _migrateThoughtsToNotesFS();
+        if((name==='notes'||name==='thoughts') && !_fsMigrationDone && D.notes && D.thoughts) _migrateThoughtsToNotesFS();
         rerender(name);
         badges();
       }, err=>console.error(name,err))
     );
   });
+  let _fsMigrationDone = false;
   async function _migrateThoughtsToNotesFS() {
+    _fsMigrationDone = true;
     if(!D.thoughts.length || !useFS()) return;
     const migratedIds=new Set((D.notes||[]).map(n=>n.migratedFrom).filter(Boolean));
     const toMigrate=D.thoughts.filter(t=>!migratedIds.has(t.id));
@@ -1691,7 +1694,7 @@ function go(tab) {
   if(tab==='tasks') renderTasks();
   if(tab==='heute') renderHeute();
   if(tab==='snippets') renderSnips();
-  if(tab==='stats') renderStats();
+  if(tab==='stats') { renderStats(); renderHabitAnalysis(); }
   if(tab==='week') renderWeek();
   if(tab==='habits') renderHabits();
   if(tab==='finance') renderFinance();
@@ -4913,9 +4916,6 @@ function renderHabits(){
     return;
   }
   el.innerHTML=habits.map(renderHabitCard).join('');
-  // Refresh analysis if it's open
-  const analysisEl=document.getElementById('habit-analysis');
-  if(analysisEl&&analysisEl.style.display!=='none') renderHabitAnalysis();
 }
 function habitField(id,field){ return document.getElementById(`hc-${field}-${id}`); }
 async function addHabitManual(){
@@ -4979,15 +4979,6 @@ function toggleHabitDetails(id) {
   el.style.display=open?'block':'none';
   const btn=el.previousElementSibling;
   if(btn) btn.textContent=open?'Details ▴':'Details ▾';
-}
-function toggleHabitAnalysis() {
-  const el=document.getElementById('habit-analysis');
-  const btn=document.getElementById('habit-analysis-toggle');
-  if(!el) return;
-  const open=el.style.display==='none';
-  el.style.display=open?'block':'none';
-  if(btn) btn.textContent=open?'📊 Wochenanalyse schließen':'📊 Wochenanalyse';
-  if(open) renderHabitAnalysis();
 }
 
 function renderHabitAnalysis() {
