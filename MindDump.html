@@ -1279,6 +1279,13 @@ select option { background:#1c1c1c; }
         <button class="btn btn-ghost" style="color:var(--red);border-color:rgba(239,68,68,.15)" onclick="clearAll()">Alles löschen</button>
       </div>
     </div>
+
+    <!-- DUPLIKATE -->
+    <div class="set-card">
+      <h3>Duplikate</h3>
+      <p>Findet exakt gleiche Tasks und Notizen und entfernt Duplikate — du siehst vorher was gelöscht wird.</p>
+      <button class="btn btn-ghost" onclick="findDuplicates()">🔍 Duplikate suchen</button>
+    </div>
   </div>
 
 </main>
@@ -6157,6 +6164,77 @@ function clearAll(){
     renderTasks();renderThoughts();renderSnips();
     toast('Alle Daten gelöscht');
   }
+}
+
+// ── DUPLIKAT-ERKENNUNG ───────────────────────────────────────
+function findDuplicates() {
+  const taskDups = [];
+  const noteDups = [];
+
+  // Tasks: gleicher Titel (exakt, case-insensitive + trim)
+  const taskSeen = new Map();
+  const tasksSorted = [...(D.tasks||[])].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  for(const t of tasksSorted) {
+    const key = (t.title||'').trim().toLowerCase();
+    if(!key) continue;
+    if(taskSeen.has(key)) taskDups.push({keep:taskSeen.get(key), del:t});
+    else taskSeen.set(key, t);
+  }
+
+  // Notizen: gleicher Titel UND gleicher Inhalt (html, stripped + normalized)
+  const stripHtml = s => (s||'').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+  const noteSeen = new Map();
+  const notesSorted = [...(D.notes||[])].sort((a,b)=>new Date(a.created||0)-new Date(b.created||0));
+  for(const n of notesSorted) {
+    const key = (n.title||'').trim().toLowerCase() + '|||' + stripHtml(n.html);
+    if(!key.startsWith('|||')) {
+      if(noteSeen.has(key)) noteDups.push({keep:noteSeen.get(key), del:n});
+      else noteSeen.set(key, n);
+    }
+  }
+
+  const totalDups = taskDups.length + noteDups.length;
+  if(totalDups === 0) { toast('Keine Duplikate gefunden ✓'); return; }
+
+  // Modal aufbauen
+  let html = '';
+  if(taskDups.length) {
+    html += `<div style="margin-bottom:12px"><div style="font-weight:700;margin-bottom:6px;color:var(--accent)">Tasks (${taskDups.length} Duplikat${taskDups.length>1?'e':''})</div>`;
+    html += taskDups.map(d=>`<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:center">
+      <span style="color:#f87171">✗</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(d.del.title)}">${esc(d.del.title)}</span>
+      <span style="color:var(--sub);font-size:10px;flex-shrink:0">→ 1 bleibt übrig</span>
+    </div>`).join('');
+    html += '</div>';
+  }
+  if(noteDups.length) {
+    html += `<div style="margin-bottom:12px"><div style="font-weight:700;margin-bottom:6px;color:#34d399">Notizen (${noteDups.length} Duplikat${noteDups.length>1?'e':''})</div>`;
+    html += noteDups.map(d=>`<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:center">
+      <span style="color:#f87171">✗</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(d.del.title)}">${esc(d.del.title||'(kein Titel)')}</span>
+      <span style="color:var(--sub);font-size:10px;flex-shrink:0">→ 1 bleibt übrig</span>
+    </div>`).join('');
+    html += '</div>';
+  }
+  html += `<div style="color:var(--sub);font-size:11px;margin-top:8px">Jeweils der älteste Eintrag bleibt erhalten. Diese Aktion kann nicht rückgängig gemacht werden.</div>`;
+  html += `<div class="form-row" style="margin-top:14px;gap:8px">
+    <button class="btn btn-primary btn-sm" style="background:#ef4444;border-color:#ef4444" onclick="deleteDuplicates(${JSON.stringify(taskDups.map(d=>d.del.id))},${JSON.stringify(noteDups.map(d=>d.del.id))})">🗑 ${totalDups} Duplikat${totalDups>1?'e':''} löschen</button>
+    <button class="btn btn-ghost btn-sm" onclick="closeModal()">Abbrechen</button>
+  </div>`;
+
+  modalMode = {type:'duplikat-preview'};
+  document.getElementById('modal-title').textContent = `🔍 ${totalDups} Duplikat${totalDups>1?'e':''} gefunden`;
+  document.getElementById('modal-body').innerHTML = html;
+  const mb = document.getElementById('modal-btns'); if(mb) mb.style.display='none';
+  document.getElementById('modal').style.display='flex';
+}
+
+async function deleteDuplicates(taskIds, noteIds) {
+  closeModal();
+  let count = 0;
+  for(const id of taskIds) { await fsDel('tasks', id); count++; }
+  for(const id of noteIds) { await fsDel('notes', id); count++; }
+  toast(`${count} Duplikat${count>1?'e':''} gelöscht ✓`);
 }
 
 // ── TAURUS ───────────────────────────────────────────────────
