@@ -1483,15 +1483,15 @@ function subscribeFS() {
     db.collection('settings').doc(currentUser.uid).onSnapshot(snap=>{
       if(!snap.exists) return;
       const d=snap.data();
-      if(d.navOrder&&d.navOrder.length){
-        const valid=d.navOrder.filter(id=>DEFAULT_NAV_ORDER.includes(id));
-        const missing=DEFAULT_NAV_ORDER.filter(id=>!valid.includes(id));
-        const final=[...valid,...missing];
-        if(final.join(',')!==(S.navOrder||[]).join(',')){
-          S.navOrder=final; saveSettings(); renderNav();
-        }
+      if(d.navOrder&&Array.isArray(d.navOrder)&&d.navOrder.length){
+        const known=NAV_ITEMS.map(i=>i.id);
+        const valid=d.navOrder.filter(id=>known.includes(id));
+        const missing=known.filter(id=>!valid.includes(id));
+        S.navOrder=[...valid,...missing];
+        saveSettings();
+        renderNav();
       }
-    }, err=>console.error('settings',err))
+    }, err=>console.error('settings snapshot error',err))
   );
   let _fsMigrationDone = false;
   async function _migrateThoughtsToNotesFS() {
