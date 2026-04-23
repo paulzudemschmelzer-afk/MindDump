@@ -548,6 +548,10 @@ select option { background:#1c1c1c; }
 .hcal-now-line { position:absolute; left:0; right:0; height:2px; background:#ef4444; z-index:5; pointer-events:none; }
 .hcal-now-dot { position:absolute; left:-4px; top:-4px; width:8px; height:8px; border-radius:50%; background:#ef4444; }
 .hcal-drop-hint { font-size:11px; color:var(--sub); text-align:center; padding:4px; }
+.hcal-snap-line { position:absolute; left:0; right:0; height:2px; background:#a78bfa; z-index:4; pointer-events:none; display:none; }
+.hcal-snap-line::after { content:attr(data-time); position:absolute; right:4px; top:-15px; font-size:10px; color:#a78bfa; font-weight:700; background:var(--card); padding:1px 5px; border-radius:4px; border:1px solid rgba(167,139,250,.3); }
+.hcal-event-rm { position:absolute; top:2px; right:2px; width:15px; height:15px; border-radius:50%; background:rgba(0,0,0,.45); color:#fff; font-size:11px; line-height:15px; text-align:center; cursor:pointer; opacity:0; transition:opacity .15s; pointer-events:all; }
+.hcal-event:hover .hcal-event-rm { opacity:1; }
 /* Heute habits */
 .heute-habits-section { background:linear-gradient(180deg, rgba(52,211,153,.10), rgba(52,211,153,.03)), var(--card); border:1px solid var(--today-habits-border); border-radius:12px; padding:14px 16px; margin-top:14px; margin-bottom:4px; box-shadow:inset 0 1px 0 rgba(255,255,255,.03); }
 .heute-habits-title { font-size:12px; font-weight:700; color:var(--today-habits-accent); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
@@ -3746,7 +3750,9 @@ function renderHeuteCalendar() {
       const fn=ev.type==='task'?`openEditTask('${ev.id}')`:`editCalEvent('${ev.id}')`;
       const drag=ev.type==='task'?`draggable="true" ondragstart="dragTask(event,'${ev.id}')"`:
         `draggable="true" ondragstart="hcalDragCalEvent(event,'${ev.id}')"`;
+      const rmBtn=ev.type==='task'?`<div class="hcal-event-rm" onclick="event.stopPropagation();unscheduleTask('${ev.id}')" title="Aus Kalender entfernen">×</div>`:'';
       return `<div class="hcal-event" style="top:${top}px;height:${h}px;left:${l+.5}%;width:${w-1}%;background:${ev.bg};border-left:3px solid ${ev.border};opacity:${ev.done?.5:1}" onclick="${fn}" ${drag} title="${esc(ev.title)}">
+        ${rmBtn}
         <div class="hcal-event-title">${esc(ev.title)}</div>
         ${h>32?`<div class="hcal-event-time">${hcalMinToTime(ev.startMin)}–${hcalMinToTime(ev.endMin)}</div>`:''}
       </div>`;
@@ -3760,10 +3766,12 @@ function renderHeuteCalendar() {
     for(let h=HCAL_START;h<HCAL_END;h++) hLines+=`<div class="hcal-hour-line" style="height:${60*HCAL_PX}px"><div class="hcal-half-line"></div></div>`;
 
     return `<div class="hcal-col ${isT?'today':''}" style="min-height:${totalPx}px"
-      ondragover="event.preventDefault()"
+      ondragover="hcalDragOver(event,this)"
+      ondragleave="hcalDragLeave(this)"
       ondrop="hcalDrop(event,'${ds}',this)"
       onclick="hcalColClick(event,'${ds}',this)">
       ${hLines}
+      <div class="hcal-snap-line"></div>
       <div class="hcal-event-layer">${evHtml}</div>
     </div>`;
   }).join('');
@@ -3798,8 +3806,20 @@ function hcalColClick(e, ds, colEl) {
 }
 document.addEventListener('scroll',()=>{ _hcalScrolling=true; clearTimeout(window._hcalScrollT); window._hcalScrollT=setTimeout(()=>_hcalScrolling=false,200); },true);
 
+function hcalDragOver(e, colEl) {
+  e.preventDefault();
+  const rect=colEl.getBoundingClientRect();
+  const min=hcalYToMin(e.clientY-rect.top);
+  const y=hcalMinToY(min);
+  const line=colEl.querySelector('.hcal-snap-line');
+  if(line){line.style.display='block';line.style.top=y+'px';line.dataset.time=hcalMinToTime(min);}
+}
+function hcalDragLeave(colEl) {
+  const line=colEl.querySelector('.hcal-snap-line'); if(line) line.style.display='none';
+}
 async function hcalDrop(e, ds, colEl) {
   e.preventDefault();
+  const line=colEl.querySelector('.hcal-snap-line'); if(line) line.style.display='none';
   const rect=colEl.getBoundingClientRect();
   const time=hcalMinToTime(hcalYToMin(e.clientY-rect.top));
   if(draggedTaskId) {
@@ -3810,11 +3830,19 @@ async function hcalDrop(e, ds, colEl) {
     renderHeuteCalendar();
   } else if(_dragCalEventId) {
     const ev=(D.calEvents||[]).find(x=>x.id===_dragCalEventId); if(!ev) return;
+    const dur=(ev.endTime&&ev.startTime)?((parseInt(ev.endTime)-parseInt(ev.startTime))||60):60;
     ev.startTime=time; ev.date=ds;
-    ev.endTime=addMinTo(time,60); ev.updated=new Date().toISOString();
+    ev.endTime=addMinTo(time,dur); ev.updated=new Date().toISOString();
     await fsUpdate('calEvents',ev); _dragCalEventId=null;
     renderHeuteCalendar();
   }
+}
+async function unscheduleTask(id) {
+  const t=D.tasks.find(x=>x.id===id); if(!t) return;
+  t.calStartTime=null;
+  await fsUpdate('tasks',t);
+  renderHeuteCalendar();
+  toast('Aus Kalender entfernt');
 }
 
 let _dragCalEventId=null;
@@ -3840,6 +3868,7 @@ function openCalEventModal(id, date, defaultTime) {
       ${id?`<button class="btn btn-ghost btn-sm" style="color:#f87171" onclick="deleteCalEvent('${id}')">Löschen</button>`:''}
       <button class="btn btn-ghost btn-sm" onclick="closeModal()">Abbrechen</button>
     </div>`;
+  const mb=document.getElementById('modal-btns'); if(mb) mb.style.display='none';
   document.getElementById('modal').style.display='flex';
 }
 
