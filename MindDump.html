@@ -6184,11 +6184,9 @@ function findDuplicates() {
     const key=(t.title||'').trim().toLowerCase(); if(!key) return;
     if(taskSeen.has(key)) taskDups.push({keep:taskSeen.get(key),del:t}); else taskSeen.set(key,t);
   });
-  const stripHtml=s=>(s||'').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim().toLowerCase();
   const noteSeen=new Map();
   [...(D.notes||[])].sort((a,b)=>new Date(a.created||0)-new Date(b.created||0)).forEach(n=>{
-    const tk=(n.title||'').trim().toLowerCase(); if(!tk) return;
-    const key=tk+'|||'+stripHtml(n.html);
+    const key=(n.title||'').trim().toLowerCase(); if(!key) return;
     if(noteSeen.has(key)) noteDups.push({keep:noteSeen.get(key),del:n}); else noteSeen.set(key,n);
   });
   _pendingDupTaskIds=taskDups.map(d=>d.del.id);
