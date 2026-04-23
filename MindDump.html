@@ -6086,6 +6086,14 @@ async function saveModal(){
       date:new Date(startTs).toISOString().slice(0,10),topic,learnings,bookmark,createdAt:Date.now()});
     closeModal(); toast('Session gespeichert ✓');
     if(typeof renderUniSubject==='function') renderUniSubject(subjectId);
+  } else if(modalMode.type==='uniSessionEdit'){
+    const sess=(D.uniSessions||[]).find(x=>x.id===modalMode.id); if(!sess) return;
+    sess.topic=document.getElementById('uni-sess-topic')?.value.trim()||sess.topic;
+    sess.learnings=document.getElementById('uni-sess-learnings')?.value.trim()||'';
+    sess.bookmark=document.getElementById('uni-sess-bookmark')?.value.trim()||'';
+    await fsUpdate('uniSessions',sess);
+    closeModal(); toast('Session aktualisiert ✓');
+    if(typeof renderUniSubject==='function') renderUniSubject(sess.subjectId);
   }
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
@@ -6756,9 +6764,12 @@ function renderUniSubject(id){
   html+=`<div class="dash-card">
     <div class="dash-title" style="margin-bottom:10px">📖 Sessions <span style="font-weight:400;color:var(--sub);font-size:12px">${sessions.length} gesamt</span></div>
     ${sessions.length?sessions.slice(0,10).map(sess=>`<div class="uni-session-row">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-weight:600">${esc(sess.topic||'Kein Thema')}</span>
-        <span style="color:var(--sub);font-size:12px">${new Date(sess.startTs).toLocaleDateString('de-DE',{day:'numeric',month:'short'})} · ${fmtDur(sess.duration||0)}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span style="font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(sess.topic||'Kein Thema')}</span>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <span style="color:var(--sub);font-size:12px">${new Date(sess.startTs).toLocaleDateString('de-DE',{day:'numeric',month:'short'})} · ${fmtDur(sess.duration||0)}</span>
+          <button onclick="openEditUniSession('${sess.id}')" style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:4px" title="Bearbeiten">✏️</button>
+        </div>
       </div>
       ${sess.learnings?`<div style="color:var(--sub);font-size:12px;margin-top:3px">${esc(sess.learnings)}</div>`:''}
       ${sess.bookmark?`<div style="font-size:11px;color:#fbbf24;margin-top:2px">📌 ${esc(sess.bookmark)}</div>`:''}
@@ -6801,6 +6812,29 @@ function uniStopTimer(){
     <div class="form-row"><label class="field"><span class="field-label">📌 Wo aufgehört?</span><input type="text" id="uni-sess-bookmark" placeholder="z.B. Kapitel 4, Seite 82 — Thema X" /></label></div>`;
   document.getElementById('modal').style.display='flex';
   setTimeout(()=>document.getElementById('uni-sess-topic')?.focus(),50);
+}
+
+function openEditUniSession(id) {
+  const sess=(D.uniSessions||[]).find(x=>x.id===id); if(!sess) return;
+  modalMode={type:'uniSessionEdit',id};
+  document.getElementById('modal-title').textContent='Session bearbeiten';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><label class="field"><span class="field-label">Thema</span><input type="text" id="uni-sess-topic" value="${esc(sess.topic||'')}" placeholder="z.B. Kapitel 3 – Thermodynamik" /></label></div>
+    <div class="form-row"><label class="field"><span class="field-label">Was habe ich gelernt?</span><textarea class="form-ta" id="uni-sess-learnings" placeholder="Kernerkenntnisse, Fragen, Aha-Momente...">${esc(sess.learnings||'')}</textarea></label></div>
+    <div class="form-row"><label class="field"><span class="field-label">📌 Wo aufgehört?</span><input type="text" id="uni-sess-bookmark" value="${esc(sess.bookmark||'')}" placeholder="z.B. Kapitel 4, Seite 82" /></label></div>
+    <div class="form-row" style="gap:8px">
+      <button class="btn btn-ghost btn-sm" style="color:#f87171" onclick="deleteUniSession('${id}')">Session löschen</button>
+    </div>`;
+  const mb=document.getElementById('modal-btns'); if(mb) mb.style.display='';
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('uni-sess-topic')?.focus(),50);
+}
+
+async function deleteUniSession(id) {
+  if(!confirm('Session löschen?')) return;
+  await fsDel('uniSessions',id);
+  closeModal();
+  toast('Session gelöscht');
 }
 
 async function openAddUniSubject(){
