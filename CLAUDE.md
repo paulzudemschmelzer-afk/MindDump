@@ -38,6 +38,8 @@ git log --oneline HEAD..origin/main # was ist auf main aber nicht hier
 **Problem 2:** `badges()` in `init()` vor `renderNav()` aufgerufen → `b-tasks` existierte noch nicht → JS-Crash → leere Nav.
 Lehre: Wenn neue DOM-Elemente dynamisch erstellt werden, muss der Render-Call VOR allen Funktionen stehen die diese Elemente lesen.
 
-## Sonstiges
+## Kommunikation (WICHTIG)
 - Immer "FERTIG" (Großbuchstaben) schreiben wenn eine Aufgabe abgeschlossen ist
-- Vor größeren Änderungen fragen ob alles richtig verstanden wurde
+- **Vor jeder Implementierung**: Verständnis kurz wiedergeben und den User fragen ob es korrekt ist — erst dann umsetzen.
+  Beispiel: "Ich verstehe: Du willst X. Ist das richtig?"
+- Gilt auch für kleine Änderungen.
