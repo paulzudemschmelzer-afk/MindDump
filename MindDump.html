@@ -231,12 +231,22 @@ textarea::placeholder { color:#444; }
 .unsched-kat-count { background:rgba(255,255,255,.1); border-radius:10px; padding:1px 6px; font-size:10px; font-weight:400; }
 .unsched-kat-tasks { display:flex; flex-wrap:wrap; gap:6px; padding:8px 10px; }
 .unsched-kat.collapsed .unsched-kat-tasks { display:none; }
+.unsched-subkat { border-top:1px solid rgba(255,255,255,.05); width:100%; }
+.unsched-subkat-header { display:flex; align-items:center; justify-content:space-between; padding:5px 10px; font-size:11px; font-weight:600; cursor:pointer; color:var(--sub); user-select:none; }
+.unsched-subkat-header:hover { color:var(--text); }
+.unsched-subkat-tasks { display:flex; flex-wrap:wrap; gap:5px; padding:4px 8px 6px; }
+.unsched-subkat.collapsed .unsched-subkat-tasks { display:none; }
 .ap-calevent { border-left-width:4px; }
 .cal-assign-kat { margin-bottom:4px; border-radius:8px; overflow:hidden; border:1px solid rgba(255,255,255,.06); }
 .cal-assign-kat-header { display:flex; align-items:center; justify-content:space-between; padding:7px 12px; font-size:12px; font-weight:600; cursor:pointer; background:rgba(255,255,255,.04); user-select:none; }
 .cal-assign-kat-header:hover { background:rgba(255,255,255,.08); }
 .cal-assign-kat-tasks { padding:4px 0; }
 .cal-assign-kat.collapsed .cal-assign-kat-tasks { display:none; }
+.cal-assign-subkat { border-top:1px solid rgba(255,255,255,.05); }
+.cal-assign-subkat-header { display:flex; align-items:center; justify-content:space-between; padding:5px 12px 5px 20px; font-size:11px; font-weight:600; cursor:pointer; color:var(--sub); user-select:none; }
+.cal-assign-subkat-header:hover { color:var(--text); background:rgba(255,255,255,.03); }
+.cal-assign-subkat-tasks { padding:2px 0; }
+.cal-assign-subkat.collapsed .cal-assign-subkat-tasks { display:none; }
 /* Quick-add overlay for calendar */
 .cal-assign-list { max-height:200px; overflow-y:auto; margin:8px 0; }
 .cal-assign-item { padding:8px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:8px; transition:background .1s; font-size:13px; }
@@ -4182,19 +4192,36 @@ function renderWeek() {
   const ua=document.getElementById('unscheduled-area');
   if(allOpen.length){
     const byKat={};
-    allOpen.forEach(t=>{ const k=t.kategorie||'Sonstiges'; if(!byKat[k])byKat[k]=[]; byKat[k].push(t); });
-    const sortedKats=Object.keys(byKat).sort();
-    const katHtml=sortedKats.map(k=>{
-      const tasks=byKat[k].sort((a,b)=>{const o={hoch:0,mittel:1,niedrig:2};return(o[a.priority]??1)-(o[b.priority]??1);});
-      const katCol=getKatColor(k);
+    allOpen.forEach(t=>{
+      const k=t.kategorie||'Sonstiges'; const sk=t.subkategorie||null;
+      if(!byKat[k]){byKat[k]={direct:[],subs:{}};}
+      if(sk){if(!byKat[k].subs[sk])byKat[k].subs[sk]=[];byKat[k].subs[sk].push(t);}
+      else byKat[k].direct.push(t);
+    });
+    const prio={hoch:0,mittel:1,niedrig:2};
+    const sortT=arr=>arr.sort((a,b)=>(prio[a.priority]??1)-(prio[b.priority]??1));
+    const taskChip=t=>`<div class="unsched-task" draggable="true" ondragstart="dragTask(event,'${t.id}')" title="${esc(t.title)}">
+      <span style="font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.title)}</span>
+      ${t.estimatedTime?`<span style="font-size:10px;color:var(--sub);white-space:nowrap">${t.estimatedTime}</span>`:''}
+    </div>`;
+    const katHtml=Object.keys(byKat).sort().map(k=>{
+      const katData=byKat[k]; const katCol=getKatColor(k);
+      const total=katData.direct.length+Object.values(katData.subs).reduce((s,a)=>s+a.length,0);
+      const directHtml=sortT(katData.direct).map(taskChip).join('');
+      const subHtml=Object.keys(katData.subs).sort().map(sk=>{
+        const subTasks=sortT(katData.subs[sk]);
+        return `<div class="unsched-subkat">
+          <div class="unsched-subkat-header" onclick="this.closest('.unsched-subkat').classList.toggle('collapsed')">
+            <span>${esc(sk)}</span><span class="unsched-kat-count">${subTasks.length}</span>
+          </div>
+          <div class="unsched-subkat-tasks">${subTasks.map(taskChip).join('')}</div>
+        </div>`;
+      }).join('');
       return `<div class="unsched-kat">
         <div class="unsched-kat-header" onclick="this.closest('.unsched-kat').classList.toggle('collapsed')" style="border-left:3px solid ${katCol.border}">
-          <span>${esc(k)}</span><span class="unsched-kat-count">${tasks.length}</span>
+          <span>${esc(k)}</span><span class="unsched-kat-count">${total}</span>
         </div>
-        <div class="unsched-kat-tasks">${tasks.map(t=>`<div class="unsched-task" draggable="true" ondragstart="dragTask(event,'${t.id}')" title="${esc(t.title)}">
-          <span style="font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.title)}</span>
-          ${t.estimatedTime?`<span style="font-size:10px;color:var(--sub);white-space:nowrap">${t.estimatedTime}</span>`:''}
-        </div>`).join('')}</div>
+        <div class="unsched-kat-tasks">${directHtml}${subHtml}</div>
       </div>`;
     }).join('');
     ua.innerHTML=`<div class="unscheduled-area" style="margin-top:16px">
@@ -4359,23 +4386,38 @@ function filterCalAssign() {
   const prioIcon={hoch:'🔴',mittel:'🟡',niedrig:'🟢'};
   const openTasks=D.tasks.filter(t=>!t.done);
   if(!q) {
-    // Show by category
     const byKat={};
-    openTasks.forEach(t=>{ const k=t.kategorie||'Sonstiges'; if(!byKat[k])byKat[k]=[]; byKat[k].push(t); });
+    openTasks.forEach(t=>{
+      const k=t.kategorie||'Sonstiges'; const sk=t.subkategorie||null;
+      if(!byKat[k]){byKat[k]={direct:[],subs:{}};}
+      if(sk){if(!byKat[k].subs[sk])byKat[k].subs[sk]=[];byKat[k].subs[sk].push(t);}
+      else byKat[k].direct.push(t);
+    });
     const sortedKats=Object.keys(byKat).sort();
     if(!sortedKats.length){el.innerHTML='<div style="padding:12px;color:var(--sub);font-size:13px">Keine Tasks vorhanden</div>';return;}
+    const taskRow=(t,katCol)=>`<div class="cal-assign-item" onclick="assignTaskToCal('${t.id}')">
+      <div style="width:4px;height:24px;border-radius:2px;background:${katCol.border};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.title)}</div>
+        <div style="font-size:11px;color:var(--sub)">${prioIcon[t.priority]||'🟡'} ${t.estimatedTime||'1h'}</div>
+      </div>
+    </div>`;
     el.innerHTML=sortedKats.map(k=>{
-      const tasks=byKat[k];
-      const katCol=getKatColor(k);
-      return `<div class="cal-assign-kat">
-        <div class="cal-assign-kat-header" onclick="this.closest('.cal-assign-kat').classList.toggle('collapsed')" style="border-left:3px solid ${katCol.border}">${esc(k)} <span class="unsched-kat-count">${tasks.length}</span></div>
-        <div class="cal-assign-kat-tasks">${tasks.map(t=>`<div class="cal-assign-item" onclick="assignTaskToCal('${t.id}')">
-          <div style="width:4px;height:24px;border-radius:2px;background:${katCol.border};flex-shrink:0"></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.title)}</div>
-            <div style="font-size:11px;color:var(--sub)">${prioIcon[t.priority]||'🟡'} ${t.estimatedTime||'1h'}</div>
+      const katData=byKat[k]; const katCol=getKatColor(k);
+      const total=katData.direct.length+Object.values(katData.subs).reduce((s,a)=>s+a.length,0);
+      const directHtml=katData.direct.map(t=>taskRow(t,katCol)).join('');
+      const subHtml=Object.keys(katData.subs).sort().map(sk=>{
+        const subTasks=katData.subs[sk];
+        return `<div class="cal-assign-subkat">
+          <div class="cal-assign-subkat-header" onclick="this.closest('.cal-assign-subkat').classList.toggle('collapsed')">
+            <span>${esc(sk)}</span><span class="unsched-kat-count">${subTasks.length}</span>
           </div>
-        </div>`).join('')}</div>
+          <div class="cal-assign-subkat-tasks">${subTasks.map(t=>taskRow(t,katCol)).join('')}</div>
+        </div>`;
+      }).join('');
+      return `<div class="cal-assign-kat">
+        <div class="cal-assign-kat-header" onclick="this.closest('.cal-assign-kat').classList.toggle('collapsed')" style="border-left:3px solid ${katCol.border}">${esc(k)} <span class="unsched-kat-count">${total}</span></div>
+        <div class="cal-assign-kat-tasks">${directHtml}${subHtml}</div>
       </div>`;
     }).join('');
   } else {
