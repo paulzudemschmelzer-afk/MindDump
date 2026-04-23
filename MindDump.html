@@ -853,15 +853,13 @@ select option { background:#1c1c1c; }
       </div>
 
       <!-- Schlaf + Routinen -->
-      <div class="sleep-track-row" id="sleep-track-row">
-        <button class="sleep-btn" id="btn-schlafen" onclick="tapSchlafen()">🌙 Schlafen</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
         <button class="sleep-btn" id="btn-aufstehen" onclick="tapAufstehen()">🌅 Aufgestanden</button>
-        <span class="sleep-info" id="sleep-info"></span>
-      </div>
-      <div class="sleep-track-row" id="routine-track-row">
-        <button class="sleep-btn" id="btn-abendroutine" onclick="tapRoutine('abend')">🌙 Abendroutine</button>
         <button class="sleep-btn" id="btn-morgenroutine" onclick="tapRoutine('morgen')">🌅 Morgenroutine</button>
+        <button class="sleep-btn" id="btn-abendroutine" onclick="tapRoutine('abend')">🌙 Abendroutine</button>
+        <button class="sleep-btn" id="btn-schlafen" onclick="tapSchlafen()">🌙 Schlafen</button>
       </div>
+      <span class="sleep-info" id="sleep-info"></span>
 
       <div class="te-row">
         <div class="te-field" style="display:none">
