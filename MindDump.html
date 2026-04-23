@@ -1659,7 +1659,9 @@ const DEFAULT_NAV_ORDER = NAV_ITEMS.map(i=>i.id);
 
 function renderNav() {
   const nav=document.getElementById('main-nav'); if(!nav) return;
-  const order=(S.navOrder&&S.navOrder.length)?S.navOrder:DEFAULT_NAV_ORDER;
+  let order=(S.navOrder&&S.navOrder.length)?S.navOrder:DEFAULT_NAV_ORDER;
+  const newItems=DEFAULT_NAV_ORDER.filter(id=>!order.includes(id));
+  if(newItems.length){order=[...order,...newItems];S.navOrder=order;saveSettings();}
   nav.innerHTML=order.map(id=>{
     const item=NAV_ITEMS.find(i=>i.id===id); if(!item) return '';
     const badge=item.badge?`<span class="badge" id="${item.badge}"${item.badgeStyle?` style="${item.badgeStyle}"`:''}></span>`:'';
