@@ -1426,6 +1426,7 @@ function rerender(colName) {
   if(colName==='notes') renderNotes();
   if(colName==='habits') { renderHabits(); if(currentTab==='stats') renderStats(); }
   if(colName==='financeEntries'||colName==='subscriptions') renderFinance();
+  if(colName==='uniSubjects'||colName==='uniSessions'||colName==='uniTasks') { if(typeof renderUni==='function'&&currentTab==='uni') renderUni(); }
 }
 
 // ── FIREBASE ──────────────────────────────────────────────────
@@ -5977,6 +5978,29 @@ async function saveModal(){
       D.tasks.push(task); await fsUpdate('tasks',task);
       closeModal(); renderWeek(); toast('Task erstellt!');
     }
+  } else if(modalMode.type==='uniSubjectAdd'){
+    const name=document.getElementById('uni-sub-name')?.value.trim();
+    if(!name){toast('Bitte Name eingeben','err');return;}
+    const cat=document.getElementById('uni-sub-cat')?.value||'normal';
+    const exam=document.getElementById('uni-sub-exam')?.value||null;
+    await fsAdd('uniSubjects',{id:uid(),name,category:cat,examDate:exam,archived:false,createdAt:Date.now()});
+    closeModal(); if(typeof renderUni==='function') renderUni(); toast('Fach hinzugefügt');
+  } else if(modalMode.type==='uniSubjectEdit'){
+    const s=(D.uniSubjects||[]).find(x=>x.id===modalMode.id); if(!s) return;
+    s.name=document.getElementById('uni-sub-name')?.value.trim()||s.name;
+    s.category=document.getElementById('uni-sub-cat')?.value||s.category;
+    s.examDate=document.getElementById('uni-sub-exam')?.value||null;
+    await fsUpdate('uniSubjects',s); closeModal(); if(typeof renderUni==='function') renderUni(); toast('Gespeichert');
+  } else if(modalMode.type==='uniSession'){
+    const topic=document.getElementById('uni-sess-topic')?.value.trim();
+    if(!topic){toast('Bitte Thema eingeben','err');return;}
+    const learnings=document.getElementById('uni-sess-learnings')?.value.trim()||'';
+    const bookmark=document.getElementById('uni-sess-bookmark')?.value.trim()||'';
+    const {subjectId,startTs,dur}=modalMode;
+    await fsAdd('uniSessions',{id:uid(),subjectId,startTs,endTs:startTs+dur,duration:dur,
+      date:new Date(startTs).toISOString().slice(0,10),topic,learnings,bookmark,createdAt:Date.now()});
+    closeModal(); toast('Session gespeichert ✓');
+    if(typeof renderUniSubject==='function') renderUniSubject(subjectId);
   }
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
@@ -6610,9 +6634,6 @@ function uniStopTimer(){
   setTimeout(()=>document.getElementById('uni-sess-topic')?.focus(),50);
 }
 
-// saveModal handles type==='uniSession'
-const _origSaveModal=typeof saveModal==='function'?saveModal:null;
-
 async function openAddUniSubject(){
   modalMode={type:'uniSubjectAdd'};
   document.getElementById('modal-title').textContent='Fach hinzufügen';
@@ -6709,41 +6730,6 @@ function renderUniStats(){
   el.innerHTML=html;
 }
 
-// Extend saveModal for uni types
-const __origSaveModal=window.saveModal;
-window.saveModal=async function(){
-  if(modalMode?.type==='uniSession'){
-    const topic=document.getElementById('uni-sess-topic')?.value.trim();
-    if(!topic){toast('Bitte Thema eingeben','err');return;}
-    const learnings=document.getElementById('uni-sess-learnings')?.value.trim()||'';
-    const bookmark=document.getElementById('uni-sess-bookmark')?.value.trim()||'';
-    const {subjectId,startTs,dur}=modalMode;
-    await fsAdd('uniSessions',{id:uid(),subjectId,startTs,endTs:startTs+dur,duration:dur,
-      date:new Date(startTs).toISOString().slice(0,10),topic,learnings,bookmark,createdAt:Date.now()});
-    closeModal();
-    toast('Session gespeichert ✓');
-    renderUniSubject(subjectId);
-    return;
-  }
-  if(modalMode?.type==='uniSubjectAdd'){
-    const name=document.getElementById('uni-sub-name')?.value.trim();
-    if(!name){toast('Bitte Name eingeben','err');return;}
-    const cat=document.getElementById('uni-sub-cat')?.value||'normal';
-    const exam=document.getElementById('uni-sub-exam')?.value||null;
-    await fsAdd('uniSubjects',{id:uid(),name,category:cat,examDate:exam,archived:false,createdAt:Date.now()});
-    closeModal(); renderUni(); toast('Fach hinzugefügt');
-    return;
-  }
-  if(modalMode?.type==='uniSubjectEdit'){
-    const s=(D.uniSubjects||[]).find(x=>x.id===modalMode.id); if(!s) return;
-    s.name=document.getElementById('uni-sub-name')?.value.trim()||s.name;
-    s.category=document.getElementById('uni-sub-cat')?.value||s.category;
-    s.examDate=document.getElementById('uni-sub-exam')?.value||null;
-    await fsUpdate('uniSubjects',s); closeModal(); renderUni(); toast('Gespeichert');
-    return;
-  }
-  if(__origSaveModal) return __origSaveModal();
-};
 </script>
 </body>
 </html>
