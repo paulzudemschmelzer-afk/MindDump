@@ -3037,7 +3037,7 @@ function openEditTask(id){
         <option value="mittel" ${t.priority==='mittel'?'selected':''}>Mittel</option>
         <option value="niedrig" ${t.priority==='niedrig'?'selected':''}>Niedrig</option>
       </select>
-      <select id="m-kat">
+      <select id="m-kat" onchange="updateSubkatSuggestions('m-kat','m-subkat')">
         ${renderTaskCategoryOptions(t.kategorie||'sonstiges')}
       </select>
       <button class="btn btn-ghost btn-sm" onclick="openNewTaskCategoryPrompt('m-kat')">+ Kategorie</button>
