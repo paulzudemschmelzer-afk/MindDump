@@ -30,6 +30,7 @@ body:has(.sidebar:not(.collapsed)) .toggle-btn { display:none; }
 .nav-btn { width:100%; padding:10px 18px; background:none; border:none; color:var(--sub); font-size:14px; text-align:left; cursor:pointer; display:flex; align-items:center; gap:10px; transition:all .15s; border-right:2px solid transparent; }
 .nav-btn:hover { background:var(--card); color:var(--text); }
 .nav-btn.active { background:rgba(124,58,237,.15); color:var(--accent2); border-right-color:var(--accent2); }
+.nav-btn.nav-dragging { background:rgba(124,58,237,.3) !important; color:var(--accent2) !important; border-right-color:var(--accent2) !important; box-shadow:2px 0 16px rgba(124,58,237,.4); opacity:.9; cursor:grabbing; transition:none; }
 .nav-icon { width:18px; text-align:center; }
 .badge { margin-left:auto; background:var(--accent); color:#fff; font-size:11px; padding:1px 6px; border-radius:10px; min-width:18px; text-align:center; font-weight:600; }
 .sidebar-bottom { margin-top:auto; padding:0 14px 2px; }
@@ -727,19 +728,7 @@ select option { background:#1c1c1c; }
     <span>Mind<span style="color:var(--accent2)">Dump</span></span>
     <button id="sidebar-close-btn" onclick="toggleSidebar()" style="background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
   </div>
-  <nav>
-    <button class="nav-btn" onclick="go('braindump')"><span class="nav-icon">⚡</span>Brain Dump</button>
-    <button class="nav-btn" onclick="go('tasks')"><span class="nav-icon">✓</span>Tasks<span class="badge" id="b-tasks">0</span></button>
-    <button class="nav-btn active" onclick="go('heute')"><span class="nav-icon">☀</span>Heute<span class="badge" id="b-heute" style="background:#f59e0b">0</span></button>
-    <button class="nav-btn" onclick="go('stats')"><span class="nav-icon">📊</span>Dashboard</button>
-    <button class="nav-btn" onclick="go('week')"><span class="nav-icon">📅</span>Woche</button>
-    <button class="nav-btn" onclick="go('notes')"><span class="nav-icon">💡</span>Thoughts<span class="badge" id="b-thoughts">0</span></button>
-    <button class="nav-btn" onclick="go('snippets')"><span class="nav-icon">⌨</span>Snippets<span class="badge" id="b-snippets">0</span></button>
-    <button class="nav-btn" onclick="go('habits')"><span class="nav-icon">🏆</span>Habits<span class="badge" id="b-habits" style="background:#10b981">0</span></button>
-    <button class="nav-btn" onclick="go('finance')"><span class="nav-icon">€</span>Finanzen</button>
-    <button class="nav-btn" onclick="go('notes')"><span class="nav-icon">📝</span>Notizen<span class="badge" id="b-notes">0</span></button>
-    <button class="nav-btn" onclick="go('settings')" style="margin-top:auto"><span class="nav-icon">⚙</span>Settings</button>
-  </nav>
+  <nav id="main-nav"></nav>
   <div class="sidebar-bottom">
     <div id="api-indicator" class="api-status missing" onclick="go('settings')" title="API Key eintragen">
       <div class="dot"></div><span id="api-label">Kein API Key</span>
@@ -840,7 +829,7 @@ select option { background:#1c1c1c; }
   </div>
 
   <!-- HEUTE -->
-  <div class="tab-panel active" id="tab-heute">
+  <div class="tab-panel" id="tab-heute">
     <div class="page-header header-row">
       <div><h1>Heute</h1><p>Dein Fokus für heute.</p></div>
       <button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>
@@ -1261,7 +1250,7 @@ select option { background:#1c1c1c; }
 <script>
 // ── STATE ─────────────────────────────────────────────────────
 let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[], financeEntries:[], subscriptions:[], calEvents:[], dailyLog:{} };
-let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{} };
+let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{}, navOrder:[] };
 let pendingResult = null;
 let taskFilter = 'all';
 let taskTagFilter = null;
@@ -1605,6 +1594,79 @@ function nextDueDate(dueDate, recurrence) {
     default: return null;
   }
   return dateKey(d);
+}
+
+// ── NAV ITEMS & REORDER ───────────────────────────────────────
+const NAV_ITEMS = [
+  {id:'braindump', tab:'braindump', icon:'⚡', label:'Brain Dump'},
+  {id:'tasks',     tab:'tasks',     icon:'✓',  label:'Tasks',    badge:'b-tasks'},
+  {id:'heute',     tab:'heute',     icon:'☀',  label:'Heute',    badge:'b-heute',   badgeStyle:'background:#f59e0b'},
+  {id:'stats',     tab:'stats',     icon:'📊', label:'Dashboard'},
+  {id:'week',      tab:'week',      icon:'📅', label:'Woche'},
+  {id:'snippets',  tab:'snippets',  icon:'⌨',  label:'Snippets', badge:'b-snippets'},
+  {id:'habits',    tab:'habits',    icon:'🏆', label:'Habits',   badge:'b-habits',  badgeStyle:'background:#10b981'},
+  {id:'finance',   tab:'finance',   icon:'€',  label:'Finanzen'},
+  {id:'notes',     tab:'notes',     icon:'📝', label:'Notizen',  badge:'b-notes'},
+];
+const DEFAULT_NAV_ORDER = NAV_ITEMS.map(i=>i.id);
+
+function renderNav() {
+  const nav=document.getElementById('main-nav'); if(!nav) return;
+  const order=(S.navOrder&&S.navOrder.length)?S.navOrder:DEFAULT_NAV_ORDER;
+  nav.innerHTML=order.map(id=>{
+    const item=NAV_ITEMS.find(i=>i.id===id); if(!item) return '';
+    const badge=item.badge?`<span class="badge" id="${item.badge}"${item.badgeStyle?` style="${item.badgeStyle}"`:''}></span>`:'';
+    const isActive=currentTab===item.tab;
+    return `<button class="nav-btn${isActive?' active':''}" onclick="go('${item.tab}')" data-nav-id="${item.id}" ontouchstart="navTouchStart(event,'${item.id}')" ontouchmove="navTouchCancelLP(event)" ontouchend="navTouchEnd(event)"><span class="nav-icon">${item.icon}</span>${item.label}${badge}</button>`;
+  }).join('')+`<button class="nav-btn" onclick="go('settings')" style="margin-top:auto"><span class="nav-icon">⚙</span>Settings</button>`;
+  badges();
+}
+
+let _navDragEl=null, _navDragStartY=0, _navLPTimer=null, _navDragActive=false;
+
+function navTouchStart(e, id) {
+  _navDragStartY=e.touches[0].clientY;
+  const el=e.currentTarget;
+  _navLPTimer=setTimeout(()=>{
+    _navLPTimer=null; _navDragActive=true; _navDragEl=el;
+    el.classList.add('nav-dragging');
+    document.getElementById('main-nav').addEventListener('touchmove',_navDragMove,{passive:false});
+    if(navigator.vibrate) navigator.vibrate(40);
+  }, 450);
+}
+function navTouchCancelLP(e) {
+  if(_navLPTimer&&Math.abs(e.touches[0].clientY-_navDragStartY)>8){clearTimeout(_navLPTimer);_navLPTimer=null;}
+}
+function _navDragMove(e) {
+  if(!_navDragActive||!_navDragEl) return;
+  e.preventDefault();
+  const y=e.touches[0].clientY;
+  const nav=document.getElementById('main-nav');
+  const btns=[...nav.querySelectorAll('.nav-btn[data-nav-id]')];
+  const dragIdx=btns.indexOf(_navDragEl);
+  let targetIdx=dragIdx;
+  btns.forEach((b,i)=>{
+    if(i===dragIdx) return;
+    const r=b.getBoundingClientRect();
+    if(i<dragIdx&&y<r.top+r.height/2) targetIdx=Math.min(targetIdx,i);
+    if(i>dragIdx&&y>r.top+r.height/2) targetIdx=i;
+  });
+  if(targetIdx!==dragIdx) {
+    const ref=targetIdx<dragIdx?btns[targetIdx]:btns[targetIdx].nextSibling;
+    nav.insertBefore(_navDragEl,ref||null);
+  }
+}
+function navTouchEnd(e) {
+  if(_navLPTimer){clearTimeout(_navLPTimer);_navLPTimer=null;}
+  const nav=document.getElementById('main-nav');
+  nav.removeEventListener('touchmove',_navDragMove);
+  if(!_navDragActive||!_navDragEl){_navDragEl=null;return;}
+  _navDragEl.classList.remove('nav-dragging');
+  _navDragActive=false;
+  S.navOrder=[...nav.querySelectorAll('.nav-btn[data-nav-id]')].map(b=>b.dataset.navId);
+  saveSettings();
+  _navDragEl=null;
+  toast('Reihenfolge gespeichert');
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
@@ -6032,7 +6094,10 @@ function init() {
   updateApiIndicator();
   badges();
   renderUserArea();
-  renderHeute();
+  renderNav();
+  const _startId=(S.navOrder&&S.navOrder.length)?S.navOrder[0]:'heute';
+  const _startTab=NAV_ITEMS.find(i=>i.id===_startId)?.tab||'heute';
+  go(_startTab);
   // Sidebar auf Mobile geschlossen starten
   if(window.innerWidth <= 600) document.querySelector('.sidebar').classList.add('collapsed');
 
