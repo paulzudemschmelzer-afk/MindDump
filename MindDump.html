@@ -3988,8 +3988,31 @@ function dropYToTime(e, colEl) {
   return hh+':'+mm;
 }
 
-async function dropTask(e,ds){
+function weekDragOver(e, colEl) {
   e.preventDefault();
+  const rect=colEl.getBoundingClientRect();
+  const y=e.clientY-rect.top;
+  const rawMins=Math.round((CAL_START_H*60+y/CAL_PX_PER_MIN)/15)*15;
+  const mins=Math.max(CAL_START_H*60,Math.min(rawMins,CAL_END_H*60-15));
+  const time=String(Math.floor(mins/60)).padStart(2,'0')+':'+String(mins%60).padStart(2,'0');
+  const snapY=(mins-CAL_START_H*60)*CAL_PX_PER_MIN;
+  const line=colEl.querySelector('.hcal-snap-line');
+  if(line){line.style.display='block';line.style.top=snapY+'px';line.dataset.time=time;}
+  colEl.classList.add('drag-over');
+}
+function weekDragLeave(colEl) {
+  const line=colEl.querySelector('.hcal-snap-line'); if(line) line.style.display='none';
+  colEl.classList.remove('drag-over');
+}
+async function unscheduleTaskWeek(id) {
+  const t=D.tasks.find(x=>x.id===id); if(!t) return;
+  t.calStartTime=null; t.dueDate=null;
+  await fsUpdate('tasks',t);
+  renderWeek(); toast('Aus Kalender entfernt');
+}
+async function dropTask(e,ds,colEl){
+  e.preventDefault();
+  if(colEl){const line=colEl.querySelector('.hcal-snap-line');if(line)line.style.display='none';colEl.classList.remove('drag-over');}
   if(_dragCalEventId) {
     const ev=(D.calEvents||[]).find(x=>x.id===_dragCalEventId); if(!ev) return;
     const col=e.currentTarget;
@@ -4303,9 +4326,9 @@ function renderWeek() {
     });
 
     html+=`<div class="ap-day-col ${isToday?'today-col':''}" style="height:${gridH}px" data-date="${ds}"
-      ondragover="event.preventDefault();this.classList.add('drag-over')"
-      ondragleave="this.classList.remove('drag-over')"
-      ondrop="dropTask(event,'${ds}');this.classList.remove('drag-over')"
+      ondragover="weekDragOver(event,this)"
+      ondragleave="weekDragLeave(this)"
+      ondrop="dropTask(event,'${ds}',this)"
       onclick="calColClick(event,'${ds}')"
       ontouchstart="calColTouchStart(event,'${ds}')"
       ontouchmove="calColTouchMove(event)"
@@ -4316,6 +4339,7 @@ function renderWeek() {
       html+=`<div class="ap-hour-line" style="top:${h*60*PX}px"></div>`;
       html+=`<div class="ap-half-line" style="top:${(h*60+30)*PX}px"></div>`;
     }
+    html+=`<div class="hcal-snap-line"></div>`;
 
     // Now indicator
     if(isToday) {
@@ -4355,6 +4379,7 @@ function renderWeek() {
         ontouchmove="calEventTouchMove(event,'${t.id}')"
         ontouchend="calEventTouchEnd(event)"
         title="${esc(t.title)}">
+        <div class="hcal-event-rm" onclick="event.stopPropagation();unscheduleTaskWeek('${t.id}')" title="Aus Kalender entfernen">×</div>
         <div class="ap-event-title">${esc(t.title)}</div>
         ${timeLabel?`<div class="ap-event-time">${timeLabel} – ${endLabel}</div>`:''}
         <div class="ap-event-resize" ontouchstart="resizeTouchStart(event,'${t.id}')" onmousedown="resizeMouseDown(event,'${t.id}')"></div>
