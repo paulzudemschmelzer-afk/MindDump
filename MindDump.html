@@ -1474,6 +1474,21 @@ function subscribeFS() {
       }, err=>console.error(name,err))
     );
   });
+  // Sync settings (navOrder) across devices
+  unsubListeners.push(
+    db.collection('settings').doc(currentUser.uid).onSnapshot(snap=>{
+      if(!snap.exists) return;
+      const d=snap.data();
+      if(d.navOrder&&d.navOrder.length){
+        const valid=d.navOrder.filter(id=>DEFAULT_NAV_ORDER.includes(id));
+        const missing=DEFAULT_NAV_ORDER.filter(id=>!valid.includes(id));
+        const final=[...valid,...missing];
+        if(final.join(',')!==(S.navOrder||[]).join(',')){
+          S.navOrder=final; saveSettings(); renderNav();
+        }
+      }
+    }, err=>console.error('settings',err))
+  );
   let _fsMigrationDone = false;
   async function _migrateThoughtsToNotesFS() {
     _fsMigrationDone = true;
@@ -1549,6 +1564,10 @@ function subscribeFS() {
 function saveApiKeyToFirebase() {
   if(!db || !currentUser || !S.groqKey) return;
   db.collection('settings').doc(currentUser.uid).set({ groqKey: S.groqKey }, { merge: true });
+}
+function saveNavOrderToFirebase() {
+  if(!db||!currentUser) return;
+  db.collection('settings').doc(currentUser.uid).set({navOrder:S.navOrder},{merge:true});
 }
 
 function signIn() {
@@ -1669,12 +1688,42 @@ function renderNav() {
     const item=NAV_ITEMS.find(i=>i.id===id); if(!item) return '';
     const badge=item.badge?`<span class="badge" id="${item.badge}"${item.badgeStyle?` style="${item.badgeStyle}"`:''}></span>`:'';
     const isActive=currentTab===item.tab;
-    return `<button class="nav-btn${isActive?' active':''}" onclick="go('${item.tab}')" data-nav-id="${item.id}" ontouchstart="navTouchStart(event,'${item.id}')" ontouchmove="navTouchCancelLP(event)" ontouchend="navTouchEnd(event)"><span class="nav-icon">${item.icon}</span>${item.label}${badge}</button>`;
+    return `<button class="nav-btn${isActive?' active':''}" onclick="go('${item.tab}')" data-nav-id="${item.id}" ontouchstart="navTouchStart(event,'${item.id}')" ontouchmove="navTouchCancelLP(event)" ontouchend="navTouchEnd(event)" onmousedown="navMouseDown(event,'${item.id}')"><span class="nav-icon">${item.icon}</span>${item.label}${badge}</button>`;
   }).join('')+`<button class="nav-btn" onclick="go('settings')" style="margin-top:auto"><span class="nav-icon">⚙</span>Settings</button>`;
   badges();
 }
 
 let _navDragEl=null, _navDragStartY=0, _navLPTimer=null, _navDragActive=false;
+let _nmEl=null,_nmStartY=0,_nmTimer=null,_nmActive=false;
+function navMouseDown(e,id){
+  if(e.button!==0) return;
+  e.preventDefault();
+  _nmStartY=e.clientY; const el=e.currentTarget;
+  document.addEventListener('mousemove',_navMMov);
+  document.addEventListener('mouseup',_navMUp,{once:true});
+  _nmTimer=setTimeout(()=>{_nmTimer=null;_nmActive=true;_nmEl=el;el.classList.add('nav-dragging');if(navigator.vibrate)navigator.vibrate(30);},450);
+}
+function _navMMov(e){
+  if(!_nmActive){if(_nmTimer&&Math.abs(e.clientY-_nmStartY)>8){clearTimeout(_nmTimer);_nmTimer=null;}return;}
+  const y=e.clientY,nav=document.getElementById('main-nav');
+  const sb=nav.querySelector('.nav-btn:not([data-nav-id])');
+  const btns=[...nav.querySelectorAll('.nav-btn[data-nav-id]')].filter(b=>b!==_nmEl);
+  let ib=sb||null;
+  for(const b of btns){const r=b.getBoundingClientRect();if(y<r.top+r.height/2){ib=b;break;}}
+  nav.insertBefore(_nmEl,ib);
+}
+function _navMUp(){
+  document.removeEventListener('mousemove',_navMMov);
+  if(_nmTimer){clearTimeout(_nmTimer);_nmTimer=null;}
+  if(!_nmActive||!_nmEl){_nmEl=null;return;}
+  _nmEl.classList.remove('nav-dragging');
+  const nav=document.getElementById('main-nav');
+  S.navOrder=[...nav.querySelectorAll('.nav-btn[data-nav-id]')].map(b=>b.dataset.navId);
+  saveSettings();saveNavOrderToFirebase();
+  _nmEl.addEventListener('click',ce=>ce.stopImmediatePropagation(),{once:true,capture:true});
+  _nmActive=false;_nmEl=null;
+  toast('Reihenfolge gespeichert');
+}
 
 function navTouchStart(e, id) {
   _navDragStartY=e.touches[0].clientY;
@@ -1712,7 +1761,7 @@ function navTouchEnd(e) {
   _navDragEl.classList.remove('nav-dragging');
   _navDragActive=false;
   S.navOrder=[...nav.querySelectorAll('.nav-btn[data-nav-id]')].map(b=>b.dataset.navId);
-  saveSettings();
+  saveSettings(); saveNavOrderToFirebase();
   _navDragEl=null;
   toast('Reihenfolge gespeichert');
 }
