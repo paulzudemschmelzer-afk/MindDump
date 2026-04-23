@@ -5536,7 +5536,10 @@ function renderNotesList() {
 function openNote(id) {
   if(activeNoteId&&activeNoteId!==id) saveCurrentNote();
   activeNoteId=id; noteMode='type'; canvasHistory=[];
+  const list=document.querySelector('.notes-list');
+  const scrollTop=list?list.scrollTop:0;
   renderNotes();
+  if(list) list.scrollTop=scrollTop;
   if(window.innerWidth<=600) document.querySelector('.notes-layout')?.classList.add('note-open');
 }
 function closeNoteOnMobile() {
