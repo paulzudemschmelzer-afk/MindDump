@@ -6234,12 +6234,20 @@ function toggleDupItem(id) {
 }
 
 async function confirmDeleteDuplicates() {
-  if(!_selectedDupIds.size){toast('Nichts ausgewählt');return;}
-  closeModal(); let count=0;
-  for(const id of _pendingDupTaskIds) if(_selectedDupIds.has(id)){await fsDel('tasks',id);count++;}
-  for(const id of _pendingDupNoteIds) if(_selectedDupIds.has(id)){await fsDel('notes',id);count++;}
+  const delTasks=_pendingDupTaskIds.filter(id=>_selectedDupIds.has(id));
+  const delNotes=_pendingDupNoteIds.filter(id=>_selectedDupIds.has(id));
+  const total=delTasks.length+delNotes.length;
+  if(!total){toast('Nichts ausgewählt','err');return;}
+  closeModal();
+  toast(`Lösche ${total} Duplikat${total>1?'e':''}...`);
+  try {
+    for(const id of delTasks) await fsDel('tasks',id);
+    for(const id of delNotes) await fsDel('notes',id);
+    toast(`${total} Duplikat${total>1?'e':''} gelöscht ✓`);
+  } catch(e) {
+    toast('Fehler: '+e.message,'err');
+  }
   _pendingDupTaskIds=[];_pendingDupNoteIds=[];_selectedDupIds=new Set();
-  toast(`${count} Duplikat${count>1?'e':''} gelöscht ✓`);
 }
 
 // ── TAURUS ───────────────────────────────────────────────────
