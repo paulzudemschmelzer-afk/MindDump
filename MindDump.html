@@ -568,7 +568,7 @@ select option { background:#1c1c1c; }
 .hcal-cols { flex:1; display:flex; min-width:0; }
 .hcal-col { flex:1; position:relative; border-left:1px solid var(--border); min-width:0; cursor:crosshair; overflow:hidden; }
 .hcal-col.today { background:rgba(124,58,237,.03); }
-.hcal-hour-line { border-bottom:1px solid rgba(255,255,255,.06); position:relative; }
+.hcal-hour-line { border-bottom:1px solid rgba(255,255,255,.06); position:relative; pointer-events:none; }
 .hcal-half-line { position:absolute; left:0; right:0; height:1px; background:rgba(255,255,255,.03); top:50%; }
 .hcal-event-layer { position:absolute; inset:0; pointer-events:none; }
 .hcal-event { position:absolute; border-radius:6px; padding:3px 5px; overflow:hidden; cursor:pointer; pointer-events:all; }
@@ -3809,7 +3809,7 @@ function renderHeuteCalendar() {
       const drag=ev.type==='task'?`draggable="true" ondragstart="dragTask(event,'${ev.id}')"`:
         `draggable="true" ondragstart="hcalDragCalEvent(event,'${ev.id}')"`;
       const rmBtn=ev.type==='task'?`<div class="hcal-event-rm" onclick="event.stopPropagation();unscheduleTask('${ev.id}')" title="Aus Kalender entfernen">×</div>`:'';
-      return `<div class="hcal-event" style="top:${top}px;height:${h}px;left:${l+.5}%;width:${w-1}%;background:${ev.bg};border-left:3px solid ${ev.border};opacity:${ev.done?.5:1}" onclick="${fn}" ${drag} title="${esc(ev.title)}">
+      return `<div class="hcal-event" style="top:${top}px;height:${h}px;left:${l+.5}%;width:${w-1}%;background:${ev.bg};border-left:3px solid ${ev.border};opacity:${ev.done?.5:1};cursor:grab" onclick="${fn}" ondragover="event.preventDefault()" ${drag} title="${esc(ev.title)}">
         ${rmBtn}
         <div class="hcal-event-title">${esc(ev.title)}</div>
         ${h>32?`<div class="hcal-event-time">${hcalMinToTime(ev.startMin)}–${hcalMinToTime(ev.endMin)}</div>`:''}
@@ -3824,6 +3824,7 @@ function renderHeuteCalendar() {
     for(let h=HCAL_START;h<HCAL_END;h++) hLines+=`<div class="hcal-hour-line" style="height:${60*HCAL_PX}px"><div class="hcal-half-line"></div></div>`;
 
     return `<div class="hcal-col ${isT?'today':''}" style="min-height:${totalPx}px"
+      ondragenter="event.preventDefault()"
       ondragover="hcalDragOver(event,this)"
       ondragleave="hcalDragLeave(this)"
       ondrop="hcalDrop(event,'${ds}',this)"
