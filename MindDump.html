@@ -303,7 +303,7 @@ textarea::placeholder { color:#444; }
 .add-form { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:18px; }
 .form-row { display:flex; gap:8px; margin-bottom:10px; }
 .form-row:last-child { margin-bottom:0; }
-input[type=text],input[type=password],input[type=date],select,.form-ta {
+input[type=text],input[type=password],input[type=date],input[type=number],select,.form-ta {
   flex:1; padding:9px 13px; background:#141414; border:1px solid var(--border); border-radius:8px;
   color:var(--text); font-size:13px; outline:none; transition:border-color .15s; font-family:inherit;
 }
@@ -573,7 +573,9 @@ select option { background:#1c1c1c; }
 .finance-meta { color:var(--sub); font-size:12px; line-height:1.45; margin-top:4px; }
 .finance-amount.income { color:#34d399; }
 .finance-amount.expense { color:#f87171; }
-.finance-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.finance-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; flex-shrink:0; }
+.finance-actions.sub-actions { flex-direction:column; align-items:flex-end; gap:3px; }
+.finance-actions.sub-actions .sub-btns { display:flex; gap:4px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
 .dashboard-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
 .dashboard-head { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:12px; }
 .dashboard-title { font-size:15px; font-weight:600; }
@@ -5460,7 +5462,7 @@ function renderFinance() {
           <button class="btn btn-primary btn-sm" onclick="saveSubscription()">Speichern</button>
         </div>
         <div class="timeline-list finance-list" style="margin-top:12px">
-          ${subs.length?subs.map(sub=>`<div class="timeline-item"><div class="timeline-body"><div class="timeline-title"><span>${esc(sub.name)}</span><strong class="finance-amount expense">${fmtCurrency(sub.amount)}</strong></div><div class="finance-meta">${esc(sub.category||'Abo')} · ${sub.billingCycle==='yearly'?'jährlich':sub.billingCycle==='weekly'?'wöchentlich':'monatlich'}${sub.nextDueDate?' · fällig '+fmtDue(sub.nextDueDate):''}</div><div class="finance-meta">≈ ${fmtCurrency(subscriptionMonthlyCost(sub))}/Monat</div></div><div class="finance-actions"><span class="sub-pill ${sub.active!==false?'active':''}">${sub.active!==false?'aktiv':'pausiert'}</span><button class="link-btn" onclick="openEditSubscription('${sub.id}')">Bearbeiten</button><button class="link-btn" onclick="toggleSubscriptionActive('${sub.id}')">${sub.active===false?'Aktivieren':'Pausieren'}</button><button class="link-btn danger-link" onclick="deleteLifeEntry('subscriptions','${sub.id}','Abo')">Entfernen</button></div></div>`).join(''):`<div class="mini-empty">Noch keine Abos.</div>`}
+          ${subs.length?subs.map(sub=>`<div class="timeline-item"><div class="timeline-body"><div class="timeline-title"><span>${esc(sub.name)}</span></div><div class="finance-meta">${esc(sub.category||'Abo')} · ${sub.billingCycle==='yearly'?'jährlich':sub.billingCycle==='weekly'?'wöchentlich':'monatlich'}${sub.nextDueDate?' · fällig '+fmtDue(sub.nextDueDate):''}</div><div class="finance-meta">≈ ${fmtCurrency(subscriptionMonthlyCost(sub))}/Monat</div></div><div class="finance-actions sub-actions"><strong class="finance-amount expense">${fmtCurrency(sub.amount)}</strong><div class="sub-btns"><span class="sub-pill ${sub.active!==false?'active':''}">${sub.active!==false?'aktiv':'pausiert'}</span><button class="link-btn" onclick="openEditSubscription('${sub.id}')">Bearbeiten</button><button class="link-btn" onclick="toggleSubscriptionActive('${sub.id}')">${sub.active===false?'Aktivieren':'Pausieren'}</button><button class="link-btn danger-link" onclick="deleteLifeEntry('subscriptions','${sub.id}','Abo')">Entfernen</button></div></div></div>`).join(''):`<div class="mini-empty">Noch keine Abos.</div>`}
         </div>
       </div>
     </div>
