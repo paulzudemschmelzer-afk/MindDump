@@ -3809,7 +3809,7 @@ function renderHeuteCalendar() {
       const drag=ev.type==='task'?`draggable="true" ondragstart="dragTask(event,'${ev.id}')"`:
         `draggable="true" ondragstart="hcalDragCalEvent(event,'${ev.id}')"`;
       const rmBtn=ev.type==='task'?`<div class="hcal-event-rm" onclick="event.stopPropagation();unscheduleTask('${ev.id}')" title="Aus Kalender entfernen">×</div>`:'';
-      return `<div class="hcal-event" style="top:${top}px;height:${h}px;left:${l+.5}%;width:${w-1}%;background:${ev.bg};border-left:3px solid ${ev.border};opacity:${ev.done?.5:1};cursor:grab" onclick="${fn}" ondragover="event.preventDefault()" ${drag} title="${esc(ev.title)}">
+      return `<div class="hcal-event" style="top:${top}px;height:${h}px;left:${l+.5}%;width:${w-1}%;background:${ev.bg};border-left:3px solid ${ev.border};opacity:${ev.done?.5:1};cursor:grab" onclick="${fn}" ondragover="event.preventDefault()" ondrop="event.preventDefault();event.stopPropagation();hcalDrop(event,'${ds}',this.closest('.hcal-col'))" ${drag} title="${esc(ev.title)}">
         ${rmBtn}
         <div class="hcal-event-title">${esc(ev.title)}</div>
         ${h>32?`<div class="hcal-event-time">${hcalMinToTime(ev.startMin)}–${hcalMinToTime(ev.endMin)}</div>`:''}
