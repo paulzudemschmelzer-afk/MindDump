@@ -5202,16 +5202,7 @@ function renderHabitCard(h){
   const score=habitScore(h), status=habitStatus(score), milestones=habitMilestones(score);
   const isBad=h.type==='bad';
   const target=Math.max(1,Number(h.frequencyCount)||3);
-  const todayStr=dateKey();
-  const todayCheckins=habitCheckins(h).filter(c=>c.date===todayStr);
-  const fullCount=todayCheckins.filter(c=>c.mode==='full').length;
-  const minCount=todayCheckins.filter(c=>c.mode==='minimal').length;
-  const totalDone=fullCount+minCount;
-  const missToday=todayCheckins.some(c=>c.mode==='miss')&&totalDone===0;
-  const checkLabel=isBad
-    ?(totalDone>0?`↩ Trotzdem gemieden (${totalDone}×)`:missToday?'✓ Doch gemieden':'✓ Heute gemieden')
-    :(totalDone>0?`✓ Nochmal (${totalDone}×)`:missToday?'〜 Minimal':'✓ Abhaken');
-  const checkCls=totalDone>0?'done':'';
+  const checkLabel=isBad?'✓ Heute gemieden':'✓ Abhaken';
   const cardStyle=isBad?'border-color:rgba(248,113,113,.25);':'';
   return `<div class="habit-card ${score.recovery?'recovery':''}" style="${cardStyle}">
     <div class="habit-top">
@@ -5229,9 +5220,9 @@ function renderHabitCard(h){
       </div>
     </div>
     <div class="habit-quick-row">
-      <button class="habit-check-btn ${checkCls}" style="${isBad?'background:rgba(248,113,113,.14);color:#f87171;border-color:rgba(248,113,113,.2)':''}" onclick="quickHabitCheckin('${h.id}','full')">${checkLabel}</button>
-      ${!isBad&&totalDone===0&&!missToday?`<button class="habit-check-btn-min" onclick="quickHabitCheckin('${h.id}','minimal')">Minimal</button>`:''}
-      ${isBad?`<button class="habit-check-btn-miss" onclick="quickHabitCheckin('${h.id}','miss')" title="Rückfall — heute getan">✗ Rückfall</button>`:`${!missToday?`<button class="habit-check-btn-miss" onclick="quickHabitCheckin('${h.id}','miss')" title="Heute nicht gemacht">✗</button>`:''}`}
+      <button class="habit-check-btn" style="${isBad?'background:rgba(248,113,113,.14);color:#f87171;border-color:rgba(248,113,113,.2)':''}" onclick="quickHabitCheckin('${h.id}','full',event)">${checkLabel}</button>
+      ${!isBad?`<button class="habit-check-btn-min" onclick="quickHabitCheckin('${h.id}','minimal',event)">Minimal</button>`:''}
+      ${isBad?`<button class="habit-check-btn-miss" onclick="quickHabitCheckin('${h.id}','miss',event)" title="Rückfall — heute getan">✗ Rückfall</button>`:`<button class="habit-check-btn-miss" onclick="quickHabitCheckin('${h.id}','miss',event)" title="Heute nicht gemacht">✗</button>`}
     </div>
     <button class="habit-details-toggle" onclick="toggleHabitDetails('${h.id}')">Details ▾</button>
     <div id="habit-details-${h.id}" style="display:none">
