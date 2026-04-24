@@ -152,6 +152,36 @@ textarea::placeholder { color:#444; }
 .hh-btn-full { background:rgba(52,211,153,.14); border-color:rgba(52,211,153,.18); color:#8cf1c7; }
 .hh-btn-min  { background:rgba(251,191,36,.14); border-color:rgba(251,191,36,.18); color:#fbbf24; }
 .hh-btn-miss { background:rgba(239,68,68,.14);  border-color:rgba(239,68,68,.18);  color:#f87171; }
+.hh-btn-bad-avoid  { background:rgba(248,113,113,.14); border-color:rgba(248,113,113,.18); color:#f87171; }
+.hh-btn-bad-relapse{ background:rgba(100,100,100,.14); border-color:rgba(100,100,100,.18); color:var(--sub); }
+.heute-habits-bad-section { background:linear-gradient(180deg,rgba(248,113,113,.10),rgba(248,113,113,.03)),var(--card); border:1px solid rgba(248,113,113,.20); border-radius:12px; padding:14px 16px; margin-top:10px; margin-bottom:4px; }
+.heute-habits-bad-title { font-size:12px; font-weight:700; color:#f87171; text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
+.heute-habit-row.bad { border-bottom-color:rgba(248,113,113,.10); }
+.heute-habit-name.bad { color:#ffe4e4; }
+.heute-goals-section { background:linear-gradient(180deg,rgba(245,158,11,.10),rgba(245,158,11,.03)),var(--card); border:1px solid rgba(245,158,11,.20); border-radius:12px; padding:14px 16px; margin-top:14px; margin-bottom:4px; }
+.heute-goals-title { font-size:12px; font-weight:700; color:#f59e0b; text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
+.heute-goal-item { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid rgba(245,158,11,.10); font-size:13px; }
+.heute-goal-item:last-child { border-bottom:none; }
+.heute-goal-name { font-weight:600; flex:1; }
+.heute-goal-cat { font-size:11px; color:var(--sub); }
+.goal-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin-bottom:10px; }
+.goal-card-header { display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
+.goal-title { font-size:15px; font-weight:600; flex:1; min-width:0; }
+.goal-cat-chip { font-size:10px; padding:2px 8px; border-radius:20px; background:rgba(124,58,237,.15); color:var(--accent2); border:1px solid rgba(124,58,237,.2); white-space:nowrap; }
+.goal-heute-btn { font-size:11px; padding:2px 8px; border-radius:20px; cursor:pointer; border:1px solid var(--border); background:none; color:var(--sub); font-family:inherit; white-space:nowrap; }
+.goal-heute-btn.active { background:rgba(245,158,11,.15); color:#f59e0b; border-color:rgba(245,158,11,.3); }
+.subgoal-list { display:flex; flex-direction:column; gap:5px; margin:8px 0 10px; }
+.subgoal-row { display:flex; align-items:center; gap:8px; padding:7px 10px; background:var(--sidebar); border-radius:8px; }
+.subgoal-check { width:18px; height:18px; border-radius:4px; border:2px solid var(--border); cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:11px; background:none; font-family:inherit; }
+.subgoal-check.done { background:#34d399; border-color:#34d399; color:#fff; }
+.subgoal-body { flex:1; min-width:0; }
+.subgoal-label { font-size:13px; font-weight:500; }
+.subgoal-label.done { text-decoration:line-through; color:var(--sub); }
+.subgoal-state { font-size:11px; color:var(--accent2); margin-top:1px; cursor:pointer; }
+.subgoal-state.plain { color:var(--sub); cursor:default; }
+.subgoal-add-btn { font-size:12px; color:var(--accent2); background:none; border:1px dashed rgba(124,58,237,.3); border-radius:8px; padding:5px 10px; cursor:pointer; width:100%; font-family:inherit; }
+.subgoal-add-btn:hover { background:rgba(124,58,237,.08); }
+.goal-empty { padding:30px; text-align:center; color:var(--sub); font-size:14px; }
 .te-notiz { width:100%; background:none; border:none; border-bottom:1px solid var(--border); color:var(--text); font-size:13px; padding-bottom:5px; outline:none; font-family:inherit; box-sizing:border-box; }
 .te-notiz:focus-visible { border-bottom-color:var(--accent); }
 .heute-drag-handle { width:28px; height:28px; min-width:28px; border-radius:7px; border:1px solid transparent; color:#3a3a3a; cursor:grab; padding:0; font-size:17px; display:flex; align-items:center; justify-content:center; flex-shrink:0; touch-action:none; user-select:none; line-height:1; margin-top:-1px; background:transparent; }
@@ -934,6 +964,8 @@ select option { background:#1c1c1c; }
 
     </div>
 
+    <!-- Ziele Reminder -->
+    <div id="heute-goals-section"></div>
     <!-- Habits Schnellcheck -->
     <div class="heute-habits-section" id="heute-habits-section"></div>
     <!-- Tasks -->
@@ -1003,7 +1035,13 @@ select option { background:#1c1c1c; }
     <div class="add-form" id="add-habit-form" style="display:none">
       <div class="form-row">
         <label class="field"><span class="field-label">Name</span><input type="text" id="h-name" placeholder="z.B. Meditation" /></label>
-        <label class="field" style="max-width:160px"><span class="field-label">Ziel / Woche</span><input type="number" id="h-frequency" min="1" max="14" value="3" /></label>
+        <label class="field" style="max-width:150px"><span class="field-label">Typ</span>
+          <select id="h-type" onchange="document.getElementById('h-freq-wrap').style.display=this.value==='bad'?'none':'flex'">
+            <option value="good">✅ Gute Gewohnheit</option>
+            <option value="bad">🚫 Schlechte Gewohnheit</option>
+          </select>
+        </label>
+        <label class="field" id="h-freq-wrap" style="max-width:160px"><span class="field-label">Ziel / Woche</span><input type="number" id="h-frequency" min="1" max="14" value="3" /></label>
       </div>
       <div class="form-row">
         <button class="btn btn-primary btn-sm" onclick="addHabitManual()">Speichern</button>
@@ -1189,6 +1227,15 @@ select option { background:#1c1c1c; }
     <div id="uni-main"></div>
   </div>
 
+  <!-- GOALS -->
+  <div class="tab-panel" id="tab-goals">
+    <div class="page-header header-row">
+      <div><h1>Ziele</h1><p>Deine Oberziele und die Meilensteine darunter.</p></div>
+      <button class="btn btn-ghost btn-sm" onclick="openAddGoal()">+ Ziel</button>
+    </div>
+    <div id="goals-list"></div>
+  </div>
+
   <!-- SETTINGS -->
   <div class="tab-panel" id="tab-settings">
     <div class="page-header"><h1>Settings</h1></div>
@@ -1308,7 +1355,7 @@ select option { background:#1c1c1c; }
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────
-let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[], financeEntries:[], subscriptions:[], calEvents:[], dailyLog:{}, uniSubjects:[], uniSessions:[], uniTasks:[] };
+let D = { tasks:[], thoughts:[], snippets:[], notes:[], habits:[], financeEntries:[], subscriptions:[], calEvents:[], dailyLog:{}, uniSubjects:[], uniSessions:[], uniTasks:[], goals:[], subgoals:[] };
 let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{}, navOrder:[] };
 let pendingResult = null;
 let taskFilter = 'all';
@@ -1437,7 +1484,8 @@ function rerender(colName) {
   if(colName==='thoughts') renderThoughts();
   if(colName==='snippets') renderSnips();
   if(colName==='notes') renderNotes();
-  if(colName==='habits') { renderHabits(); if(currentTab==='stats') renderStats(); }
+  if(colName==='habits') { renderHabits(); if(currentTab==='stats') renderStats(); if(currentTab==='heute') renderHeuteHabits(); }
+  if(colName==='goals'||colName==='subgoals') { if(currentTab==='goals') renderGoals(); renderHeuteGoals(); }
   if(colName==='financeEntries'||colName==='subscriptions') renderFinance();
   if(colName==='uniSubjects'||colName==='uniSessions'||colName==='uniTasks') { if(typeof renderUni==='function'&&currentTab==='uni') renderUni(); }
 }
@@ -1476,7 +1524,7 @@ function connectFirebase() {
 function subscribeFS() {
   unsubListeners.forEach(u=>u());
   unsubListeners=[];
-  ['tasks','thoughts','snippets','notes','habits','financeEntries','subscriptions','calEvents','uniSubjects','uniSessions','uniTasks'].forEach(name=>{
+  ['tasks','thoughts','snippets','notes','habits','financeEntries','subscriptions','calEvents','uniSubjects','uniSessions','uniTasks','goals','subgoals'].forEach(name=>{
     unsubListeners.push(
       col(name).onSnapshot(snap=>{
         D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1686,6 +1734,7 @@ const NAV_ITEMS = [
   {id:'week',      tab:'week',      icon:'📅', label:'Woche'},
   {id:'snippets',  tab:'snippets',  icon:'⌨',  label:'Snippets', badge:'b-snippets'},
   {id:'habits',    tab:'habits',    icon:'🏆', label:'Habits',   badge:'b-habits',  badgeStyle:'background:#10b981'},
+  {id:'goals',     tab:'goals',     icon:'🎯', label:'Ziele'},
   {id:'finance',   tab:'finance',   icon:'€',  label:'Finanzen'},
   {id:'notes',     tab:'notes',     icon:'📝', label:'Notizen',  badge:'b-notes'},
   {id:'uni',       tab:'uni',       icon:'🎓', label:'Uni'},
@@ -3585,7 +3634,7 @@ function renderHeute() {
   const el = document.getElementById('heute-list');
   if(!list.length) {
     el.innerHTML='<div class="heute-empty-drop">Tasks hierher ziehen oder per ☀ in der Task-Liste markieren</div>';
-    renderHeuteHabits();
+    renderHeuteGoals(); renderHeuteHabits();
     renderHeuteCalendar();
     return;
   }
@@ -3618,7 +3667,7 @@ function renderHeute() {
     </div>`;
   }).join('');
   badges();
-  renderHeuteHabits();
+  renderHeuteGoals(); renderHeuteHabits();
   renderHeuteCalendar();
 }
 
@@ -3902,22 +3951,30 @@ async function editCalEvent(id) { openCalEventModal(id, null, null); }
 // ── HEUTE HABITS ────────────────────────────────────────────────
 function renderHeuteHabits() {
   const el=document.getElementById('heute-habits-section'); if(!el) return;
-  const habits=(D.habits||[]).filter(h=>!h.archived);
-  if(!habits.length){el.innerHTML='';return;}
-  const todayStr=dateKey();
-  el.innerHTML=`<div class="heute-habits-title">🏆 Habits</div>`+habits.map(h=>{
-    return `<div class="heute-habit-row">
+  const all=(D.habits||[]).filter(h=>!h.archived);
+  const good=all.filter(h=>h.type!=='bad');
+  const bad=all.filter(h=>h.type==='bad');
+  if(!all.length){el.innerHTML='';return;}
+  const habitRow=(h)=>{
+    const isBad=h.type==='bad';
+    return `<div class="heute-habit-row${isBad?' bad':''}">
       <div style="flex:1;min-width:0">
-        <div class="heute-habit-name">${esc(h.name)}</div>
+        <div class="heute-habit-name${isBad?' bad':''}">${esc(h.name)}</div>
         ${h.why?`<div class="heute-habit-why">${esc(h.why)}</div>`:''}
       </div>
       <div style="display:flex;gap:5px;flex-shrink:0">
-        <button class="hh-btn hh-btn-full" onclick="quickHabitCheckin('${h.id}','full',event)">✅ Erledigt</button>
-        <button class="hh-btn hh-btn-min"  onclick="quickHabitCheckin('${h.id}','minimal',event)">➖ Minimal</button>
-        <button class="hh-btn hh-btn-miss" onclick="quickHabitCheckin('${h.id}','miss',event)">✗ Skip</button>
+        ${isBad
+          ?`<button class="hh-btn hh-btn-bad-avoid" onclick="quickHabitCheckin('${h.id}','full',event)">✓ Gemieden</button>
+             <button class="hh-btn hh-btn-bad-relapse" onclick="quickHabitCheckin('${h.id}','miss',event)">✗ Rückfall</button>`
+          :`<button class="hh-btn hh-btn-full" onclick="quickHabitCheckin('${h.id}','full',event)">✅ Erledigt</button>
+             <button class="hh-btn hh-btn-min"  onclick="quickHabitCheckin('${h.id}','minimal',event)">➖ Minimal</button>
+             <button class="hh-btn hh-btn-miss" onclick="quickHabitCheckin('${h.id}','miss',event)">✗ Skip</button>`
+        }
       </div>
     </div>`;
-  }).join('');
+  };
+  el.innerHTML=(good.length?`<div class="heute-habits-title">🏆 Habits</div>`+good.map(habitRow).join(''):'')
+    +(bad.length?`<div class="heute-habits-bad-section" style="margin-top:${good.length?10:0}px"><div class="heute-habits-bad-title">🚫 Bad Habits vermeiden</div>`+bad.map(habitRow).join('')+`</div>`:'');
 }
 
 const CAL_START_H=0, CAL_END_H=24;
@@ -5033,6 +5090,7 @@ function habitMeter(label,value,type){
 }
 function renderHabitCard(h){
   const score=habitScore(h), status=habitStatus(score), milestones=habitMilestones(score);
+  const isBad=h.type==='bad';
   const target=Math.max(1,Number(h.frequencyCount)||3);
   const todayStr=dateKey();
   const todayCheckins=habitCheckins(h).filter(c=>c.date===todayStr);
@@ -5040,18 +5098,19 @@ function renderHabitCard(h){
   const minCount=todayCheckins.filter(c=>c.mode==='minimal').length;
   const totalDone=fullCount+minCount;
   const missToday=todayCheckins.some(c=>c.mode==='miss')&&totalDone===0;
-  const doneToday=totalDone>0;
-  const minToday=totalDone===0&&minCount>0;
-  const checkLabel=totalDone>0?`✓ Nochmal (${totalDone}×)`:missToday?'〜 Minimal':'✓ Abhaken';
+  const checkLabel=isBad
+    ?(totalDone>0?`↩ Trotzdem gemieden (${totalDone}×)`:missToday?'✓ Doch gemieden':'✓ Heute gemieden')
+    :(totalDone>0?`✓ Nochmal (${totalDone}×)`:missToday?'〜 Minimal':'✓ Abhaken');
   const checkCls=totalDone>0?'done':'';
-  return `<div class="habit-card ${score.recovery?'recovery':''}">
+  const cardStyle=isBad?'border-color:rgba(248,113,113,.25);':'';
+  return `<div class="habit-card ${score.recovery?'recovery':''}" style="${cardStyle}">
     <div class="habit-top">
       <div style="flex:1;min-width:0">
-        <div class="habit-name">${esc(h.name)}</div>
+        <div class="habit-name">${isBad?'🚫 ':''} ${esc(h.name)}</div>
         <div class="habit-meta" style="margin-top:4px">
-          <span class="habit-chip ${status.cls}">${status.text}</span>
-          <span class="habit-chip">${target}× / Woche</span>
-          ${score.recentMisses?`<span class="habit-chip warn">${score.recentMisses}× verpasst</span>`:''}
+          ${isBad?`<span class="habit-chip" style="background:rgba(248,113,113,.15);color:#f87171;border-color:rgba(248,113,113,.2)">Bad Habit</span>`:`<span class="habit-chip ${status.cls}">${status.text}</span>`}
+          ${!isBad?`<span class="habit-chip">${target}× / Woche</span>`:''}
+          ${score.recentMisses&&!isBad?`<span class="habit-chip warn">${score.recentMisses}× verpasst</span>`:''}
         </div>
       </div>
       <div class="card-actions">
@@ -5060,9 +5119,9 @@ function renderHabitCard(h){
       </div>
     </div>
     <div class="habit-quick-row">
-      <button class="habit-check-btn ${checkCls}" onclick="quickHabitCheckin('${h.id}','full')">${checkLabel}</button>
-      ${totalDone===0&&!missToday?`<button class="habit-check-btn-min" onclick="quickHabitCheckin('${h.id}','minimal')">Minimal</button>`:''}
-      ${!missToday?`<button class="habit-check-btn-miss" onclick="quickHabitCheckin('${h.id}','miss')" title="Heute nicht gemacht">✗</button>`:''}
+      <button class="habit-check-btn ${checkCls}" style="${isBad?'background:rgba(248,113,113,.14);color:#f87171;border-color:rgba(248,113,113,.2)':''}" onclick="quickHabitCheckin('${h.id}','full')">${checkLabel}</button>
+      ${!isBad&&totalDone===0&&!missToday?`<button class="habit-check-btn-min" onclick="quickHabitCheckin('${h.id}','minimal')">Minimal</button>`:''}
+      ${isBad?`<button class="habit-check-btn-miss" onclick="quickHabitCheckin('${h.id}','miss')" title="Rückfall — heute getan">✗ Rückfall</button>`:`${!missToday?`<button class="habit-check-btn-miss" onclick="quickHabitCheckin('${h.id}','miss')" title="Heute nicht gemacht">✗</button>`:''}`}
     </div>
     <button class="habit-details-toggle" onclick="toggleHabitDetails('${h.id}')">Details ▾</button>
     <div id="habit-details-${h.id}" style="display:none">
@@ -5101,8 +5160,9 @@ function habitField(id,field){ return document.getElementById(`hc-${field}-${id}
 async function addHabitManual(){
   const name=document.getElementById('h-name').value.trim();
   if(!name){toast('Bitte Habit-Namen eingeben','err');return;}
-  const habit={id:uid(),name,
-    frequencyCount:Math.max(1,Number(document.getElementById('h-frequency').value)||3),
+  const type=document.getElementById('h-type')?.value||'good';
+  const habit={id:uid(),name,type,
+    frequencyCount:type==='bad'?7:Math.max(1,Number(document.getElementById('h-frequency').value)||3),
     frequencyPeriod:'week',
     decayWarnDays:7,decayDangerDays:21,
     checkins:[],archived:false,createdAt:Date.now()
@@ -5110,8 +5170,10 @@ async function addHabitManual(){
   await fsAdd('habits',habit);
   document.getElementById('h-name').value='';
   document.getElementById('h-frequency').value=3;
+  if(document.getElementById('h-type')) document.getElementById('h-type').value='good';
+  if(document.getElementById('h-freq-wrap')) document.getElementById('h-freq-wrap').style.display='flex';
   toggleForm('add-habit-form');
-  toast('Habit erstellt');
+  toast(type==='bad'?'Bad Habit erstellt 🚫':'Habit erstellt ✓');
 }
 async function addHabitCheckin(id,mode='full'){
   const h=D.habits.find(x=>x.id===id); if(!h) return;
@@ -5130,8 +5192,9 @@ async function addHabitCheckin(id,mode='full'){
   toast(mode==='miss'?'Heute als nicht gemacht markiert':mode==='minimal'?'Minimalversion zählt!':'Check-in gespeichert ✓');
 }
 async function quickHabitCheckin(id, mode='full', e) {
-  if(e) flashBtn(e.currentTarget, mode==='miss'?'red':mode==='minimal'?'orange':'green');
   const h=D.habits.find(x=>x.id===id); if(!h) return;
+  const isBad=h.type==='bad';
+  if(e) flashBtn(e.currentTarget, mode==='miss'?(isBad?'red':'red'):mode==='minimal'?'orange':'green');
   const today=todayISO();
   const checkin={id:uid(),date:today,time:new Date().toTimeString().slice(0,5),mode,createdAt:Date.now()};
   const prev=habitCheckins(h);
@@ -5142,7 +5205,11 @@ async function quickHabitCheckin(id, mode='full', e) {
   }
   await fsUpdate('habits',h);
   const count=h.checkins.filter(c=>c.date===today&&(c.mode==='full'||c.mode==='minimal')).length;
-  toast(mode==='miss'?'Als nicht gemacht markiert':mode==='minimal'?`Minimal ✓ (${count}x heute)`:`Erledigt ✓ (${count}x heute)`);
+  if(isBad) {
+    toast(mode==='miss'?'Rückfall markiert ✗':mode==='minimal'?`Gemieden ✓ (${count}x)`:`Heute gemieden ✓ (${count}x)`);
+  } else {
+    toast(mode==='miss'?'Als nicht gemacht markiert':mode==='minimal'?`Minimal ✓ (${count}x heute)`:`Erledigt ✓ (${count}x heute)`);
+  }
 }
 function toggleHabitDetails(id) {
   const el=document.getElementById('habit-details-'+id); if(!el) return;
@@ -5397,11 +5464,154 @@ function openEditHabit(id){
   const h=D.habits.find(x=>x.id===id); if(!h) return;
   modalMode={type:'habit',id};
   document.getElementById('modal-title').textContent='Habit bearbeiten';
+  const isBad=h.type==='bad';
   document.getElementById('modal-body').innerHTML=`
     <div class="form-row"><label class="field"><span class="field-label">Name</span><input type="text" id="m-h-name" value="${esc(h.name)}" placeholder="Name" /></label></div>
-    <div class="form-row"><label class="field"><span class="field-label">Ziel / Woche</span><input type="number" id="m-h-frequency" min="1" max="14" value="${h.frequencyCount||3}" /></label></div>`;
+    <div class="form-row"><label class="field"><span class="field-label">Typ</span><select id="m-h-type"><option value="good"${!isBad?' selected':''}>✅ Gute Gewohnheit</option><option value="bad"${isBad?' selected':''}>🚫 Schlechte Gewohnheit</option></select></label></div>
+    <div class="form-row" id="m-h-freq-row" style="${isBad?'display:none':''}"><label class="field"><span class="field-label">Ziel / Woche</span><input type="number" id="m-h-frequency" min="1" max="14" value="${h.frequencyCount||3}" /></label></div>`;
   document.getElementById('modal').style.display='flex';
+  document.getElementById('m-h-type')?.addEventListener('change',e=>{ document.getElementById('m-h-freq-row').style.display=e.target.value==='bad'?'none':''; });
   setTimeout(()=>document.getElementById('m-h-name')?.focus(),50);
+}
+
+// ── GOALS ──────────────────────────────────────────────────────
+const GOAL_CATS=['Körperlich','Finanziell','Karriere','Sozial','Mentales Wachstum','Sonstiges'];
+
+function renderGoals() {
+  const el=document.getElementById('goals-list'); if(!el) return;
+  const goals=(D.goals||[]).filter(g=>!g.archived).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  if(!goals.length){
+    el.innerHTML='<div class="goal-empty"><h3>Noch keine Ziele</h3><p>Definiere deine Oberziele und brich sie in konkrete Meilensteine herunter.</p></div>';
+    return;
+  }
+  el.innerHTML=goals.map(g=>{
+    const subs=(D.subgoals||[]).filter(s=>s.goalId===g.id).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+    const achieved=subs.filter(s=>s.achieved).length;
+    return `<div class="goal-card">
+      <div class="goal-card-header">
+        <div class="goal-title">${esc(g.title)}</div>
+        ${g.category?`<span class="goal-cat-chip">${esc(g.category)}</span>`:''}
+        <button class="goal-heute-btn ${g.showInHeute?'active':''}" onclick="toggleGoalHeute('${g.id}')" title="In Heute anzeigen">⭐ Heute</button>
+        <button class="icon-btn edit-btn" onclick="openEditGoal('${g.id}')">✏</button>
+        <button class="icon-btn del" onclick="deleteGoal('${g.id}')">×</button>
+      </div>
+      ${subs.length?`<div style="font-size:11px;color:var(--sub);margin-bottom:6px">${achieved}/${subs.length} Meilensteine erreicht</div>`:''}
+      <div class="subgoal-list">
+        ${subs.map(s=>`<div class="subgoal-row">
+          <button class="subgoal-check ${s.achieved?'done':''}" onclick="toggleSubgoalAchieved('${s.id}')" title="${s.achieved?'Als offen markieren':'Als erreicht markieren'}">${s.achieved?'✓':''}</button>
+          <div class="subgoal-body">
+            <div class="subgoal-label ${s.achieved?'done':''}">${esc(s.label)}</div>
+            ${s.currentState?`<div class="subgoal-state" onclick="openUpdateSubgoalProgress('${s.id}')" title="Stand aktualisieren">▶ ${esc(s.currentState)}</div>`
+              :`<div class="subgoal-state" onclick="openUpdateSubgoalProgress('${s.id}')" title="Aktuellen Stand eintragen">+ Stand eintragen</div>`}
+          </div>
+          <button class="icon-btn edit-btn" onclick="openEditSubgoal('${s.id}')">✏</button>
+          <button class="icon-btn del" onclick="deleteSubgoal('${s.id}')">×</button>
+        </div>`).join('')}
+      </div>
+      <button class="subgoal-add-btn" onclick="openAddSubgoal('${g.id}')">+ Meilenstein hinzufügen</button>
+    </div>`;
+  }).join('');
+}
+
+function renderHeuteGoals() {
+  const el=document.getElementById('heute-goals-section'); if(!el) return;
+  const goals=(D.goals||[]).filter(g=>!g.archived&&g.showInHeute);
+  if(!goals.length){el.innerHTML='';return;}
+  el.innerHTML=`<div class="heute-goals-section">
+    <div class="heute-goals-title">🎯 Meine Ziele</div>
+    ${goals.map(g=>`<div class="heute-goal-item">
+      <span class="heute-goal-name">${esc(g.title)}</span>
+      ${g.category?`<span class="heute-goal-cat">${esc(g.category)}</span>`:''}
+    </div>`).join('')}
+  </div>`;
+}
+
+function openAddGoal() {
+  modalMode={type:'goalAdd'};
+  document.getElementById('modal-title').textContent='Neues Ziel';
+  const opts=GOAL_CATS.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><label class="field"><span class="field-label">Ziel</span><input type="text" id="m-goal-title" placeholder="z.B. Unbesiegbar sein" /></label></div>
+    <div class="form-row"><label class="field"><span class="field-label">Kategorie</span><select id="m-goal-cat"><option value="">Keine Kategorie</option>${opts}</select></label></div>
+    <div class="form-row"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="m-goal-heute" checked /> In Heute anzeigen</label></div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-goal-title')?.focus(),50);
+}
+
+function openEditGoal(id) {
+  const g=(D.goals||[]).find(x=>x.id===id); if(!g) return;
+  modalMode={type:'goalEdit',id};
+  document.getElementById('modal-title').textContent='Ziel bearbeiten';
+  const opts=GOAL_CATS.map(c=>`<option${g.category===c?' selected':''}>${c}</option>`).join('');
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><label class="field"><span class="field-label">Ziel</span><input type="text" id="m-goal-title" value="${esc(g.title)}" /></label></div>
+    <div class="form-row"><label class="field"><span class="field-label">Kategorie</span><select id="m-goal-cat"><option value=""${!g.category?' selected':''}>Keine Kategorie</option>${opts}</select></label></div>
+    <div class="form-row"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="m-goal-heute" ${g.showInHeute?'checked':''} /> In Heute anzeigen</label></div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-goal-title')?.focus(),50);
+}
+
+function openAddSubgoal(goalId) {
+  modalMode={type:'subgoalAdd',goalId};
+  document.getElementById('modal-title').textContent='Meilenstein hinzufügen';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><label class="field"><span class="field-label">Statement</span><input type="text" id="m-sg-label" placeholder="z.B. Ich kann 20 Klimmzüge am Stück" /></label></div>
+    <div class="form-row"><label class="field"><span class="field-label">Aktueller Stand</span><input type="text" id="m-sg-state" placeholder="z.B. Aktuell bei 12" /></label></div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-sg-label')?.focus(),50);
+}
+
+function openEditSubgoal(id) {
+  const s=(D.subgoals||[]).find(x=>x.id===id); if(!s) return;
+  modalMode={type:'subgoalEdit',id};
+  document.getElementById('modal-title').textContent='Meilenstein bearbeiten';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><label class="field"><span class="field-label">Statement</span><input type="text" id="m-sg-label" value="${esc(s.label)}" /></label></div>
+    <div class="form-row"><label class="field"><span class="field-label">Aktueller Stand</span><input type="text" id="m-sg-state" value="${esc(s.currentState||'')}" placeholder="z.B. Aktuell bei 12" /></label></div>
+    <div class="form-row"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="m-sg-achieved" ${s.achieved?'checked':''} /> Erreicht</label></div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-sg-label')?.focus(),50);
+}
+
+function openUpdateSubgoalProgress(id) {
+  const s=(D.subgoals||[]).find(x=>x.id===id); if(!s) return;
+  modalMode={type:'subgoalProgress',id};
+  document.getElementById('modal-title').textContent='Stand aktualisieren';
+  document.getElementById('modal-body').innerHTML=`
+    <div style="font-size:13px;color:var(--sub);margin-bottom:10px">${esc(s.label)}</div>
+    <div class="form-row"><label class="field"><span class="field-label">Aktueller Stand</span><input type="text" id="m-sg-progress" value="${esc(s.currentState||'')}" placeholder="z.B. Aktuell bei 12" /></label></div>`;
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-sg-progress')?.focus(),50);
+}
+
+async function toggleGoalHeute(id) {
+  const g=(D.goals||[]).find(x=>x.id===id); if(!g) return;
+  g.showInHeute=!g.showInHeute;
+  await fsUpdate('goals',g);
+  renderGoals(); renderHeuteGoals();
+  toast(g.showInHeute?'In Heute angezeigt ⭐':'Aus Heute entfernt');
+}
+
+async function toggleSubgoalAchieved(id) {
+  const s=(D.subgoals||[]).find(x=>x.id===id); if(!s) return;
+  s.achieved=!s.achieved;
+  if(s.achieved) s.achievedAt=Date.now();
+  await fsUpdate('subgoals',s);
+  renderGoals();
+  toast(s.achieved?'Meilenstein erreicht 🎯':'Als offen markiert');
+}
+
+async function deleteGoal(id) {
+  if(!confirm('Ziel und alle Meilensteine löschen?')) return;
+  const subs=(D.subgoals||[]).filter(s=>s.goalId===id);
+  for(const s of subs) await fsDel('subgoals',s.id);
+  await fsDel('goals',id);
+  renderGoals(); renderHeuteGoals(); toast('Ziel gelöscht');
+}
+
+async function deleteSubgoal(id) {
+  if(!confirm('Meilenstein löschen?')) return;
+  await fsDel('subgoals',id); renderGoals(); toast('Meilenstein gelöscht');
 }
 
 function renderFinance() {
@@ -6033,8 +6243,36 @@ async function saveModal(){
     const name=document.getElementById('m-h-name').value.trim();
     if(!name){toast('Name darf nicht leer sein','err');return;}
     h.name=name;
-    h.frequencyCount=Math.max(1,Number(document.getElementById('m-h-frequency').value)||3);
+    h.type=document.getElementById('m-h-type')?.value||h.type||'good';
+    h.frequencyCount=h.type==='bad'?7:Math.max(1,Number(document.getElementById('m-h-frequency')?.value)||3);
     await fsUpdate('habits',h); closeModal(); toast('Habit aktualisiert!');
+  } else if(modalMode.type==='goalAdd'){
+    const title=document.getElementById('m-goal-title').value.trim();
+    if(!title){toast('Bitte Ziel eingeben','err');return;}
+    await fsAdd('goals',{id:uid(),title,category:document.getElementById('m-goal-cat').value||'',showInHeute:document.getElementById('m-goal-heute').checked,archived:false,createdAt:Date.now()});
+    closeModal(); renderGoals(); renderHeuteGoals(); toast('Ziel erstellt 🎯');
+  } else if(modalMode.type==='goalEdit'){
+    const g=(D.goals||[]).find(x=>x.id===modalMode.id); if(!g) return;
+    g.title=document.getElementById('m-goal-title').value.trim()||g.title;
+    g.category=document.getElementById('m-goal-cat').value||'';
+    g.showInHeute=document.getElementById('m-goal-heute').checked;
+    await fsUpdate('goals',g); closeModal(); renderGoals(); renderHeuteGoals(); toast('Ziel aktualisiert!');
+  } else if(modalMode.type==='subgoalAdd'){
+    const label=document.getElementById('m-sg-label').value.trim();
+    if(!label){toast('Bitte Statement eingeben','err');return;}
+    await fsAdd('subgoals',{id:uid(),goalId:modalMode.goalId,label,currentState:document.getElementById('m-sg-state').value.trim(),achieved:false,createdAt:Date.now()});
+    closeModal(); renderGoals(); toast('Meilenstein hinzugefügt ✓');
+  } else if(modalMode.type==='subgoalEdit'){
+    const s=(D.subgoals||[]).find(x=>x.id===modalMode.id); if(!s) return;
+    s.label=document.getElementById('m-sg-label').value.trim()||s.label;
+    s.currentState=document.getElementById('m-sg-state').value.trim();
+    s.achieved=document.getElementById('m-sg-achieved').checked;
+    if(s.achieved&&!s.achievedAt) s.achievedAt=Date.now();
+    await fsUpdate('subgoals',s); closeModal(); renderGoals(); toast('Meilenstein aktualisiert!');
+  } else if(modalMode.type==='subgoalProgress'){
+    const s=(D.subgoals||[]).find(x=>x.id===modalMode.id); if(!s) return;
+    s.currentState=document.getElementById('m-sg-progress').value.trim();
+    await fsUpdate('subgoals',s); closeModal(); renderGoals(); toast('Stand aktualisiert ✓');
   } else if(modalMode.type==='finance-entry'){
     const item=(D.financeEntries||[]).find(x=>x.id===modalMode.id); if(!item) return;
     item.kind=document.getElementById('m-fin-kind').value;
