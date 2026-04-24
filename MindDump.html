@@ -571,7 +571,7 @@ select option { background:#1c1c1c; }
 .hcal-hour-line { border-bottom:1px solid rgba(255,255,255,.06); position:relative; pointer-events:none; }
 .hcal-half-line { position:absolute; left:0; right:0; height:1px; background:rgba(255,255,255,.03); top:50%; }
 .hcal-event-layer { position:absolute; inset:0; pointer-events:none; }
-.hcal-event { position:absolute; border-radius:6px; padding:3px 5px; overflow:hidden; cursor:pointer; pointer-events:all; }
+.hcal-event { position:absolute; border-radius:6px; padding:3px 5px; overflow:hidden; cursor:pointer; pointer-events:all; user-select:none; -webkit-user-select:none; }
 .hcal-event:active { opacity:.75; }
 .hcal-event-title { font-size:11px; font-weight:700; line-height:1.3; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .hcal-event-time { font-size:10px; color:rgba(255,255,255,.8); }
@@ -3881,6 +3881,10 @@ async function hcalDrop(e, ds, colEl) {
   const line=colEl.querySelector('.hcal-snap-line'); if(line) line.style.display='none';
   const rect=colEl.getBoundingClientRect();
   const time=hcalMinToTime(hcalYToMin(e.clientY-rect.top));
+  // Fallback: recover IDs from dataTransfer if globals were somehow cleared
+  const dtVal=e.dataTransfer.getData('text/plain')||'';
+  if(!draggedTaskId&&dtVal.startsWith('task:')) draggedTaskId=dtVal.slice(5);
+  if(!_dragCalEventId&&dtVal.startsWith('calEvent:')) _dragCalEventId=dtVal.slice(9);
   if(draggedTaskId) {
     const t=D.tasks.find(x=>x.id===draggedTaskId); if(!t) return;
     t.calStartTime=time; t.dueDate=ds;
@@ -3905,7 +3909,7 @@ async function unscheduleTask(id) {
 }
 
 let _dragCalEventId=null;
-function hcalDragCalEvent(e, id) { _dragCalEventId=id; draggedTaskId=null; e.dataTransfer.effectAllowed='move'; }
+function hcalDragCalEvent(e, id) { _dragCalEventId=id; draggedTaskId=null; e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain','calEvent:'+id); }
 
 function openCalEventModal(id, date, defaultTime) {
   const ev=id?(D.calEvents||[]).find(e=>e.id===id):null;
@@ -4034,6 +4038,7 @@ function dragTask(e,id){
   const blockRect=e.currentTarget.getBoundingClientRect();
   dragGrabOffsetMin=Math.round((e.clientY-blockRect.top)/CAL_PX_PER_MIN);
   e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain','task:'+id);
 }
 
 function dropYToTime(e, colEl) {
