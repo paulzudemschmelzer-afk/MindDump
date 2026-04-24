@@ -1485,7 +1485,7 @@ function rerender(colName) {
   if(colName==='snippets') renderSnips();
   if(colName==='notes') renderNotes();
   if(colName==='habits') { renderHabits(); if(currentTab==='stats') renderStats(); if(currentTab==='heute') renderHeuteHabits(); }
-  if(colName==='goals'||colName==='subgoals') { if(currentTab==='goals') renderGoals(); renderHeuteGoals(); }
+  if(colName==='goals'||colName==='subgoals') { if(currentTab==='goals') renderGoals(); renderHeuteGoals(); if(currentTab==='stats') renderStats(); }
   if(colName==='financeEntries'||colName==='subscriptions') renderFinance();
   if(colName==='uniSubjects'||colName==='uniSessions'||colName==='uniTasks') { if(typeof renderUni==='function'&&currentTab==='uni') renderUni(); }
 }
@@ -4282,11 +4282,13 @@ function renderStats() {
         <div class="month-strip">${monthStrip}</div>
       </div>
     </div>
-    ${buildHabitsSection()}`;
+    ${buildHabitsSection()}
+    ${buildBadHabitsSection()}
+    ${buildGoalsSection()}`;
 }
 
 function buildHabitsSection() {
-  const habits=(D.habits||[]).filter(h=>!h.archived);
+  const habits=(D.habits||[]).filter(h=>!h.archived&&h.type!=='bad');
   if(!habits.length) return '';
   const now=todayISO();
   // Last 7 days checkins across all habits
@@ -4330,6 +4332,108 @@ function buildHabitsSection() {
       <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:10px;border-radius:2px;background:#f87171;display:inline-block"></span>Ausgelassen</span>
       <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:10px;border-radius:2px;background:var(--border);display:inline-block"></span>Kein Eintrag</span>
     </div>
+  </div>`;
+}
+
+function buildBadHabitsSection() {
+  const bad=(D.habits||[]).filter(h=>!h.archived&&h.type==='bad');
+  if(!bad.length) return '';
+  const dayLabels=[];
+  const last7dates=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    last7dates.push(d.toISOString().slice(0,10));
+    dayLabels.push(['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()]);
+  }
+  const rows=bad.map(h=>{
+    const checkins=habitCheckins(h);
+    // streak: days since last relapse
+    const relapses=checkins.filter(c=>c.mode==='miss').map(c=>c.date).sort();
+    const lastRelapse=relapses.length?relapses[relapses.length-1]:null;
+    const today=todayISO();
+    let streak=0;
+    if(!lastRelapse){
+      const avoided=checkins.filter(c=>c.mode==='full'||c.mode==='minimal').map(c=>c.date).sort();
+      if(avoided.length) streak=Math.floor((new Date(today)-new Date(avoided[0]))/86400000)+1;
+    } else if(lastRelapse!==today){
+      streak=Math.floor((new Date(today)-new Date(lastRelapse))/86400000);
+    }
+    // last 7 days success rate
+    const avoided7=last7dates.filter(dk=>checkins.some(c=>c.date===dk&&(c.mode==='full'||c.mode==='minimal'))).length;
+    const relapsed7=last7dates.filter(dk=>checkins.some(c=>c.date===dk&&c.mode==='miss')).length;
+    const checked7=avoided7+relapsed7;
+    const rate=checked7?Math.round(avoided7/checked7*100):null;
+    // dots
+    const dots=last7dates.map(dk=>{
+      const hasAvoided=checkins.some(c=>c.date===dk&&(c.mode==='full'||c.mode==='minimal'));
+      const hasRelapse=checkins.some(c=>c.date===dk&&c.mode==='miss');
+      const col=hasRelapse?'#f87171':hasAvoided?'#34d399':'var(--border)';
+      const title=hasRelapse?'Rückfall':hasAvoided?'Gemieden':'Kein Eintrag';
+      return `<div title="${title}" style="width:18px;height:18px;border-radius:4px;background:${col};flex-shrink:0"></div>`;
+    }).join('');
+    const streakCol=streak>=7?'#34d399':streak>=3?'#f59e0b':'#f87171';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px;font-weight:700;color:${streakCol};flex-shrink:0;min-width:48px">${streak}d 🔥</span>
+      <span style="flex:1;font-size:13px;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(h.name)}</span>
+      <div style="display:flex;gap:3px;flex-shrink:0">${dots}</div>
+      <span style="font-size:12px;color:var(--sub);flex-shrink:0;min-width:40px;text-align:right">${rate!==null?rate+'%':'–'}</span>
+    </div>`;
+  }).join('');
+  const dayHeader=['So','Mo','Di','Mi','Do','Fr','Sa'].map((_,i)=>{
+    const d=new Date(); d.setDate(d.getDate()-(6-i));
+    return `<div style="width:18px;text-align:center;font-size:9px;color:var(--sub)">${['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()]}</div>`;
+  }).join('');
+  return `<div class="dash-card" style="margin-top:14px">
+    <div class="dash-title" style="margin-bottom:12px">🚫 Bad Habits — letzte 7 Tage</div>
+    <div style="display:flex;gap:4px;justify-content:flex-end;margin-bottom:6px">${dayHeader}</div>
+    ${rows}
+    <div style="display:flex;gap:10px;margin-top:10px;font-size:11px;color:var(--sub)">
+      <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:10px;border-radius:2px;background:#34d399;display:inline-block"></span>Gemieden</span>
+      <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:10px;border-radius:2px;background:#f87171;display:inline-block"></span>Rückfall</span>
+      <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:10px;border-radius:2px;background:var(--border);display:inline-block"></span>Kein Eintrag</span>
+    </div>
+  </div>`;
+}
+
+function buildGoalsSection() {
+  const goals=(D.goals||[]).filter(g=>!g.archived);
+  if(!goals.length) return '';
+  const allSubs=(D.subgoals||[]);
+  const totalSubs=allSubs.filter(s=>goals.some(g=>g.id===s.goalId)).length;
+  const totalAchieved=allSubs.filter(s=>s.achieved&&goals.some(g=>g.id===s.goalId)).length;
+  const overallPct=totalSubs?Math.round(totalAchieved/totalSubs*100):0;
+  const goalRows=goals.map(g=>{
+    const subs=allSubs.filter(s=>s.goalId===g.id);
+    const achieved=subs.filter(s=>s.achieved).length;
+    const pct=subs.length?Math.round(achieved/subs.length*100):0;
+    const barCol=pct>=80?'#34d399':pct>=40?'var(--accent2)':'#f59e0b';
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+        <span style="flex:1;font-size:13px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(g.title)}</span>
+        ${g.category?`<span class="goal-cat-chip">${esc(g.category)}</span>`:''}
+        <span style="font-size:12px;color:var(--sub);flex-shrink:0">${achieved}/${subs.length}</span>
+      </div>
+      <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${barCol};border-radius:3px;transition:width .3s"></div>
+      </div>
+      ${subs.filter(s=>s.achieved).length?`<div style="font-size:11px;color:#34d399;margin-top:4px">✓ ${subs.filter(s=>s.achieved).map(s=>esc(s.label)).join(' · ')}</div>`:''}
+    </div>`;
+  }).join('');
+  return `<div class="dash-card" style="margin-top:14px">
+    <div class="dash-title" style="margin-bottom:12px">🎯 Ziele — Fortschritt</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:10px 12px;background:var(--sidebar);border-radius:8px">
+      <div style="flex:1">
+        <div style="font-size:12px;color:var(--sub);margin-bottom:4px">Gesamtfortschritt</div>
+        <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${overallPct}%;background:${overallPct>=80?'#34d399':overallPct>=40?'var(--accent2)':'#f59e0b'};border-radius:4px;transition:width .3s"></div>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:22px;font-weight:700;color:var(--text)">${overallPct}%</div>
+        <div style="font-size:11px;color:var(--sub)">${totalAchieved}/${totalSubs} Meilensteine</div>
+      </div>
+    </div>
+    ${goalRows||'<div style="color:var(--sub);font-size:13px">Noch keine Meilensteine definiert.</div>'}
   </div>`;
 }
 
