@@ -577,6 +577,7 @@ select option { background:#1c1c1c; }
 .hcal-cols { flex:1; display:flex; min-width:0; }
 .hcal-col { flex:1; position:relative; border-left:1px solid var(--border); min-width:0; cursor:crosshair; overflow:hidden; }
 .hcal-col.today { background:rgba(124,58,237,.03); }
+.hcal-col.drag-over { background:rgba(124,58,237,.12); }
 .hcal-hour-line { border-bottom:1px solid rgba(255,255,255,.06); position:relative; pointer-events:none; }
 .hcal-half-line { position:absolute; left:0; right:0; height:1px; background:rgba(255,255,255,.03); top:50%; }
 .hcal-event-layer { position:absolute; inset:0; pointer-events:none; }
@@ -3689,6 +3690,11 @@ function renderHeute() {
         </div>
       </div>
       <button class="icon-btn" onclick="openEditTask('${t.id}')" title="Bearbeiten">✏</button>
+      <div class="icon-btn" draggable="true" ondragstart="dragTask(event,'${t.id}')"
+        ontouchstart="hcalEventTouchStart(event,'${t.id}','task')"
+        ontouchmove="hcalEventTouchMove(event)"
+        ontouchend="hcalEventTouchEnd(event)"
+        title="In Kalender ziehen" style="cursor:grab;font-size:13px;touch-action:none">📅</div>
       <button class="icon-btn del" onclick="removeFromHeute('${t.id}')" title="Von Heute entfernen" style="font-size:13px">☀</button>
       <button class="icon-btn del" onclick="if(confirm('Task löschen?'))delTask('${t.id}')" title="Löschen">×</button>
     </div>`;
@@ -3835,8 +3841,9 @@ function renderHeuteCalendar() {
       const fn=ev.type==='task'?`openEditTask('${ev.id}')`:`editCalEvent('${ev.id}')`;
       const drag=ev.type==='task'?`draggable="true" ondragstart="dragTask(event,'${ev.id}')"`:
         `draggable="true" ondragstart="hcalDragCalEvent(event,'${ev.id}')"`;
+      const touch=`ontouchstart="hcalEventTouchStart(event,'${ev.id}','${ev.type}')" ontouchmove="hcalEventTouchMove(event)" ontouchend="hcalEventTouchEnd(event)" style="touch-action:none"`;
       const rmBtn=ev.type==='task'?`<div class="hcal-event-rm" onclick="event.stopPropagation();unscheduleTask('${ev.id}')" title="Aus Kalender entfernen">×</div>`:'';
-      return `<div class="hcal-event" style="top:${top}px;height:${h}px;left:${l+.5}%;width:${w-1}%;background:${ev.bg};border-left:3px solid ${ev.border};opacity:${ev.done?.5:1};cursor:grab" onclick="${fn}" ondragover="event.preventDefault()" ondrop="event.preventDefault();event.stopPropagation();hcalDrop(event,'${ds}',this.closest('.hcal-col'))" ${drag} title="${esc(ev.title)}">
+      return `<div class="hcal-event" style="top:${top}px;height:${h}px;left:${l+.5}%;width:${w-1}%;background:${ev.bg};border-left:3px solid ${ev.border};opacity:${ev.done?.5:1};cursor:grab" onclick="${fn}" ondragover="event.preventDefault()" ondrop="event.preventDefault();event.stopPropagation();hcalDrop(event,'${ds}',this.closest('.hcal-col'))" ${drag} ${touch} title="${esc(ev.title)}">
         ${rmBtn}
         <div class="hcal-event-title">${esc(ev.title)}</div>
         ${h>32?`<div class="hcal-event-time">${hcalMinToTime(ev.startMin)}–${hcalMinToTime(ev.endMin)}</div>`:''}
@@ -3850,7 +3857,7 @@ function renderHeuteCalendar() {
     let hLines='';
     for(let h=HCAL_START;h<HCAL_END;h++) hLines+=`<div class="hcal-hour-line" style="height:${60*HCAL_PX}px"><div class="hcal-half-line"></div></div>`;
 
-    return `<div class="hcal-col ${isT?'today':''}" style="min-height:${totalPx}px"
+    return `<div class="hcal-col ${isT?'today':''}" style="min-height:${totalPx}px" data-date="${ds}"
       ondragenter="event.preventDefault()"
       ondragover="hcalDragOver(event,this)"
       ondragleave="hcalDragLeave(this)"
@@ -3894,6 +3901,58 @@ function hcalColClick(e, ds, colEl) {
   openCalEventModal(null, ds, time);
 }
 document.addEventListener('scroll',()=>{ _hcalScrolling=true; clearTimeout(window._hcalScrollT); window._hcalScrollT=setTimeout(()=>_hcalScrolling=false,200); },true);
+
+// ── HCAL TOUCH DRAG (like week calendar) ─────────────────────────
+let hcalTouchId=null, hcalTouchType=null, hcalTouchClone=null, hcalTouchMoved=false;
+function hcalEventTouchStart(e, id, type='task') {
+  e.stopPropagation();
+  hcalTouchId=id; hcalTouchType=type; hcalTouchMoved=false;
+}
+function hcalEventTouchMove(e) {
+  if(!hcalTouchId) return;
+  e.preventDefault();
+  hcalTouchMoved=true;
+  const touch=e.touches[0];
+  if(!hcalTouchClone) {
+    const el=e.target.closest('.hcal-event,.heute-task,.icon-btn');
+    if(!el) return;
+    hcalTouchClone=el.cloneNode(true);
+    const rect=el.getBoundingClientRect();
+    Object.assign(hcalTouchClone.style,{position:'fixed',width:rect.width+'px',opacity:'.75',pointerEvents:'none',zIndex:'9999',boxShadow:'0 8px 24px rgba(0,0,0,.5)',borderRadius:'8px',transform:'scale(1.04)'});
+    document.body.appendChild(hcalTouchClone);
+  }
+  hcalTouchClone.style.left=(touch.clientX-40)+'px';
+  hcalTouchClone.style.top=(touch.clientY-20)+'px';
+  document.querySelectorAll('.hcal-col').forEach(c=>c.classList.remove('drag-over'));
+  const col=document.elementFromPoint(touch.clientX,touch.clientY)?.closest('.hcal-col');
+  if(col) col.classList.add('drag-over');
+}
+async function hcalEventTouchEnd(e) {
+  if(!hcalTouchId) return;
+  if(hcalTouchClone){hcalTouchClone.remove();hcalTouchClone=null;}
+  document.querySelectorAll('.hcal-col').forEach(c=>c.classList.remove('drag-over'));
+  if(!hcalTouchMoved){hcalTouchId=null;return;}
+  const touch=e.changedTouches[0];
+  const col=document.elementFromPoint(touch.clientX,touch.clientY)?.closest('.hcal-col');
+  if(col&&col.dataset.date) {
+    const rect=col.getBoundingClientRect();
+    const time=hcalMinToTime(hcalYToMin(touch.clientY-rect.top));
+    const ds=col.dataset.date;
+    if(hcalTouchType==='task') {
+      const t=D.tasks.find(x=>x.id===hcalTouchId); if(!t){hcalTouchId=null;return;}
+      t.calStartTime=time; t.dueDate=ds;
+      await fsUpdate('tasks',t);
+      toast(`${t.title} — ${time} eingeplant`);
+    } else {
+      const ev=(D.calEvents||[]).find(x=>x.id===hcalTouchId); if(!ev){hcalTouchId=null;return;}
+      const dur=(ev.endTime&&ev.startTime)?((parseInt(ev.endTime.replace(':',''))-parseInt(ev.startTime.replace(':','')))||60):60;
+      ev.startTime=time; ev.date=ds; ev.endTime=addMinTo(time,Math.abs(dur));
+      await fsUpdate('calEvents',ev);
+    }
+    renderHeuteCalendar();
+  }
+  hcalTouchId=null;
+}
 
 let _hcalLongPressTimer=null, _hcalPickerTime=null, _hcalPickerDate=null, _hcalLongPressed=false;
 function hcalLongPressStart(e, ds, colEl) {
