@@ -589,6 +589,14 @@ select option { background:#1c1c1c; }
 .hcal-drop-hint { font-size:11px; color:var(--sub); text-align:center; padding:4px; }
 .hcal-snap-line { position:absolute; left:0; right:0; height:2px; background:#a78bfa; z-index:4; pointer-events:none; display:none; }
 .hcal-snap-line::after { content:attr(data-time); position:absolute; right:4px; top:-15px; font-size:10px; color:#a78bfa; font-weight:700; background:var(--card); padding:1px 5px; border-radius:4px; border:1px solid rgba(167,139,250,.3); }
+/* Heute Task-Picker Sheet */
+#hcal-task-picker { position:fixed; inset:0; z-index:300; display:none; flex-direction:column; justify-content:flex-end; }
+.hcal-picker-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.55); }
+.hcal-picker-sheet { position:relative; background:var(--card); border-radius:16px 16px 0 0; padding:18px 16px 28px; max-height:65vh; overflow-y:auto; border-top:1px solid var(--border); }
+.hcal-picker-title { font-size:14px; font-weight:700; color:var(--text); margin-bottom:14px; }
+.hcal-picker-task { display:block; width:100%; text-align:left; padding:11px 14px; border-radius:10px; background:var(--sidebar); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; cursor:pointer; margin-bottom:6px; }
+.hcal-picker-task:active { opacity:.7; }
+.hcal-picker-empty { font-size:13px; color:var(--sub); padding:8px 0; }
 .hcal-event-rm { position:absolute; top:2px; right:2px; width:15px; height:15px; border-radius:50%; background:rgba(0,0,0,.45); color:#fff; font-size:11px; line-height:15px; text-align:center; cursor:pointer; opacity:0; transition:opacity .15s; pointer-events:all; }
 .hcal-event:hover .hcal-event-rm { opacity:1; }
 /* Heute habits */
@@ -1022,6 +1030,15 @@ select option { background:#1c1c1c; }
           <div class="hcal-cols" id="hcal-cols"></div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Heute Kalender Task-Picker -->
+  <div id="hcal-task-picker">
+    <div class="hcal-picker-backdrop" onclick="closeHcalPicker()"></div>
+    <div class="hcal-picker-sheet">
+      <div class="hcal-picker-title" id="hcal-picker-title">Task einplanen</div>
+      <div id="hcal-picker-list"></div>
     </div>
   </div>
 
@@ -3672,8 +3689,8 @@ function renderHeute() {
         </div>
       </div>
       <button class="icon-btn" onclick="openEditTask('${t.id}')" title="Bearbeiten">✏</button>
-      <div class="icon-btn" draggable="true" ondragstart="dragTask(event,'${t.id}')" title="In Kalender ziehen" style="cursor:grab;font-size:13px">📅</div>
       <button class="icon-btn del" onclick="removeFromHeute('${t.id}')" title="Von Heute entfernen" style="font-size:13px">☀</button>
+      <button class="icon-btn del" onclick="if(confirm('Task löschen?'))delTask('${t.id}')" title="Löschen">×</button>
     </div>`;
   }).join('');
   badges();
@@ -3838,7 +3855,10 @@ function renderHeuteCalendar() {
       ondragover="hcalDragOver(event,this)"
       ondragleave="hcalDragLeave(this)"
       ondrop="hcalDrop(event,'${ds}',this)"
-      onclick="hcalColClick(event,'${ds}',this)">
+      onclick="hcalColClick(event,'${ds}',this)"
+      ontouchstart="hcalLongPressStart(event,'${ds}',this)"
+      ontouchmove="hcalLongPressCancel()"
+      ontouchend="hcalLongPressCancel()">
       ${hLines}
       <div class="hcal-snap-line"></div>
       <div class="hcal-event-layer">${evHtml}</div>
@@ -3874,6 +3894,45 @@ function hcalColClick(e, ds, colEl) {
   openCalEventModal(null, ds, time);
 }
 document.addEventListener('scroll',()=>{ _hcalScrolling=true; clearTimeout(window._hcalScrollT); window._hcalScrollT=setTimeout(()=>_hcalScrolling=false,200); },true);
+
+let _hcalLongPressTimer=null, _hcalPickerTime=null, _hcalPickerDate=null, _hcalLongPressed=false;
+function hcalLongPressStart(e, ds, colEl) {
+  if(e.target.closest('.hcal-event,.hcal-event-rm')) return;
+  const touch=e.touches[0];
+  const rect=colEl.getBoundingClientRect();
+  _hcalPickerTime=hcalMinToTime(hcalYToMin(touch.clientY-rect.top));
+  _hcalPickerDate=ds;
+  _hcalLongPressed=false;
+  _hcalLongPressTimer=setTimeout(()=>{
+    _hcalLongPressed=true;
+    showHcalTaskPicker();
+  }, 480);
+}
+function hcalLongPressCancel() {
+  clearTimeout(_hcalLongPressTimer);
+  _hcalLongPressTimer=null;
+}
+function showHcalTaskPicker() {
+  const todayStr=dateKey();
+  const tasks=(D.tasks||[]).filter(t=>!t.done&&(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr);
+  const el=document.getElementById('hcal-task-picker');
+  document.getElementById('hcal-picker-title').textContent=`Einplanen um ${_hcalPickerTime}`;
+  document.getElementById('hcal-picker-list').innerHTML=tasks.length
+    ? tasks.map(t=>`<button class="hcal-picker-task" onclick="scheduleFromPicker('${t.id}')">${esc(t.title)}</button>`).join('')
+    : '<div class="hcal-picker-empty">Keine Tasks in der Heute-Liste</div>';
+  el.style.display='flex';
+}
+async function scheduleFromPicker(id) {
+  const t=D.tasks.find(x=>x.id===id); if(!t) return;
+  t.calStartTime=_hcalPickerTime; t.dueDate=_hcalPickerDate;
+  await fsUpdate('tasks',t);
+  closeHcalPicker();
+  renderHeuteCalendar();
+  toast(`${t.title} — ${_hcalPickerTime} eingeplant`);
+}
+function closeHcalPicker() {
+  document.getElementById('hcal-task-picker').style.display='none';
+}
 
 function hcalDragOver(e, colEl) {
   e.preventDefault();
