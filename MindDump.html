@@ -2622,7 +2622,8 @@ function renderTaskSortTabs() {
   const tabs = document.getElementById('task-sort-tabs');
   if(!tabs) return;
   const sorts = [
-    { id:'priority', label:'Prioritaet' },
+    { id:'priority', label:'Manuell' },
+    { id:'wichtigkeit', label:'Wichtigkeit' },
     { id:'newest', label:'Neueste' },
     { id:'oldest', label:'Aelteste' }
   ];
@@ -3145,6 +3146,12 @@ function renderTasks() {
     if(taskSortMode==='priority'){
       const aHas=a.taskOrder!==undefined, bHas=b.taskOrder!==undefined;
       if(aHas||bHas) return (a.taskOrder??9999)-(b.taskOrder??9999);
+    }
+    if(taskSortMode==='wichtigkeit'){
+      const o={hoch:0,mittel:1,niedrig:2};
+      const prio=(o[a.priority]??1)-(o[b.priority]??1);
+      if(prio!==0) return prio;
+      return (a.dueDate||'9999')-(b.dueDate||'9999');
     }
     if(taskSortMode==='newest') return (b.createdAt??0)-(a.createdAt??0);
     if(taskSortMode==='oldest') return (a.createdAt??0)-(b.createdAt??0);
