@@ -446,6 +446,15 @@ select option { background:#1c1c1c; }
 
 /* DASHBOARD / STATS */
 .dash-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.daylog-list { display:flex; flex-direction:column; gap:2px; }
+.daylog-row { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; background:var(--sidebar); }
+.daylog-row:hover { background:rgba(124,58,237,.08); }
+.daylog-date { font-size:13px; font-weight:600; min-width:90px; }
+.daylog-val { font-size:12px; color:var(--sub); min-width:44px; }
+.daylog-chip { font-size:13px; }
+.daylog-spacer { flex:1; }
+.daylog-edit-btn { font-size:11px; padding:3px 10px; border-radius:6px; border:1px solid var(--border); background:none; color:var(--accent2); cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; }
+.daylog-edit-btn:hover { background:rgba(124,58,237,.12); }
 .dash-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; }
 .dash-card.full { grid-column:1/-1; }
 .dash-title { font-size:12px; font-weight:600; color:var(--sub); text-transform:uppercase; letter-spacing:.5px; margin-bottom:14px; }
@@ -4175,7 +4184,7 @@ function renderStats() {
     .sort((a,b) => a.date.localeCompare(b.date));
 
   if(entries.length === 0) {
-    el.innerHTML = `<div class="no-data-hint">Noch keine Daten — trage täglich im Heute-Tab deine Werte ein. 📊</div>`;
+    el.innerHTML = `<div class="no-data-hint">Noch keine Daten — trage täglich im Heute-Tab deine Werte ein. 📊</div>${buildDailyLogEditSection()}`;
     return;
   }
 
@@ -4291,7 +4300,69 @@ function renderStats() {
     </div>
     ${buildHabitsSection()}
     ${buildBadHabitsSection()}
-    ${buildGoalsSection()}`;
+    ${buildGoalsSection()}
+    ${buildDailyLogEditSection()}`;
+}
+
+function buildDailyLogEditSection() {
+  const log = D.dailyLog || {};
+  const today = new Date();
+  const energieMojis = ['','😵','😴','🙂','⚡','🚀'];
+  const rows = [];
+  for(let i=0; i<14; i++) {
+    const d = new Date(today); d.setDate(d.getDate()-i);
+    const key = d.toISOString().slice(0,10);
+    const entry = log[key] || {};
+    const dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+    const label = i===0 ? 'Heute' : i===1 ? 'Gestern' : dayNames[d.getDay()]+' '+d.getDate()+'.'+(d.getMonth()+1)+'.';
+    const schlafStr = entry.schlaf != null ? entry.schlaf+'h' : '–';
+    const energieStr = entry.energie ? energieMojis[entry.energie] : '–';
+    const hasData = entry.schlaf!=null||entry.energie!=null||entry.morgenRoutine||entry.abendRoutine||entry.notiz;
+    rows.push(`<div class="daylog-row">
+      <span class="daylog-date">${label}</span>
+      <span class="daylog-val">😴 ${schlafStr}</span>
+      <span class="daylog-val">${energieStr}</span>
+      ${entry.morgenRoutine?'<span class="daylog-chip" title="Morgenroutine">☕</span>':'<span class="daylog-chip"> </span>'}
+      ${entry.abendRoutine?'<span class="daylog-chip" title="Abendroutine">🌙</span>':'<span class="daylog-chip"> </span>'}
+      <span class="daylog-spacer"></span>
+      <button class="daylog-edit-btn" onclick="openEditDayLog('${key}')">✏ ${hasData?'Bearbeiten':'Eintragen'}</button>
+    </div>`);
+  }
+  return `<div class="dash-card full" style="margin-top:14px">
+    <div class="dash-title" style="margin-bottom:10px">📝 Einträge nachbearbeiten</div>
+    <div class="daylog-list">${rows.join('')}</div>
+  </div>`;
+}
+
+function openEditDayLog(date) {
+  const entry = (D.dailyLog||{})[date] || {};
+  modalMode = {type:'dayLogEdit', date};
+  const label = new Date(date+'T12:00').toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('modal-title').textContent = label;
+  const aufstehTime = entry.schlafEnde ? new Date(entry.schlafEnde).toTimeString().slice(0,5) : '';
+  const schlafzeitTime = entry.schlafStart ? new Date(entry.schlafStart).toTimeString().slice(0,5) : '';
+  const energieBtns = [1,2,3,4,5].map(v=>
+    `<button class="te-btn${entry.energie===v?' active':''}" data-val="${v}" onclick="this.parentNode.querySelectorAll('.te-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')" style="font-size:16px">${['😵','😴','🙂','⚡','🚀'][v-1]}</button>`
+  ).join('');
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-row">
+      <label class="field" style="max-width:130px"><span class="field-label">😴 Schlaf (h)</span><input type="number" id="m-dl-schlaf" value="${entry.schlaf??''}" min="0" max="24" step="0.5" placeholder="z.B. 7.5" /></label>
+      <label class="field" style="max-width:150px"><span class="field-label">🌅 Aufgestanden</span><input type="time" id="m-dl-aufsteh" value="${aufstehTime}" /></label>
+      <label class="field" style="max-width:150px"><span class="field-label">💤 Schlafen gegangen</span><input type="time" id="m-dl-schlafzeit" value="${schlafzeitTime}" /></label>
+    </div>
+    <div class="form-row" style="align-items:center">
+      <span class="field-label" style="margin-right:8px">⚡ Energie</span>
+      <div class="te-btns" id="m-dl-energie-btns">${energieBtns}</div>
+    </div>
+    <div class="form-row" style="gap:16px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="m-dl-morgen" ${entry.morgenRoutine?'checked':''} /> ☕ Morgenroutine</label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="m-dl-abend" ${entry.abendRoutine?'checked':''} /> 🌙 Abendroutine</label>
+    </div>
+    <div class="form-row">
+      <label class="field wide"><span class="field-label">Notiz</span><input type="text" id="m-dl-notiz" value="${esc(entry.notiz||'')}" placeholder="Wie war der Tag?" /></label>
+    </div>`;
+  document.getElementById('modal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('m-dl-schlaf')?.focus(), 50);
 }
 
 function buildHabitsSection() {
@@ -6375,6 +6446,46 @@ async function saveModal(){
     const s=(D.subgoals||[]).find(x=>x.id===modalMode.id); if(!s) return;
     s.currentState=document.getElementById('m-sg-progress').value.trim();
     await fsUpdate('subgoals',s); closeModal(); renderGoals(); toast('Stand aktualisiert ✓');
+  } else if(modalMode.type==='dayLogEdit'){
+    const date=modalMode.date;
+    if(!D.dailyLog) D.dailyLog={};
+    if(!D.dailyLog[date]) D.dailyLog[date]={};
+    const entry=D.dailyLog[date];
+    // Schlaf hours
+    const schlafVal=parseFloat(document.getElementById('m-dl-schlaf')?.value);
+    if(!isNaN(schlafVal)&&schlafVal>=0) entry.schlaf=schlafVal;
+    else delete entry.schlaf;
+    // Aufstehzeit → schlafEnde timestamp
+    const aufstehStr=document.getElementById('m-dl-aufsteh')?.value;
+    if(aufstehStr){const [h,m]=aufstehStr.split(':').map(Number);const dt=new Date(date+'T12:00');dt.setHours(h,m,0,0);entry.schlafEnde=dt.getTime();}
+    else entry.schlafEnde=null;
+    // Schlafzeit → schlafStart timestamp (if past midnight store on same date)
+    const schlafzeitStr=document.getElementById('m-dl-schlafzeit')?.value;
+    if(schlafzeitStr){const [h,m]=schlafzeitStr.split(':').map(Number);const dt=new Date(date+'T12:00');dt.setHours(h,m,0,0);entry.schlafStart=dt.getTime();}
+    else entry.schlafStart=null;
+    // Auto-calc schlaf from times if not manually set
+    if(entry.schlafEnde&&entry.schlafStart&&isNaN(schlafVal)){
+      let diff=(entry.schlafEnde-entry.schlafStart)/3600000;
+      if(diff<0) diff+=24;
+      if(diff>0&&diff<24) entry.schlaf=Math.round(diff*10)/10;
+    }
+    // Energie
+    const activeEBtn=document.querySelector('#m-dl-energie-btns .te-btn.active');
+    if(activeEBtn) entry.energie=Number(activeEBtn.dataset.val);
+    else delete entry.energie;
+    // Routinen
+    const morgenChecked=document.getElementById('m-dl-morgen')?.checked;
+    const abendChecked=document.getElementById('m-dl-abend')?.checked;
+    if(morgenChecked&&!entry.morgenRoutine){const dt=new Date(date+'T08:00');entry.morgenRoutine=dt.getTime();}
+    else if(!morgenChecked) entry.morgenRoutine=null;
+    if(abendChecked&&!entry.abendRoutine){const dt=new Date(date+'T22:00');entry.abendRoutine=dt.getTime();}
+    else if(!abendChecked) entry.abendRoutine=null;
+    // Notiz
+    entry.notiz=document.getElementById('m-dl-notiz')?.value||'';
+    entry.updatedAt=Date.now();
+    await _saveDailyLogDay(date);
+    closeModal(); renderStats(); renderSleepChart(); renderEnergyChart();
+    toast('Eintrag gespeichert ✓');
   } else if(modalMode.type==='finance-entry'){
     const item=(D.financeEntries||[]).find(x=>x.id===modalMode.id); if(!item) return;
     item.kind=document.getElementById('m-fin-kind').value;
