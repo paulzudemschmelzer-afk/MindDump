@@ -4184,7 +4184,7 @@ function renderStats() {
     .sort((a,b) => a.date.localeCompare(b.date));
 
   if(entries.length === 0) {
-    el.innerHTML = `<div class="no-data-hint">Noch keine Daten — trage täglich im Heute-Tab deine Werte ein. 📊</div>${buildDailyLogEditSection()}`;
+    el.innerHTML = `<div class="no-data-hint">Noch keine Daten — trage täglich im Heute-Tab deine Werte ein. 📊</div>`;
     return;
   }
 
@@ -4237,7 +4237,7 @@ function renderStats() {
   const maxSchlaf = Math.max(...last7.map(d=>d.schlaf||0), 8);
   const barChart = last7.map(d=>{
     const h = d.schlaf!=null ? Math.round((d.schlaf/maxSchlaf)*72) : 0;
-    return `<div class="chart-bar-col">
+    return `<div class="chart-bar-col" onclick="openEditDayLog('${d.date}')" style="cursor:pointer" title="Bearbeiten: ${d.label}">
       <span class="chart-val">${d.schlaf!=null?d.schlaf+'h':''}</span>
       <div class="chart-bar schlaf" style="height:${h}px"></div>
       <span class="chart-day">${d.label}</span>
@@ -4248,7 +4248,7 @@ function renderStats() {
   const metricBars = (field, cls) => last7.map(d=>{
     const val = d[field];
     const h = val!=null ? Math.round((val/5)*72) : 0;
-    return `<div class="chart-bar-col">
+    return `<div class="chart-bar-col" onclick="openEditDayLog('${d.date}')" style="cursor:pointer" title="Bearbeiten: ${d.label}">
       <span class="chart-val">${val!=null?val:''}</span>
       <div class="chart-bar ${cls}" style="height:${h}px"></div>
       <span class="chart-day">${d.label}</span>
@@ -4262,7 +4262,7 @@ function renderStats() {
   const monthStrip = last30.map(d=>{
     const h = d.schlaf!=null ? Math.round((d.schlaf/maxM)*52)+2 : 2;
     const col = d.schlaf!=null ? (d.schlaf>=8?'#34d399':d.schlaf>=6?'var(--accent2)':'#f59e0b') : 'var(--border)';
-    return `<div class="month-col"><div class="month-bar" style="height:${h}px;background:${col}"></div></div>`;
+    return `<div class="month-col" onclick="openEditDayLog('${d.date}')" style="cursor:pointer" title="${d.date}"><div class="month-bar" style="height:${h}px;background:${col}"></div></div>`;
   }).join('');
 
   el.innerHTML = `
@@ -4300,8 +4300,7 @@ function renderStats() {
     </div>
     ${buildHabitsSection()}
     ${buildBadHabitsSection()}
-    ${buildGoalsSection()}
-    ${buildDailyLogEditSection()}`;
+    ${buildGoalsSection()}`;
 }
 
 function buildDailyLogEditSection() {
