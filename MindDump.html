@@ -4950,17 +4950,17 @@ function openQuickAddCal(ds, time) {
     : '<div style="padding:12px;color:var(--sub);font-size:13px">Keine Tasks in der Heute-Liste</div>';
   document.getElementById('modal-body').innerHTML=`
     <div class="cal-assign-tabs">
-      <button class="cal-assign-tab active" onclick="switchCalTab('assign')">Alle Tasks</button>
-      <button class="cal-assign-tab" onclick="switchCalTab('heute')">Heute</button>
-      <button class="cal-assign-tab" onclick="switchCalTab('new')">Neuer Task</button>
+      <button class="cal-assign-tab active" onclick="switchCalTab('heute')">Heute</button>
+      <button class="cal-assign-tab" onclick="switchCalTab('assign')">Alle Tasks</button>
       <button class="cal-assign-tab" onclick="switchCalTab('event')">Event</button>
+      <button class="cal-assign-tab" onclick="switchCalTab('new')">Neu</button>
     </div>
-    <div id="cal-tab-assign">
+    <div id="cal-tab-heute">
+      <div class="cal-assign-list">${heuteTabHtml}</div>
+    </div>
+    <div id="cal-tab-assign" style="display:none">
       <input type="text" class="cal-assign-search" id="cal-assign-search" placeholder="Task suchen…" oninput="filterCalAssign()" />
       <div class="cal-assign-list" id="cal-assign-list"></div>
-    </div>
-    <div id="cal-tab-heute" style="display:none">
-      <div class="cal-assign-list">${heuteTabHtml}</div>
     </div>
     <div id="cal-tab-new" style="display:none">
       <div class="form-row"><input type="text" id="m-qa-title" placeholder="Was steht an?" /></div>
@@ -4990,16 +4990,14 @@ function openQuickAddCal(ds, time) {
       </div>
     </div>`;
   document.getElementById('modal').style.display='flex';
-  filterCalAssign();
-  setTimeout(()=>document.getElementById('cal-assign-search').focus(),100);
 }
 
 function switchCalTab(tab) {
-  const tabs=['assign','heute','new','event'];
+  const tabs=['heute','assign','event','new'];
   document.querySelectorAll('.cal-assign-tab').forEach((el,i)=>el.classList.toggle('active',tabs[i]===tab));
   tabs.forEach(t=>{ const el=document.getElementById('cal-tab-'+t); if(el) el.style.display=t===tab?'':'none'; });
   if(tab==='new') setTimeout(()=>document.getElementById('m-qa-title').focus(),50);
-  if(tab==='assign') setTimeout(()=>document.getElementById('cal-assign-search').focus(),50);
+  if(tab==='assign'){filterCalAssign();setTimeout(()=>document.getElementById('cal-assign-search').focus(),50);}
   if(tab==='event') setTimeout(()=>document.getElementById('m-qe-title').focus(),50);
 }
 
