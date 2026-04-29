@@ -4937,15 +4937,30 @@ function openQuickAddCal(ds, time) {
   document.getElementById('modal-title').textContent=`${dayLabel} · ${time}`;
   const endTime=`${String(Math.floor((parseInt(time.split(':')[0])*60+parseInt(time.split(':')[1])+60)/60)%24).padStart(2,'0')}:${String((parseInt(time.split(':')[1])+60)%60).padStart(2,'0')}`;
   const typeOpts=Object.entries(CALEVENT_COLORS).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('');
+  // Heute-Tasks for 4th tab
+  const todayStr=dateKey();
+  const prioIcon={hoch:'🔴',mittel:'🟡',niedrig:'🟢'};
+  const heuteTasks=(D.tasks||[]).filter(t=>!t.done&&(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr);
+  const heuteTabHtml=heuteTasks.length
+    ? heuteTasks.map(t=>{const kc=getKatColor(t.kategorie||'sonstiges');return `<div class="cal-assign-item" onclick="assignTaskToCal('${t.id}')">
+        <div style="width:4px;height:24px;border-radius:2px;background:${kc.border};flex-shrink:0"></div>
+        <div style="flex:1;min-width:0"><div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.title)}</div>
+        <div style="font-size:11px;color:var(--sub)">${prioIcon[t.priority]||'🟡'} ${t.estimatedTime||'1h'}</div></div>
+      </div>`;}).join('')
+    : '<div style="padding:12px;color:var(--sub);font-size:13px">Keine Tasks in der Heute-Liste</div>';
   document.getElementById('modal-body').innerHTML=`
     <div class="cal-assign-tabs">
-      <button class="cal-assign-tab active" onclick="switchCalTab('assign')">Bestehender Task</button>
+      <button class="cal-assign-tab active" onclick="switchCalTab('assign')">Alle Tasks</button>
+      <button class="cal-assign-tab" onclick="switchCalTab('heute')">Heute</button>
       <button class="cal-assign-tab" onclick="switchCalTab('new')">Neuer Task</button>
-      <button class="cal-assign-tab" onclick="switchCalTab('event')">Kalender Event</button>
+      <button class="cal-assign-tab" onclick="switchCalTab('event')">Event</button>
     </div>
     <div id="cal-tab-assign">
       <input type="text" class="cal-assign-search" id="cal-assign-search" placeholder="Task suchen…" oninput="filterCalAssign()" />
       <div class="cal-assign-list" id="cal-assign-list"></div>
+    </div>
+    <div id="cal-tab-heute" style="display:none">
+      <div class="cal-assign-list">${heuteTabHtml}</div>
     </div>
     <div id="cal-tab-new" style="display:none">
       <div class="form-row"><input type="text" id="m-qa-title" placeholder="Was steht an?" /></div>
@@ -4980,7 +4995,7 @@ function openQuickAddCal(ds, time) {
 }
 
 function switchCalTab(tab) {
-  const tabs=['assign','new','event'];
+  const tabs=['assign','heute','new','event'];
   document.querySelectorAll('.cal-assign-tab').forEach((el,i)=>el.classList.toggle('active',tabs[i]===tab));
   tabs.forEach(t=>{ const el=document.getElementById('cal-tab-'+t); if(el) el.style.display=t===tab?'':'none'; });
   if(tab==='new') setTimeout(()=>document.getElementById('m-qa-title').focus(),50);
