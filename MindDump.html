@@ -269,7 +269,7 @@ textarea::placeholder { color:#444; }
 .ap-half-line { position:absolute; left:0; right:0; height:1px; background:rgba(255,255,255,.03); pointer-events:none; }
 .ap-now-line { position:absolute; left:-6px; right:0; height:2px; background:var(--accent2); pointer-events:none; z-index:5; }
 .ap-now-dot { position:absolute; left:-5px; top:-4px; width:10px; height:10px; border-radius:50%; background:var(--accent2); }
-.ap-event { position:absolute; border-radius:5px; padding:4px 7px; cursor:grab; overflow:hidden; transition:box-shadow .15s,opacity .15s; border-left:4px solid; user-select:none; z-index:2; }
+.ap-event { position:absolute; border-radius:5px; padding:4px 7px; cursor:grab; overflow:hidden; transition:box-shadow .15s,opacity .15s; border-left:4px solid; user-select:none; z-index:2; touch-action:none; }
 .ap-event:hover { box-shadow:0 2px 8px rgba(0,0,0,.3); z-index:3; }
 .ap-event:active { cursor:grabbing; opacity:.9; }
 .ap-event.done { opacity:.25; text-decoration:line-through; }
@@ -581,12 +581,12 @@ select option { background:#1c1c1c; }
 .hcal-hour-line { border-bottom:1px solid rgba(255,255,255,.06); position:relative; pointer-events:none; }
 .hcal-half-line { position:absolute; left:0; right:0; height:1px; background:rgba(255,255,255,.03); top:50%; }
 .hcal-event-layer { position:absolute; inset:0; pointer-events:none; }
-.hcal-event { position:absolute; border-radius:6px; padding:3px 5px; overflow:hidden; cursor:pointer; pointer-events:all; user-select:none; -webkit-user-select:none; }
+.hcal-event { position:absolute; border-radius:6px; padding:3px 5px; overflow:hidden; cursor:grab; pointer-events:all; user-select:none; -webkit-user-select:none; touch-action:none; }
 .hcal-event:active { opacity:.75; }
 .hcal-event-title { font-size:11px; font-weight:700; line-height:1.3; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .hcal-event-time { font-size:10px; color:rgba(255,255,255,.8); }
-.hcal-now-line { position:absolute; left:0; right:0; height:2px; background:#ef4444; z-index:5; pointer-events:none; }
-.hcal-now-dot { position:absolute; left:-4px; top:-4px; width:8px; height:8px; border-radius:50%; background:#ef4444; }
+.hcal-now-line { position:absolute; left:0; right:0; height:2px; background:var(--accent2); z-index:5; pointer-events:none; }
+.hcal-now-dot { position:absolute; left:-4px; top:-4px; width:8px; height:8px; border-radius:50%; background:var(--accent2); }
 .hcal-drop-hint { font-size:11px; color:var(--sub); text-align:center; padding:4px; }
 .hcal-snap-line { position:absolute; left:0; right:0; height:2px; background:#a78bfa; z-index:4; pointer-events:none; display:none; }
 .hcal-snap-line::after { content:attr(data-time); position:absolute; right:4px; top:-15px; font-size:10px; color:#a78bfa; font-weight:700; background:var(--card); padding:1px 5px; border-radius:4px; border:1px solid rgba(167,139,250,.3); }
@@ -3932,14 +3932,20 @@ function hcalEventTouchMove(e) {
   }
   hcalTouchClone.style.left=(touch.clientX-40)+'px';
   hcalTouchClone.style.top=(touch.clientY-20)+'px';
-  document.querySelectorAll('.hcal-col').forEach(c=>c.classList.remove('drag-over'));
+  document.querySelectorAll('.hcal-col').forEach(c=>{c.classList.remove('drag-over');const l=c.querySelector('.hcal-snap-line');if(l)l.style.display='none';});
   const col=document.elementFromPoint(touch.clientX,touch.clientY)?.closest('.hcal-col');
-  if(col) col.classList.add('drag-over');
+  if(col){
+    col.classList.add('drag-over');
+    const rect=col.getBoundingClientRect();
+    const min=hcalYToMin(touch.clientY-rect.top);
+    const line=col.querySelector('.hcal-snap-line');
+    if(line){line.style.display='block';line.style.top=hcalMinToY(min)+'px';line.dataset.time=hcalMinToTime(min);}
+  }
 }
 async function hcalEventTouchEnd(e) {
   if(!hcalTouchId) return;
   if(hcalTouchClone){hcalTouchClone.remove();hcalTouchClone=null;}
-  document.querySelectorAll('.hcal-col').forEach(c=>c.classList.remove('drag-over'));
+  document.querySelectorAll('.hcal-col').forEach(c=>{c.classList.remove('drag-over');const l=c.querySelector('.hcal-snap-line');if(l)l.style.display='none';});
   if(!hcalTouchMoved){hcalTouchId=null;return;}
   const touch=e.changedTouches[0];
   const col=document.elementFromPoint(touch.clientX,touch.clientY)?.closest('.hcal-col');
@@ -4872,16 +4878,22 @@ function calEventTouchMove(e, id) {
   }
   calTouchClone.style.left=(touch.clientX-40)+'px';
   calTouchClone.style.top=(touch.clientY-20)+'px';
-  document.querySelectorAll('.ap-day-col').forEach(c=>c.classList.remove('drag-over'));
+  document.querySelectorAll('.ap-day-col').forEach(c=>{c.classList.remove('drag-over');const l=c.querySelector('.hcal-snap-line');if(l)l.style.display='none';});
   const under=document.elementFromPoint(touch.clientX,touch.clientY);
   const col=under?.closest('.ap-day-col');
-  if(col) col.classList.add('drag-over');
+  if(col){
+    col.classList.add('drag-over');
+    const rect=col.getBoundingClientRect();
+    const snappedY=Math.round((touch.clientY-rect.top)/(15*CAL_PX_PER_MIN))*15*CAL_PX_PER_MIN;
+    const line=col.querySelector('.hcal-snap-line');
+    if(line){line.style.display='block';line.style.top=snappedY+'px';line.dataset.time=yToTime(touch.clientY,col);}
+  }
 }
 
 async function calEventTouchEnd(e) {
   if(!calTouchId) return;
   if(calTouchClone){calTouchClone.remove();calTouchClone=null;}
-  document.querySelectorAll('.ap-day-col').forEach(c=>c.classList.remove('drag-over'));
+  document.querySelectorAll('.ap-day-col').forEach(c=>{c.classList.remove('drag-over');const l=c.querySelector('.hcal-snap-line');if(l)l.style.display='none';});
   if(!calTouchMoved){calTouchId=null;return;} // was a tap, not a drag
   const touch=e.changedTouches[0];
   const under=document.elementFromPoint(touch.clientX,touch.clientY);
