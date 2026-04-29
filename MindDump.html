@@ -3854,6 +3854,7 @@ function renderHeuteCalendar() {
         ${rmBtn}
         <div class="hcal-event-title">${esc(ev.title)}</div>
         ${h>32?`<div class="hcal-event-time">${hcalMinToTime(ev.startMin)}–${hcalMinToTime(ev.endMin)}</div>`:''}
+        ${ev.type==='task'?`<div class="ap-event-resize" ontouchstart="hcalResizeTouchStart(event,'${ev.id}')" onmousedown="hcalResizeMouseDown(event,'${ev.id}')"></div>`:''}
       </div>`;
     }).join('');
 
@@ -3899,13 +3900,14 @@ function hcalZoom(dir) {
   if(newBody){newBody.scrollTop=oldScroll*(HCAL_PX/oldPx);newBody.dataset.scrolled='1';}
 }
 
-let _hcalScrolling=false;
+let _hcalScrolling=false, _hcalLastTouch=0;
 function hcalColClick(e, ds, colEl) {
   if(e.target.closest('.hcal-event')) return;
   if(_hcalScrolling) return;
+  if(Date.now()-_hcalLastTouch < 800) return;
   const rect=colEl.getBoundingClientRect();
   const time=hcalMinToTime(hcalYToMin(e.clientY-rect.top));
-  openCalEventModal(null, ds, time);
+  openQuickAddCal(ds, time);
 }
 document.addEventListener('scroll',()=>{ _hcalScrolling=true; clearTimeout(window._hcalScrollT); window._hcalScrollT=setTimeout(()=>_hcalScrolling=false,200); },true);
 
@@ -3964,6 +3966,7 @@ async function hcalEventTouchEnd(e) {
 let _hcalLongPressTimer=null, _hcalPickerTime=null, _hcalPickerDate=null, _hcalLongPressed=false;
 function hcalLongPressStart(e, ds, colEl) {
   if(e.target.closest('.hcal-event,.hcal-event-rm')) return;
+  _hcalLastTouch=Date.now();
   const touch=e.touches[0];
   const rect=colEl.getBoundingClientRect();
   _hcalPickerTime=hcalMinToTime(hcalYToMin(touch.clientY-rect.top));
@@ -3971,7 +3974,7 @@ function hcalLongPressStart(e, ds, colEl) {
   _hcalLongPressed=false;
   _hcalLongPressTimer=setTimeout(()=>{
     _hcalLongPressed=true;
-    showHcalTaskPicker();
+    openQuickAddCal(_hcalPickerDate, _hcalPickerTime);
   }, 480);
 }
 function hcalLongPressCancel() {
@@ -4904,10 +4907,11 @@ function yToTime(clientY, col) {
 }
 
 // ── CALENDAR LONG-PRESS / CLICK TO ADD ───────────────────────
-let calLPTimer=null;
+let calLPTimer=null, _calLastTouch=0;
 
 function calColTouchStart(e, ds) {
   if(e.target.closest('.ap-event')||e.target.closest('.ap-add-btn')) return;
+  _calLastTouch=Date.now();
   const touch=e.touches[0];
   const col=e.currentTarget;
   calLPTimer=setTimeout(()=>{
@@ -4921,6 +4925,7 @@ function calColTouchEnd(){if(calLPTimer){clearTimeout(calLPTimer);calLPTimer=nul
 
 function calColClick(e, ds) {
   if(e.target.closest('.ap-event')||e.target.closest('.ap-add-btn')) return;
+  if(Date.now()-_calLastTouch < 800) return;
   const col=e.currentTarget;
   const time=yToTime(e.clientY,col);
   openQuickAddCal(ds,time);
@@ -5050,6 +5055,7 @@ async function assignTaskToCal(id) {
   await fsUpdate('tasks',t);
   closeModal();
   renderWeek();
+  renderHeuteCalendar();
   toast('Task eingeplant!');
 }
 
@@ -5112,6 +5118,54 @@ async function resizeTouchEnd(e) {
     renderWeek();
   }
   resizeId=null; resizeEl=null;
+}
+
+// ── HEUTE CALENDAR RESIZE ─────────────────────────────────────
+let hcalResizeId=null, hcalResizeStartY=0, hcalResizeOrigH=0, hcalResizeEl=null;
+
+function hcalResizeMouseDown(e, id) {
+  e.preventDefault(); e.stopPropagation();
+  hcalResizeId=id; hcalResizeStartY=e.clientY;
+  hcalResizeEl=e.target.closest('.hcal-event');
+  hcalResizeOrigH=hcalResizeEl.offsetHeight;
+  document.addEventListener('mousemove',hcalResizeMouseMove);
+  document.addEventListener('mouseup',hcalResizeMouseUp);
+}
+function hcalResizeMouseMove(e) {
+  if(!hcalResizeEl) return;
+  hcalResizeEl.style.height=Math.max(24,hcalResizeOrigH+(e.clientY-hcalResizeStartY))+'px';
+}
+async function hcalResizeMouseUp(e) {
+  document.removeEventListener('mousemove',hcalResizeMouseMove);
+  document.removeEventListener('mouseup',hcalResizeMouseUp);
+  if(!hcalResizeId||!hcalResizeEl) return;
+  const mins=Math.round(hcalResizeEl.offsetHeight/HCAL_PX/15)*15;
+  const t=D.tasks.find(x=>x.id===hcalResizeId);
+  if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');await fsUpdate('tasks',t);renderHeuteCalendar();}
+  hcalResizeId=null; hcalResizeEl=null;
+}
+
+function hcalResizeTouchStart(e, id) {
+  e.preventDefault(); e.stopPropagation();
+  hcalResizeId=id; hcalResizeStartY=e.touches[0].clientY;
+  hcalResizeEl=e.target.closest('.hcal-event');
+  hcalResizeOrigH=hcalResizeEl.offsetHeight;
+  hcalResizeEl.addEventListener('touchmove',hcalResizeTouchMove,{passive:false});
+  hcalResizeEl.addEventListener('touchend',hcalResizeTouchEnd);
+}
+function hcalResizeTouchMove(e) {
+  e.preventDefault();
+  if(!hcalResizeEl) return;
+  hcalResizeEl.style.height=Math.max(24,hcalResizeOrigH+(e.touches[0].clientY-hcalResizeStartY))+'px';
+}
+async function hcalResizeTouchEnd(e) {
+  if(!hcalResizeId||!hcalResizeEl) return;
+  hcalResizeEl.removeEventListener('touchmove',hcalResizeTouchMove);
+  hcalResizeEl.removeEventListener('touchend',hcalResizeTouchEnd);
+  const mins=Math.round(hcalResizeEl.offsetHeight/HCAL_PX/15)*15;
+  const t=D.tasks.find(x=>x.id===hcalResizeId);
+  if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');await fsUpdate('tasks',t);renderHeuteCalendar();}
+  hcalResizeId=null; hcalResizeEl=null;
 }
 
 // ── THOUGHTS ─────────────────────────────────────────────────
@@ -6666,7 +6720,7 @@ async function saveModal(){
         estimatedTime:document.getElementById('m-qa-est').value.trim()||'1h',
         done:false,createdAt:Date.now(),tags:[],recurrence:null};
       D.tasks.push(task); await fsUpdate('tasks',task);
-      closeModal(); renderWeek(); toast('Task erstellt!');
+      closeModal(); renderWeek(); renderHeuteCalendar(); toast('Task erstellt!');
     }
   } else if(modalMode.type==='uniSubjectAdd'){
     const name=document.getElementById('uni-sub-name')?.value.trim();
