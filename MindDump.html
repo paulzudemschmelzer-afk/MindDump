@@ -3956,15 +3956,16 @@ async function hcalEventTouchEnd(e) {
     if(hcalTouchType==='task') {
       const t=D.tasks.find(x=>x.id===hcalTouchId); if(!t){hcalTouchId=null;return;}
       t.calStartTime=time; t.dueDate=ds;
-      await fsUpdate('tasks',t);
+      renderHeuteCalendar();
+      fsUpdate('tasks',t);
       toast(`${t.title} — ${time} eingeplant`);
     } else {
       const ev=(D.calEvents||[]).find(x=>x.id===hcalTouchId); if(!ev){hcalTouchId=null;return;}
       const dur=(ev.endTime&&ev.startTime)?((parseInt(ev.endTime.replace(':',''))-parseInt(ev.startTime.replace(':','')))||60):60;
       ev.startTime=time; ev.date=ds; ev.endTime=addMinTo(time,Math.abs(dur));
-      await fsUpdate('calEvents',ev);
+      renderHeuteCalendar();
+      fsUpdate('calEvents',ev);
     }
-    renderHeuteCalendar();
   }
   hcalTouchId=null;
 }
@@ -4032,16 +4033,16 @@ async function hcalDrop(e, ds, colEl) {
   if(draggedTaskId) {
     const t=D.tasks.find(x=>x.id===draggedTaskId); if(!t) return;
     t.calStartTime=time; t.dueDate=ds;
-    await fsUpdate('tasks',t); draggedTaskId=null;
-    toast(`${t.title} — ${time} eingeplant`);
     renderHeuteCalendar();
+    fsUpdate('tasks',t); draggedTaskId=null;
+    toast(`${t.title} — ${time} eingeplant`);
   } else if(_dragCalEventId) {
     const ev=(D.calEvents||[]).find(x=>x.id===_dragCalEventId); if(!ev) return;
     const dur=(ev.endTime&&ev.startTime)?((parseInt(ev.endTime)-parseInt(ev.startTime))||60):60;
     ev.startTime=time; ev.date=ds;
     ev.endTime=addMinTo(time,dur); ev.updated=new Date().toISOString();
-    await fsUpdate('calEvents',ev); _dragCalEventId=null;
     renderHeuteCalendar();
+    fsUpdate('calEvents',ev); _dragCalEventId=null;
   }
 }
 async function unscheduleTask(id) {
@@ -4234,7 +4235,8 @@ async function dropTask(e,ds,colEl){
     ev.date=ds;
     ev.startTime=startTime;
     ev.endTime=String(Math.floor(newEndMins/60)).padStart(2,'0')+':'+String(newEndMins%60).padStart(2,'0');
-    await fsUpdate('calEvents',ev);
+    renderWeek();
+    fsUpdate('calEvents',ev);
     _dragCalEventId=null;
     return;
   }
@@ -4247,8 +4249,9 @@ async function dropTask(e,ds,colEl){
   t.dueDate=ds;
   const dayTasks=D.tasks.filter(x=>x.dueDate===ds&&x.id!==t.id).sort((a,b)=>(a.dayOrder??a.createdAt??0)-(b.dayOrder??b.createdAt??0));
   t.dayOrder=dayTasks.length>0?(dayTasks[dayTasks.length-1].dayOrder??dayTasks.length*10)+10:0;
-  await fsUpdate('tasks',t);
-  if(!useFS()){saveLocal();renderWeek();}
+  renderWeek();
+  fsUpdate('tasks',t);
+  if(!useFS()) saveLocal();
   draggedTaskId=null; dragSourceDay=null;
 }
 async function reorderTask(e,targetId,ds){
@@ -4903,8 +4906,8 @@ async function calEventTouchEnd(e) {
     if(t) {
       t.calStartTime=yToTime(touch.clientY,col);
       t.dueDate=col.dataset.date;
-      await fsUpdate('tasks',t);
       renderWeek();
+      fsUpdate('tasks',t);
     }
   }
   calTouchId=null;
