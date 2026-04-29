@@ -277,8 +277,9 @@ textarea::placeholder { color:#444; }
 .ap-event-title { font-size:11px; font-weight:600; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .ap-event-time { font-size:10px; opacity:.7; font-weight:400; margin-top:1px; }
 .ap-event-dur { font-size:10px; opacity:.5; margin-top:1px; }
-.ap-event-resize { position:absolute; bottom:0; left:0; right:0; height:6px; cursor:ns-resize; border-radius:0 0 5px 5px; }
-.ap-event-resize:hover { background:rgba(255,255,255,.1); }
+.ap-event-resize { position:absolute; bottom:0; left:0; right:0; height:14px; cursor:ns-resize; border-radius:0 0 5px 5px; display:flex; align-items:center; justify-content:center; }
+.ap-event-resize:hover { background:rgba(255,255,255,.15); }
+.ap-event-resize::after { content:''; width:20px; height:3px; border-radius:2px; background:rgba(255,255,255,.4); }
 .ap-add-btn { display:none; }
 .unscheduled-area { background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:16px; box-shadow:0 2px 8px rgba(0,0,0,.15); }
 .unsched-tasks { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
@@ -5101,21 +5102,16 @@ function resizeMouseDown(e, id) {
 function resizeMouseMove(e) {
   if(!resizeEl) return;
   const diff=e.clientY-resizeStartY;
-  const newH=Math.max(24, resizeOrigH+diff);
-  resizeEl.style.height=newH+'px';
+  const snap=Math.max(1,Math.round((resizeOrigH+diff)/CAL_PX_PER_MIN/15))*15*CAL_PX_PER_MIN;
+  resizeEl.style.height=snap+'px';
 }
 async function resizeMouseUp(e) {
   document.removeEventListener('mousemove',resizeMouseMove);
   document.removeEventListener('mouseup',resizeMouseUp);
   if(!resizeId||!resizeEl) return;
-  const newH=resizeEl.offsetHeight;
-  const mins=Math.round(newH/CAL_PX_PER_MIN/15)*15;
+  const mins=Math.round(resizeEl.offsetHeight/CAL_PX_PER_MIN/15)*15;
   const t=D.tasks.find(x=>x.id===resizeId);
-  if(t) {
-    t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');
-    await fsUpdate('tasks',t);
-    renderWeek();
-  }
+  if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');renderWeek();fsUpdate('tasks',t);}
   resizeId=null; resizeEl=null;
 }
 
@@ -5131,20 +5127,16 @@ function resizeTouchMove(e) {
   e.preventDefault();
   if(!resizeEl) return;
   const diff=e.touches[0].clientY-resizeStartY;
-  resizeEl.style.height=Math.max(24,resizeOrigH+diff)+'px';
+  const snap=Math.max(1,Math.round((resizeOrigH+diff)/CAL_PX_PER_MIN/15))*15*CAL_PX_PER_MIN;
+  resizeEl.style.height=snap+'px';
 }
 async function resizeTouchEnd(e) {
   if(!resizeId||!resizeEl) return;
   resizeEl.removeEventListener('touchmove',resizeTouchMove);
   resizeEl.removeEventListener('touchend',resizeTouchEnd);
-  const newH=resizeEl.offsetHeight;
-  const mins=Math.round(newH/CAL_PX_PER_MIN/15)*15;
+  const mins=Math.round(resizeEl.offsetHeight/CAL_PX_PER_MIN/15)*15;
   const t=D.tasks.find(x=>x.id===resizeId);
-  if(t) {
-    t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');
-    await fsUpdate('tasks',t);
-    renderWeek();
-  }
+  if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');renderWeek();fsUpdate('tasks',t);}
   resizeId=null; resizeEl=null;
 }
 
@@ -5161,7 +5153,9 @@ function hcalResizeMouseDown(e, id) {
 }
 function hcalResizeMouseMove(e) {
   if(!hcalResizeEl) return;
-  hcalResizeEl.style.height=Math.max(24,hcalResizeOrigH+(e.clientY-hcalResizeStartY))+'px';
+  const diff=e.clientY-hcalResizeStartY;
+  const snap=Math.max(1,Math.round((hcalResizeOrigH+diff)/HCAL_PX/15))*15*HCAL_PX;
+  hcalResizeEl.style.height=snap+'px';
 }
 async function hcalResizeMouseUp(e) {
   document.removeEventListener('mousemove',hcalResizeMouseMove);
@@ -5169,7 +5163,7 @@ async function hcalResizeMouseUp(e) {
   if(!hcalResizeId||!hcalResizeEl) return;
   const mins=Math.round(hcalResizeEl.offsetHeight/HCAL_PX/15)*15;
   const t=D.tasks.find(x=>x.id===hcalResizeId);
-  if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');await fsUpdate('tasks',t);renderHeuteCalendar();}
+  if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');renderHeuteCalendar();fsUpdate('tasks',t);}
   hcalResizeId=null; hcalResizeEl=null;
 }
 
@@ -5184,7 +5178,9 @@ function hcalResizeTouchStart(e, id) {
 function hcalResizeTouchMove(e) {
   e.preventDefault();
   if(!hcalResizeEl) return;
-  hcalResizeEl.style.height=Math.max(24,hcalResizeOrigH+(e.touches[0].clientY-hcalResizeStartY))+'px';
+  const diff=e.touches[0].clientY-hcalResizeStartY;
+  const snap=Math.max(1,Math.round((hcalResizeOrigH+diff)/HCAL_PX/15))*15*HCAL_PX;
+  hcalResizeEl.style.height=snap+'px';
 }
 async function hcalResizeTouchEnd(e) {
   if(!hcalResizeId||!hcalResizeEl) return;
@@ -5192,7 +5188,7 @@ async function hcalResizeTouchEnd(e) {
   hcalResizeEl.removeEventListener('touchend',hcalResizeTouchEnd);
   const mins=Math.round(hcalResizeEl.offsetHeight/HCAL_PX/15)*15;
   const t=D.tasks.find(x=>x.id===hcalResizeId);
-  if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');await fsUpdate('tasks',t);renderHeuteCalendar();}
+  if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');renderHeuteCalendar();fsUpdate('tasks',t);}
   hcalResizeId=null; hcalResizeEl=null;
 }
 
