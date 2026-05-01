@@ -3855,7 +3855,7 @@ function renderHeuteCalendar() {
         ${rmBtn}
         <div class="hcal-event-title">${esc(ev.title)}</div>
         ${h>32?`<div class="hcal-event-time">${hcalMinToTime(ev.startMin)}–${hcalMinToTime(ev.endMin)}</div>`:''}
-        ${ev.type==='task'?`<div class="ap-event-resize" ontouchstart="hcalResizeTouchStart(event,'${ev.id}')" onmousedown="hcalResizeMouseDown(event,'${ev.id}')"></div>`:''}
+        ${ev.type==='task'?`<div class="ap-event-resize" onmousedown="hcalResizeMouseDown(event,'${ev.id}')"></div>`:''}
       </div>`;
     }).join('');
 
@@ -3912,63 +3912,92 @@ function hcalColClick(e, ds, colEl) {
 }
 document.addEventListener('scroll',()=>{ _hcalScrolling=true; clearTimeout(window._hcalScrollT); window._hcalScrollT=setTimeout(()=>_hcalScrolling=false,200); },true);
 
-// ── HCAL TOUCH DRAG (like week calendar) ─────────────────────────
+// ── HCAL TOUCH: Long-press=drag, Unterkante long-press=resize ──
 let hcalTouchId=null, hcalTouchType=null, hcalTouchClone=null, hcalTouchMoved=false;
+let hcalTouchLPTimer=null, hcalTouchEl=null, hcalTouchStartX=0, hcalTouchStartY=0, hcalTouchMode=null;
+
 function hcalEventTouchStart(e, id, type='task') {
   e.stopPropagation();
-  hcalTouchId=id; hcalTouchType=type; hcalTouchMoved=false;
+  const el=e.target.closest('.hcal-event'); if(!el) return;
+  const touch=e.touches[0];
+  const rect=el.getBoundingClientRect();
+  const isBottom=(touch.clientY-rect.top)>(rect.height-16);
+  hcalTouchId=id; hcalTouchType=type; hcalTouchEl=el;
+  hcalTouchStartX=touch.clientX; hcalTouchStartY=touch.clientY;
+  hcalTouchMoved=false; hcalTouchMode=null;
+  clearTimeout(hcalTouchLPTimer);
+  hcalTouchLPTimer=setTimeout(()=>{
+    hcalTouchLPTimer=null;
+    if(isBottom&&type==='task'){
+      hcalTouchMode='resize';
+      hcalResizeId=id; hcalResizeStartY=hcalTouchStartY; hcalResizeOrigH=el.offsetHeight; hcalResizeEl=el;
+      el.style.boxShadow='0 0 0 2px var(--accent2)';
+    } else {
+      hcalTouchMode='drag';
+      el.style.opacity='.3';
+      hcalTouchClone=el.cloneNode(true);
+      const r=el.getBoundingClientRect();
+      Object.assign(hcalTouchClone.style,{position:'fixed',width:r.width+'px',opacity:'.85',pointerEvents:'none',zIndex:'9999',boxShadow:'0 8px 24px rgba(0,0,0,.5)',borderRadius:'6px',transform:'scale(1.05)',left:(hcalTouchStartX-r.width/2)+'px',top:(hcalTouchStartY-20)+'px'});
+      document.body.appendChild(hcalTouchClone);
+    }
+  },400);
 }
 function hcalEventTouchMove(e) {
-  if(!hcalTouchId) return;
-  e.preventDefault();
-  hcalTouchMoved=true;
   const touch=e.touches[0];
-  if(!hcalTouchClone) {
-    const el=e.target.closest('.hcal-event,.heute-task,.icon-btn');
-    if(!el) return;
-    hcalTouchClone=el.cloneNode(true);
-    const rect=el.getBoundingClientRect();
-    Object.assign(hcalTouchClone.style,{position:'fixed',width:rect.width+'px',opacity:'.75',pointerEvents:'none',zIndex:'9999',boxShadow:'0 8px 24px rgba(0,0,0,.5)',borderRadius:'8px',transform:'scale(1.04)'});
-    document.body.appendChild(hcalTouchClone);
+  if(!hcalTouchMode) {
+    if(!hcalTouchId) return;
+    if(Math.abs(touch.clientX-hcalTouchStartX)>8||Math.abs(touch.clientY-hcalTouchStartY)>8){
+      clearTimeout(hcalTouchLPTimer); hcalTouchLPTimer=null; hcalTouchId=null;
+    }
+    return;
   }
-  hcalTouchClone.style.left=(touch.clientX-40)+'px';
-  hcalTouchClone.style.top=(touch.clientY-20)+'px';
-  document.querySelectorAll('.hcal-col').forEach(c=>{c.classList.remove('drag-over');const l=c.querySelector('.hcal-snap-line');if(l)l.style.display='none';});
-  const col=document.elementFromPoint(touch.clientX,touch.clientY)?.closest('.hcal-col');
-  if(col){
-    col.classList.add('drag-over');
-    const rect=col.getBoundingClientRect();
-    const min=hcalYToMin(touch.clientY-rect.top);
-    const line=col.querySelector('.hcal-snap-line');
-    if(line){line.style.display='block';line.style.top=hcalMinToY(min)+'px';line.dataset.time=hcalMinToTime(min);}
+  e.preventDefault(); hcalTouchMoved=true;
+  if(hcalTouchMode==='drag'){
+    hcalTouchClone.style.left=(touch.clientX-40)+'px';
+    hcalTouchClone.style.top=(touch.clientY-20)+'px';
+    document.querySelectorAll('.hcal-col').forEach(c=>{c.classList.remove('drag-over');const l=c.querySelector('.hcal-snap-line');if(l)l.style.display='none';});
+    const col=document.elementFromPoint(touch.clientX,touch.clientY)?.closest('.hcal-col');
+    if(col){
+      col.classList.add('drag-over');
+      const cr=col.getBoundingClientRect(), min=hcalYToMin(touch.clientY-cr.top);
+      const line=col.querySelector('.hcal-snap-line');
+      if(line){line.style.display='block';line.style.top=hcalMinToY(min)+'px';line.dataset.time=hcalMinToTime(min);}
+    }
+  } else {
+    const snap=Math.max(1,Math.round((hcalResizeOrigH+(touch.clientY-hcalResizeStartY))/HCAL_PX/15))*15*HCAL_PX;
+    if(hcalResizeEl) hcalResizeEl.style.height=snap+'px';
   }
 }
 async function hcalEventTouchEnd(e) {
+  clearTimeout(hcalTouchLPTimer); hcalTouchLPTimer=null;
   if(!hcalTouchId) return;
-  if(hcalTouchClone){hcalTouchClone.remove();hcalTouchClone=null;}
-  document.querySelectorAll('.hcal-col').forEach(c=>{c.classList.remove('drag-over');const l=c.querySelector('.hcal-snap-line');if(l)l.style.display='none';});
-  if(!hcalTouchMoved){hcalTouchId=null;return;}
-  const touch=e.changedTouches[0];
-  const col=document.elementFromPoint(touch.clientX,touch.clientY)?.closest('.hcal-col');
-  if(col&&col.dataset.date) {
-    const rect=col.getBoundingClientRect();
-    const time=hcalMinToTime(hcalYToMin(touch.clientY-rect.top));
-    const ds=col.dataset.date;
-    if(hcalTouchType==='task') {
-      const t=D.tasks.find(x=>x.id===hcalTouchId); if(!t){hcalTouchId=null;return;}
-      t.calStartTime=time; t.dueDate=ds;
-      renderHeuteCalendar();
-      fsUpdate('tasks',t);
-      toast(`${t.title} — ${time} eingeplant`);
-    } else {
-      const ev=(D.calEvents||[]).find(x=>x.id===hcalTouchId); if(!ev){hcalTouchId=null;return;}
-      const dur=(ev.endTime&&ev.startTime)?((parseInt(ev.endTime.replace(':',''))-parseInt(ev.startTime.replace(':','')))||60):60;
-      ev.startTime=time; ev.date=ds; ev.endTime=addMinTo(time,Math.abs(dur));
-      renderHeuteCalendar();
-      fsUpdate('calEvents',ev);
+  const id=hcalTouchId, type=hcalTouchType, mode=hcalTouchMode, el=hcalTouchEl, moved=hcalTouchMoved;
+  hcalTouchId=null; hcalTouchMode=null; hcalTouchEl=null; hcalTouchMoved=false;
+  if(mode==='drag'){
+    if(el) el.style.opacity='';
+    if(hcalTouchClone){hcalTouchClone.remove();hcalTouchClone=null;}
+    document.querySelectorAll('.hcal-col').forEach(c=>{c.classList.remove('drag-over');const l=c.querySelector('.hcal-snap-line');if(l)l.style.display='none';});
+    if(moved){
+      const touch=e.changedTouches[0];
+      const col=document.elementFromPoint(touch.clientX,touch.clientY)?.closest('.hcal-col');
+      if(col&&col.dataset.date){
+        const ds=col.dataset.date, cr=col.getBoundingClientRect();
+        const time=hcalMinToTime(hcalYToMin(touch.clientY-cr.top));
+        if(type==='task'){
+          const t=D.tasks.find(x=>x.id===id);
+          if(t){t.calStartTime=time;t.dueDate=ds;renderHeuteCalendar();fsUpdate('tasks',t);toast(`${t.title} — ${time}`);}
+        } else {
+          const ev=(D.calEvents||[]).find(x=>x.id===id);
+          if(ev){const [sh,sm]=(ev.startTime||'09:00').split(':').map(Number),[eh,em]=(ev.endTime||'10:00').split(':').map(Number);const dur=(eh*60+em)-(sh*60+sm)||60;ev.startTime=time;ev.date=ds;ev.endTime=addMinTo(time,Math.max(dur,15));renderHeuteCalendar();fsUpdate('calEvents',ev);}
+        }
+      }
     }
+  } else if(mode==='resize'){
+    if(el){el.style.boxShadow='';const mins=Math.max(15,Math.round(el.offsetHeight/HCAL_PX/15)*15);const t=D.tasks.find(x=>x.id===id);if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');renderHeuteCalendar();fsUpdate('tasks',t);}}
+    hcalResizeId=null; hcalResizeEl=null;
   }
-  hcalTouchId=null;
+  // kein mode → kurzes Tippen → onclick öffnet Edit-Modal
+}
 }
 
 let _hcalLongPressTimer=null, _hcalPickerTime=null, _hcalPickerDate=null, _hcalLongPressed=false;
@@ -4760,7 +4789,7 @@ function renderWeek() {
         <div class="hcal-event-rm" onclick="event.stopPropagation();unscheduleTaskWeek('${t.id}')" title="Aus Kalender entfernen">×</div>
         <div class="ap-event-title">${esc(t.title)}</div>
         ${timeLabel?`<div class="ap-event-time">${timeLabel} – ${endLabel}</div>`:''}
-        <div class="ap-event-resize" ontouchstart="resizeTouchStart(event,'${t.id}')" onmousedown="resizeMouseDown(event,'${t.id}')"></div>
+        <div class="ap-event-resize" onmousedown="resizeMouseDown(event,'${t.id}')"></div>
       </div>`;
       if(startMins!==null) {
         nextFreeTop=Math.max(nextFreeTop, top+h+2);
@@ -4859,59 +4888,86 @@ function addCalTask(ds) {
   setTimeout(()=>document.getElementById('t-title').focus(),100);
 }
 
-// ── CALENDAR TOUCH DRAG ──────────────────────────────────────
+// ── CALENDAR TOUCH: Long-press=drag, Unterkante long-press=resize ──
 let calTouchId=null, calTouchClone=null, calTouchMoved=false;
+let calTouchLPTimer=null, calTouchEl=null, calTouchStartX=0, calTouchStartY=0, calTouchMode=null;
 
 function calEventTouchStart(e, id) {
-  e.stopPropagation(); // prevent column long-press
-  calTouchId=id; calTouchMoved=false;
+  e.stopPropagation();
+  const el=e.target.closest('.ap-event'); if(!el) return;
+  const touch=e.touches[0];
+  const rect=el.getBoundingClientRect();
+  const isBottom=(touch.clientY-rect.top)>(rect.height-16);
+  calTouchId=id; calTouchEl=el;
+  calTouchStartX=touch.clientX; calTouchStartY=touch.clientY;
+  calTouchMoved=false; calTouchMode=null;
+  clearTimeout(calTouchLPTimer);
+  calTouchLPTimer=setTimeout(()=>{
+    calTouchLPTimer=null;
+    if(isBottom){
+      calTouchMode='resize';
+      resizeId=id; resizeStartY=calTouchStartY; resizeOrigH=el.offsetHeight; resizeEl=el;
+      el.style.boxShadow='0 0 0 2px var(--accent2)';
+    } else {
+      calTouchMode='drag';
+      el.style.opacity='.3';
+      calTouchClone=el.cloneNode(true);
+      const r=el.getBoundingClientRect();
+      Object.assign(calTouchClone.style,{position:'fixed',width:r.width+'px',opacity:'.85',pointerEvents:'none',zIndex:'9999',boxShadow:'0 8px 24px rgba(0,0,0,.5)',borderRadius:'6px',transform:'scale(1.05)',left:(calTouchStartX-r.width/2)+'px',top:(calTouchStartY-20)+'px'});
+      document.body.appendChild(calTouchClone);
+    }
+  },400);
 }
 
 function calEventTouchMove(e, id) {
-  if(!calTouchId) return;
-  e.preventDefault();
-  calTouchMoved=true;
   const touch=e.touches[0];
-  if(!calTouchClone) {
-    const el=e.target.closest('.ap-event');
-    if(!el) return;
-    calTouchClone=el.cloneNode(true);
-    const rect=el.getBoundingClientRect();
-    Object.assign(calTouchClone.style,{position:'fixed',width:rect.width+'px',opacity:'.8',pointerEvents:'none',zIndex:'9999',boxShadow:'0 8px 24px rgba(0,0,0,.5)',borderRadius:'6px',transform:'scale(1.03)'});
-    document.body.appendChild(calTouchClone);
+  if(!calTouchMode){
+    if(!calTouchId) return;
+    if(Math.abs(touch.clientX-calTouchStartX)>8||Math.abs(touch.clientY-calTouchStartY)>8){
+      clearTimeout(calTouchLPTimer); calTouchLPTimer=null; calTouchId=null;
+    }
+    return;
   }
-  calTouchClone.style.left=(touch.clientX-40)+'px';
-  calTouchClone.style.top=(touch.clientY-20)+'px';
-  document.querySelectorAll('.ap-day-col').forEach(c=>{c.classList.remove('drag-over');const l=c.querySelector('.hcal-snap-line');if(l)l.style.display='none';});
-  const under=document.elementFromPoint(touch.clientX,touch.clientY);
-  const col=under?.closest('.ap-day-col');
-  if(col){
-    col.classList.add('drag-over');
-    const rect=col.getBoundingClientRect();
-    const snappedY=Math.round((touch.clientY-rect.top)/(15*CAL_PX_PER_MIN))*15*CAL_PX_PER_MIN;
-    const line=col.querySelector('.hcal-snap-line');
-    if(line){line.style.display='block';line.style.top=snappedY+'px';line.dataset.time=yToTime(touch.clientY,col);}
+  e.preventDefault(); calTouchMoved=true;
+  if(calTouchMode==='drag'){
+    calTouchClone.style.left=(touch.clientX-40)+'px';
+    calTouchClone.style.top=(touch.clientY-20)+'px';
+    document.querySelectorAll('.ap-day-col').forEach(c=>{c.classList.remove('drag-over');const l=c.querySelector('.hcal-snap-line');if(l)l.style.display='none';});
+    const col=document.elementFromPoint(touch.clientX,touch.clientY)?.closest('.ap-day-col');
+    if(col){
+      col.classList.add('drag-over');
+      const snap=Math.round((touch.clientY-col.getBoundingClientRect().top)/(15*CAL_PX_PER_MIN))*15*CAL_PX_PER_MIN;
+      const line=col.querySelector('.hcal-snap-line');
+      if(line){line.style.display='block';line.style.top=snap+'px';line.dataset.time=yToTime(touch.clientY,col);}
+    }
+  } else {
+    const snap=Math.max(1,Math.round((resizeOrigH+(touch.clientY-resizeStartY))/CAL_PX_PER_MIN/15))*15*CAL_PX_PER_MIN;
+    if(resizeEl) resizeEl.style.height=snap+'px';
   }
 }
 
 async function calEventTouchEnd(e) {
+  clearTimeout(calTouchLPTimer); calTouchLPTimer=null;
   if(!calTouchId) return;
-  if(calTouchClone){calTouchClone.remove();calTouchClone=null;}
-  document.querySelectorAll('.ap-day-col').forEach(c=>{c.classList.remove('drag-over');const l=c.querySelector('.hcal-snap-line');if(l)l.style.display='none';});
-  if(!calTouchMoved){calTouchId=null;return;} // was a tap, not a drag
-  const touch=e.changedTouches[0];
-  const under=document.elementFromPoint(touch.clientX,touch.clientY);
-  const col=under?.closest('.ap-day-col');
-  if(col&&col.dataset.date) {
-    const t=D.tasks.find(x=>x.id===calTouchId);
-    if(t) {
-      t.calStartTime=yToTime(touch.clientY,col);
-      t.dueDate=col.dataset.date;
-      renderWeek();
-      fsUpdate('tasks',t);
+  const id=calTouchId, mode=calTouchMode, el=calTouchEl, moved=calTouchMoved;
+  calTouchId=null; calTouchMode=null; calTouchEl=null; calTouchMoved=false;
+  if(mode==='drag'){
+    if(el) el.style.opacity='';
+    if(calTouchClone){calTouchClone.remove();calTouchClone=null;}
+    document.querySelectorAll('.ap-day-col').forEach(c=>{c.classList.remove('drag-over');const l=c.querySelector('.hcal-snap-line');if(l)l.style.display='none';});
+    if(moved){
+      const touch=e.changedTouches[0];
+      const col=document.elementFromPoint(touch.clientX,touch.clientY)?.closest('.ap-day-col');
+      if(col&&col.dataset.date){
+        const t=D.tasks.find(x=>x.id===id);
+        if(t){t.calStartTime=yToTime(touch.clientY,col);t.dueDate=col.dataset.date;renderWeek();fsUpdate('tasks',t);}
+      }
     }
+  } else if(mode==='resize'){
+    if(el){el.style.boxShadow='';const mins=Math.max(15,Math.round(el.offsetHeight/CAL_PX_PER_MIN/15)*15);const t=D.tasks.find(x=>x.id===id);if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');renderWeek();fsUpdate('tasks',t);}}
+    resizeId=null; resizeEl=null;
   }
-  calTouchId=null;
+  // kein mode → kurzes Tippen → onclick öffnet Event
 }
 
 function yToTime(clientY, col) {
