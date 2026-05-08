@@ -3855,7 +3855,7 @@ function renderHeuteCalendar() {
         ${rmBtn}
         <div class="hcal-event-title">${esc(ev.title)}</div>
         ${h>32?`<div class="hcal-event-time">${hcalMinToTime(ev.startMin)}–${hcalMinToTime(ev.endMin)}</div>`:''}
-        ${ev.type==='task'?`<div class="ap-event-resize" onmousedown="hcalResizeMouseDown(event,'${ev.id}')"></div>`:''}
+        ${ev.type==='task'?`<div class="ap-event-resize" ontouchstart="hcalResizeTouchStart(event,'${ev.id}')" onmousedown="hcalResizeMouseDown(event,'${ev.id}')"></div>`:''}
       </div>`;
     }).join('');
 
@@ -3920,26 +3920,18 @@ function hcalEventTouchStart(e, id, type='task') {
   e.stopPropagation();
   const el=e.target.closest('.hcal-event'); if(!el) return;
   const touch=e.touches[0];
-  const rect=el.getBoundingClientRect();
-  const isBottom=(touch.clientY-rect.top)>(rect.height-16);
   hcalTouchId=id; hcalTouchType=type; hcalTouchEl=el;
   hcalTouchStartX=touch.clientX; hcalTouchStartY=touch.clientY;
   hcalTouchMoved=false; hcalTouchMode=null;
   clearTimeout(hcalTouchLPTimer);
   hcalTouchLPTimer=setTimeout(()=>{
     hcalTouchLPTimer=null;
-    if(isBottom&&type==='task'){
-      hcalTouchMode='resize';
-      hcalResizeId=id; hcalResizeStartY=hcalTouchStartY; hcalResizeOrigH=el.offsetHeight; hcalResizeEl=el;
-      el.style.boxShadow='0 0 0 2px var(--accent2)';
-    } else {
-      hcalTouchMode='drag';
-      el.style.opacity='.3';
-      hcalTouchClone=el.cloneNode(true);
-      const r=el.getBoundingClientRect();
-      Object.assign(hcalTouchClone.style,{position:'fixed',width:r.width+'px',opacity:'.85',pointerEvents:'none',zIndex:'9999',boxShadow:'0 8px 24px rgba(0,0,0,.5)',borderRadius:'6px',transform:'scale(1.05)',left:(hcalTouchStartX-r.width/2)+'px',top:(hcalTouchStartY-20)+'px'});
-      document.body.appendChild(hcalTouchClone);
-    }
+    hcalTouchMode='drag';
+    el.style.opacity='.3';
+    hcalTouchClone=el.cloneNode(true);
+    const r=el.getBoundingClientRect();
+    Object.assign(hcalTouchClone.style,{position:'fixed',width:r.width+'px',opacity:'.85',pointerEvents:'none',zIndex:'9999',boxShadow:'0 8px 24px rgba(0,0,0,.5)',borderRadius:'6px',transform:'scale(1.05)',left:(hcalTouchStartX-r.width/2)+'px',top:(hcalTouchStartY-20)+'px'});
+    document.body.appendChild(hcalTouchClone);
   },400);
 }
 function hcalEventTouchMove(e) {
@@ -4788,7 +4780,7 @@ function renderWeek() {
         <div class="hcal-event-rm" onclick="event.stopPropagation();unscheduleTaskWeek('${t.id}')" title="Aus Kalender entfernen">×</div>
         <div class="ap-event-title">${esc(t.title)}</div>
         ${timeLabel?`<div class="ap-event-time">${timeLabel} – ${endLabel}</div>`:''}
-        <div class="ap-event-resize" onmousedown="resizeMouseDown(event,'${t.id}')"></div>
+        <div class="ap-event-resize" ontouchstart="resizeTouchStart(event,'${t.id}')" onmousedown="resizeMouseDown(event,'${t.id}')"></div>
       </div>`;
       if(startMins!==null) {
         nextFreeTop=Math.max(nextFreeTop, top+h+2);
@@ -4895,26 +4887,18 @@ function calEventTouchStart(e, id) {
   e.stopPropagation();
   const el=e.target.closest('.ap-event'); if(!el) return;
   const touch=e.touches[0];
-  const rect=el.getBoundingClientRect();
-  const isBottom=(touch.clientY-rect.top)>(rect.height-16);
   calTouchId=id; calTouchEl=el;
   calTouchStartX=touch.clientX; calTouchStartY=touch.clientY;
   calTouchMoved=false; calTouchMode=null;
   clearTimeout(calTouchLPTimer);
   calTouchLPTimer=setTimeout(()=>{
     calTouchLPTimer=null;
-    if(isBottom){
-      calTouchMode='resize';
-      resizeId=id; resizeStartY=calTouchStartY; resizeOrigH=el.offsetHeight; resizeEl=el;
-      el.style.boxShadow='0 0 0 2px var(--accent2)';
-    } else {
-      calTouchMode='drag';
-      el.style.opacity='.3';
-      calTouchClone=el.cloneNode(true);
-      const r=el.getBoundingClientRect();
-      Object.assign(calTouchClone.style,{position:'fixed',width:r.width+'px',opacity:'.85',pointerEvents:'none',zIndex:'9999',boxShadow:'0 8px 24px rgba(0,0,0,.5)',borderRadius:'6px',transform:'scale(1.05)',left:(calTouchStartX-r.width/2)+'px',top:(calTouchStartY-20)+'px'});
-      document.body.appendChild(calTouchClone);
-    }
+    calTouchMode='drag';
+    el.style.opacity='.3';
+    calTouchClone=el.cloneNode(true);
+    const r=el.getBoundingClientRect();
+    Object.assign(calTouchClone.style,{position:'fixed',width:r.width+'px',opacity:'.85',pointerEvents:'none',zIndex:'9999',boxShadow:'0 8px 24px rgba(0,0,0,.5)',borderRadius:'6px',transform:'scale(1.05)',left:(calTouchStartX-r.width/2)+'px',top:(calTouchStartY-20)+'px'});
+    document.body.appendChild(calTouchClone);
   },400);
 }
 
