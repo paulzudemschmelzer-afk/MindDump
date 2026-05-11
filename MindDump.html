@@ -277,7 +277,7 @@ textarea::placeholder { color:#444; }
 .ap-event-title { font-size:11px; font-weight:600; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .ap-event-time { font-size:10px; opacity:.7; font-weight:400; margin-top:1px; }
 .ap-event-dur { font-size:10px; opacity:.5; margin-top:1px; }
-.ap-event-resize { position:absolute; bottom:0; left:0; right:0; height:14px; cursor:ns-resize; border-radius:0 0 5px 5px; display:flex; align-items:center; justify-content:center; }
+.ap-event-resize { position:absolute; bottom:0; left:0; right:0; height:40px; max-height:50%; cursor:ns-resize; border-radius:0 0 5px 5px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:5px; }
 .ap-event-resize:hover { background:rgba(255,255,255,.15); }
 .ap-event-resize::after { content:''; width:20px; height:3px; border-radius:2px; background:rgba(255,255,255,.4); }
 .ap-add-btn { display:none; }
@@ -3917,6 +3917,7 @@ let hcalTouchId=null, hcalTouchType=null, hcalTouchClone=null, hcalTouchMoved=fa
 let hcalTouchLPTimer=null, hcalTouchEl=null, hcalTouchStartX=0, hcalTouchStartY=0, hcalTouchMode=null;
 
 function hcalEventTouchStart(e, id, type='task') {
+  if(e.target.closest('.ap-event-resize')) return;
   e.stopPropagation();
   const el=e.target.closest('.hcal-event'); if(!el) return;
   const touch=e.touches[0];
@@ -4884,6 +4885,7 @@ let calTouchId=null, calTouchClone=null, calTouchMoved=false;
 let calTouchLPTimer=null, calTouchEl=null, calTouchStartX=0, calTouchStartY=0, calTouchMode=null;
 
 function calEventTouchStart(e, id) {
+  if(e.target.closest('.ap-event-resize')) return;
   e.stopPropagation();
   const el=e.target.closest('.ap-event'); if(!el) return;
   const touch=e.touches[0];
@@ -5155,12 +5157,36 @@ async function resizeMouseUp(e) {
 }
 
 function resizeTouchStart(e, id) {
-  e.preventDefault(); e.stopPropagation();
-  resizeId=id; resizeStartY=e.touches[0].clientY;
-  resizeEl=e.target.closest('.ap-event');
-  resizeOrigH=resizeEl.offsetHeight;
-  resizeEl.addEventListener('touchmove',resizeTouchMove,{passive:false});
-  resizeEl.addEventListener('touchend',resizeTouchEnd);
+  e.stopPropagation();
+  const el=e.target.closest('.ap-event'); if(!el) return;
+  const startY=e.touches[0].clientY;
+  let moved=false, active=false;
+  const activate=()=>{
+    active=true;
+    resizeId=id; resizeStartY=startY; resizeEl=el; resizeOrigH=el.offsetHeight;
+    el.style.boxShadow='0 0 0 2px var(--accent2)';
+  };
+  const onMove=(ev)=>{
+    if(Math.abs(ev.touches[0].clientY-startY)>4&&!active){ activate(); }
+    if(!active) return;
+    ev.preventDefault();
+    moved=true;
+    const diff=ev.touches[0].clientY-resizeStartY;
+    const snap=Math.max(1,Math.round((resizeOrigH+diff)/CAL_PX_PER_MIN/15))*15*CAL_PX_PER_MIN;
+    el.style.height=snap+'px';
+  };
+  const onEnd=async()=>{
+    el.removeEventListener('touchmove',onMove);
+    el.removeEventListener('touchend',onEnd);
+    el.style.boxShadow='';
+    if(!active||!moved) return;
+    const mins=Math.round(el.offsetHeight/CAL_PX_PER_MIN/15)*15;
+    const t=D.tasks.find(x=>x.id===id);
+    if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');renderWeek();fsUpdate('tasks',t);}
+    resizeId=null; resizeEl=null;
+  };
+  el.addEventListener('touchmove',onMove,{passive:false});
+  el.addEventListener('touchend',onEnd);
 }
 function resizeTouchMove(e) {
   e.preventDefault();
@@ -5207,12 +5233,37 @@ async function hcalResizeMouseUp(e) {
 }
 
 function hcalResizeTouchStart(e, id) {
-  e.preventDefault(); e.stopPropagation();
-  hcalResizeId=id; hcalResizeStartY=e.touches[0].clientY;
-  hcalResizeEl=e.target.closest('.hcal-event');
-  hcalResizeOrigH=hcalResizeEl.offsetHeight;
-  hcalResizeEl.addEventListener('touchmove',hcalResizeTouchMove,{passive:false});
-  hcalResizeEl.addEventListener('touchend',hcalResizeTouchEnd);
+  e.stopPropagation();
+  const el=e.target.closest('.hcal-event'); if(!el) return;
+  const startY=e.touches[0].clientY;
+  let moved=false, active=false;
+  const activate=()=>{
+    active=true;
+    hcalResizeId=id; hcalResizeStartY=startY; hcalResizeEl=el; hcalResizeOrigH=el.offsetHeight;
+    el.style.boxShadow='0 0 0 2px var(--accent2)';
+  };
+  const onMove=(ev)=>{
+    const dy=Math.abs(ev.touches[0].clientY-startY);
+    if(dy>4&&!active){ activate(); }
+    if(!active) return;
+    ev.preventDefault();
+    moved=true;
+    const diff=ev.touches[0].clientY-hcalResizeStartY;
+    const snap=Math.max(1,Math.round((hcalResizeOrigH+diff)/HCAL_PX/15))*15*HCAL_PX;
+    el.style.height=snap+'px';
+  };
+  const onEnd=async()=>{
+    el.removeEventListener('touchmove',onMove);
+    el.removeEventListener('touchend',onEnd);
+    el.style.boxShadow='';
+    if(!active||!moved) return;
+    const mins=Math.round(el.offsetHeight/HCAL_PX/15)*15;
+    const t=D.tasks.find(x=>x.id===id);
+    if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');renderHeuteCalendar();fsUpdate('tasks',t);}
+    hcalResizeId=null; hcalResizeEl=null;
+  };
+  el.addEventListener('touchmove',onMove,{passive:false});
+  el.addEventListener('touchend',onEnd);
 }
 function hcalResizeTouchMove(e) {
   e.preventDefault();
