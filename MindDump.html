@@ -5159,34 +5159,9 @@ async function resizeMouseUp(e) {
 function resizeTouchStart(e, id) {
   e.stopPropagation();
   const el=e.target.closest('.ap-event'); if(!el) return;
-  const startY=e.touches[0].clientY;
-  let moved=false, active=false;
-  const activate=()=>{
-    active=true;
-    resizeId=id; resizeStartY=startY; resizeEl=el; resizeOrigH=el.offsetHeight;
-    el.style.boxShadow='0 0 0 2px var(--accent2)';
-  };
-  const onMove=(ev)=>{
-    if(Math.abs(ev.touches[0].clientY-startY)>4&&!active){ activate(); }
-    if(!active) return;
-    ev.preventDefault();
-    moved=true;
-    const diff=ev.touches[0].clientY-resizeStartY;
-    const snap=Math.max(1,Math.round((resizeOrigH+diff)/CAL_PX_PER_MIN/15))*15*CAL_PX_PER_MIN;
-    el.style.height=snap+'px';
-  };
-  const onEnd=async()=>{
-    el.removeEventListener('touchmove',onMove);
-    el.removeEventListener('touchend',onEnd);
-    el.style.boxShadow='';
-    if(!active||!moved) return;
-    const mins=Math.round(el.offsetHeight/CAL_PX_PER_MIN/15)*15;
-    const t=D.tasks.find(x=>x.id===id);
-    if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');renderWeek();fsUpdate('tasks',t);}
-    resizeId=null; resizeEl=null;
-  };
-  el.addEventListener('touchmove',onMove,{passive:false});
-  el.addEventListener('touchend',onEnd);
+  resizeId=id; resizeStartY=e.touches[0].clientY; resizeEl=el; resizeOrigH=el.offsetHeight;
+  document.addEventListener('touchmove',resizeTouchMove,{passive:false});
+  document.addEventListener('touchend',resizeTouchEnd);
 }
 function resizeTouchMove(e) {
   e.preventDefault();
@@ -5196,9 +5171,9 @@ function resizeTouchMove(e) {
   resizeEl.style.height=snap+'px';
 }
 async function resizeTouchEnd(e) {
+  document.removeEventListener('touchmove',resizeTouchMove);
+  document.removeEventListener('touchend',resizeTouchEnd);
   if(!resizeId||!resizeEl) return;
-  resizeEl.removeEventListener('touchmove',resizeTouchMove);
-  resizeEl.removeEventListener('touchend',resizeTouchEnd);
   const mins=Math.round(resizeEl.offsetHeight/CAL_PX_PER_MIN/15)*15;
   const t=D.tasks.find(x=>x.id===resizeId);
   if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');renderWeek();fsUpdate('tasks',t);}
@@ -5235,35 +5210,9 @@ async function hcalResizeMouseUp(e) {
 function hcalResizeTouchStart(e, id) {
   e.stopPropagation();
   const el=e.target.closest('.hcal-event'); if(!el) return;
-  const startY=e.touches[0].clientY;
-  let moved=false, active=false;
-  const activate=()=>{
-    active=true;
-    hcalResizeId=id; hcalResizeStartY=startY; hcalResizeEl=el; hcalResizeOrigH=el.offsetHeight;
-    el.style.boxShadow='0 0 0 2px var(--accent2)';
-  };
-  const onMove=(ev)=>{
-    const dy=Math.abs(ev.touches[0].clientY-startY);
-    if(dy>4&&!active){ activate(); }
-    if(!active) return;
-    ev.preventDefault();
-    moved=true;
-    const diff=ev.touches[0].clientY-hcalResizeStartY;
-    const snap=Math.max(1,Math.round((hcalResizeOrigH+diff)/HCAL_PX/15))*15*HCAL_PX;
-    el.style.height=snap+'px';
-  };
-  const onEnd=async()=>{
-    el.removeEventListener('touchmove',onMove);
-    el.removeEventListener('touchend',onEnd);
-    el.style.boxShadow='';
-    if(!active||!moved) return;
-    const mins=Math.round(el.offsetHeight/HCAL_PX/15)*15;
-    const t=D.tasks.find(x=>x.id===id);
-    if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');renderHeuteCalendar();fsUpdate('tasks',t);}
-    hcalResizeId=null; hcalResizeEl=null;
-  };
-  el.addEventListener('touchmove',onMove,{passive:false});
-  el.addEventListener('touchend',onEnd);
+  hcalResizeId=id; hcalResizeStartY=e.touches[0].clientY; hcalResizeEl=el; hcalResizeOrigH=el.offsetHeight;
+  document.addEventListener('touchmove',hcalResizeTouchMove,{passive:false});
+  document.addEventListener('touchend',hcalResizeTouchEnd);
 }
 function hcalResizeTouchMove(e) {
   e.preventDefault();
@@ -5273,9 +5222,8 @@ function hcalResizeTouchMove(e) {
   hcalResizeEl.style.height=snap+'px';
 }
 async function hcalResizeTouchEnd(e) {
-  if(!hcalResizeId||!hcalResizeEl) return;
-  hcalResizeEl.removeEventListener('touchmove',hcalResizeTouchMove);
-  hcalResizeEl.removeEventListener('touchend',hcalResizeTouchEnd);
+  document.removeEventListener('touchmove',hcalResizeTouchMove);
+  document.removeEventListener('touchend',hcalResizeTouchEnd);
   const mins=Math.round(hcalResizeEl.offsetHeight/HCAL_PX/15)*15;
   const t=D.tasks.find(x=>x.id===hcalResizeId);
   if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');renderHeuteCalendar();fsUpdate('tasks',t);}
