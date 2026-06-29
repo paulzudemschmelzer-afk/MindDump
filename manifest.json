@@ -1,0 +1,20 @@
+{
+  "name": "MindDump",
+  "short_name": "MindDump",
+  "description": "Brain Dump, Tasks, Habits & mehr — dein persönliches Denk-Werkzeug.",
+  "start_url": "MindDump.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "lang": "de",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

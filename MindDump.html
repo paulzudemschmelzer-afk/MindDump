@@ -2,8 +2,23 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>MindDump</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#111111">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MindDump">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW-Registrierung fehlgeschlagen:', e));
+    });
+  }
+</script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -2006,12 +2021,21 @@ Brain Dump:
 ${text}`;
 
   try {
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.groqKey},
-      body:JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:2048})
-    });
-    if(!res.ok){ const e=await res.json(); throw new Error(e.error?.message||'HTTP '+res.status); }
+    const ctrl=new AbortController();
+    const timeout=setTimeout(()=>ctrl.abort(), 30000);
+    let res;
+    try {
+      res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.groqKey},
+        signal:ctrl.signal,
+        body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:4096,response_format:{type:'json_object'}})
+      });
+    } catch(e){
+      if(e.name==='AbortError') throw new Error('Zeitüberschreitung — Groq antwortet nicht. Nochmal versuchen.');
+      throw new Error('Netzwerkfehler — keine Verbindung zu Groq.');
+    } finally { clearTimeout(timeout); }
+    if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||'HTTP '+res.status); }
     const data=await res.json();
     const raw=data.choices?.[0]?.message?.content?.trim();
     if(!raw) throw new Error('Keine Antwort erhalten');
