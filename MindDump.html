@@ -6485,18 +6485,51 @@ function initCanvas(note) {
   if(!canvas||!wrap) return;
   const rect=wrap.getBoundingClientRect();
   canvas.width=rect.width||800; canvas.height=rect.height||600;
-  const newCanvas=canvas.cloneNode(true);
+  const newCanvas=canvas.cloneNode(false);
   canvas.parentNode.replaceChild(newCanvas,canvas);
-  const nCtx=newCanvas.getContext('2d');
-  nCtx.lineCap='round'; nCtx.lineJoin='round';
-  if(note.canvasData){const img=new Image();img.onload=()=>nCtx.drawImage(img,0,0);img.src=note.canvasData;}
-  else{nCtx.fillStyle='#1a1a1a';nCtx.fillRect(0,0,newCanvas.width,newCanvas.height);canvasHistory=[newCanvas.toDataURL()];}
-  let lastX,lastY;
-  function getPos(e){const r=newCanvas.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};}
-  newCanvas.addEventListener('pointerdown',e=>{e.preventDefault();isDrawing=true;const p=getPos(e);lastX=p.x;lastY=p.y;});
-  newCanvas.addEventListener('pointermove',e=>{if(!isDrawing)return;e.preventDefault();const p=getPos(e);nCtx.strokeStyle=drawTool==='eraser'?'#1a1a1a':drawColor;nCtx.lineWidth=drawTool==='eraser'?drawSize*4:drawSize;nCtx.beginPath();nCtx.moveTo(lastX,lastY);nCtx.lineTo(p.x,p.y);nCtx.stroke();lastX=p.x;lastY=p.y;});
-  newCanvas.addEventListener('pointerup',e=>{if(!isDrawing)return;isDrawing=false;if(canvasHistory.length>30)canvasHistory.shift();canvasHistory.push(newCanvas.toDataURL());autoSaveNote();});
-  newCanvas.addEventListener('pointerleave',e=>{if(isDrawing){isDrawing=false;canvasHistory.push(newCanvas.toDataURL());autoSaveNote();}});
+  const ctx=newCanvas.getContext('2d');
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  if(note.canvasData){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0,newCanvas.width,newCanvas.height);img.src=note.canvasData;}
+  else{ctx.fillStyle='#1a1a1a';ctx.fillRect(0,0,newCanvas.width,newCanvas.height);canvasHistory=[newCanvas.toDataURL()];}
+
+  let pts=[], activeId=null, penActive=false;
+  const getPos=e=>{const r=newCanvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top,p:e.pressure};};
+  // Druckabhängige Strichbreite — Maus meldet 0 oder 0.5, dann konstante Breite
+  const strokeWidth=pr=>{const base=drawTool==='eraser'?drawSize*4:drawSize; return (!pr||pr===0.5)?base:base*(0.35+pr*1.3);};
+  const dab=p=>{ctx.fillStyle=drawTool==='eraser'?'#1a1a1a':drawColor;ctx.beginPath();ctx.arc(p.x,p.y,Math.max(strokeWidth(p.p)/2,0.5),0,2*Math.PI);ctx.fill();};
+
+  newCanvas.addEventListener('pointerdown',e=>{
+    if(penActive&&e.pointerType==='touch') return;          // Handballen ignorieren wenn Stift aktiv
+    if(e.pointerType==='pen') penActive=true;
+    e.preventDefault(); activeId=e.pointerId; isDrawing=true;
+    try{newCanvas.setPointerCapture(e.pointerId);}catch(_){}
+    const p=getPos(e); pts=[p]; dab(p);                      // Tap zeichnet einen Punkt
+  });
+  newCanvas.addEventListener('pointermove',e=>{
+    if(!isDrawing||e.pointerId!==activeId) return;
+    if(penActive&&e.pointerType==='touch') return;
+    e.preventDefault();
+    const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e];  // alle Zwischenpunkte für flüssige Striche
+    for(const ev of evs){
+      const p=getPos(ev); pts.push(p);
+      if(pts.length<3) continue;
+      const n=pts.length, a=pts[n-3], b=pts[n-2], c=pts[n-1];
+      const m1={x:(a.x+b.x)/2,y:(a.y+b.y)/2}, m2={x:(b.x+c.x)/2,y:(b.y+c.y)/2};
+      ctx.strokeStyle=drawTool==='eraser'?'#1a1a1a':drawColor;
+      ctx.lineWidth=strokeWidth(b.p);
+      ctx.beginPath(); ctx.moveTo(m1.x,m1.y); ctx.quadraticCurveTo(b.x,b.y,m2.x,m2.y); ctx.stroke();  // glatte Kurve
+    }
+  });
+  const endStroke=()=>{
+    if(!isDrawing) return;
+    isDrawing=false; activeId=null; pts=[];
+    if(canvasHistory.length>30) canvasHistory.shift();
+    canvasHistory.push(newCanvas.toDataURL());
+    autoSaveNote();
+  };
+  newCanvas.addEventListener('pointerup',endStroke);
+  newCanvas.addEventListener('pointercancel',endStroke);
+  newCanvas.addEventListener('pointerleave',e=>{ if(isDrawing&&e.pointerId===activeId) endStroke(); });
   newCanvas.style.touchAction='none';
 }
 function setDrawTool(tool) {
