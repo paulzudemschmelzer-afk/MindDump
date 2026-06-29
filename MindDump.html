@@ -694,6 +694,12 @@ select option { background:#1c1c1c; }
 .note-tag-chip { padding:2px 8px; border-radius:6px; background:none; border:1px solid var(--border); color:var(--sub); cursor:pointer; font-size:11px; font-family:inherit; }
 .note-tag-chip:hover { color:var(--text); }
 .note-tag-chip.active { background:rgba(124,58,237,.15); color:var(--accent2); border-color:rgba(124,58,237,.3); }
+.ink-img { display:block; max-width:100%; margin:10px 0; border:1px solid var(--border); border-radius:8px; background:#1a1a1a; cursor:pointer; }
+.ink-img:hover { border-color:var(--accent); }
+.ink-overlay { position:fixed; inset:0; z-index:300; background:rgba(0,0,0,.7); display:flex; flex-direction:column; padding:12px; gap:8px; }
+.ink-overlay-bar { display:flex; flex-wrap:wrap; align-items:center; gap:6px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:8px 10px; }
+.ink-canvas-wrap { flex:1; background:#1a1a1a; border:1px solid var(--border); border-radius:10px; overflow:hidden; display:flex; min-height:0; }
+.ink-canvas-wrap canvas { touch-action:none; display:block; margin:auto; }
 .notes-editor-area { flex:1; display:flex; flex-direction:column; min-width:0; }
 .notes-empty { display:flex; align-items:center; justify-content:center; flex:1; color:var(--sub); font-size:14px; }
 .notes-toolbar { display:flex; flex-wrap:wrap; gap:3px; padding:8px 12px; border-bottom:1px solid var(--border); align-items:center; background:var(--sidebar); }
@@ -1219,8 +1225,7 @@ select option { background:#1c1c1c; }
         <div class="notes-back-btn" style="display:none"><button class="nt-btn" onclick="closeNoteOnMobile()" style="margin:8px 12px 0;align-self:flex-start">← Zurück</button></div>
         <div class="notes-empty" id="notes-empty">Erstelle eine Notiz um loszulegen</div>
         <div class="notes-mode-bar" id="notes-mode-bar" style="display:none">
-          <button class="notes-mode-btn active" onclick="setNoteMode('type')" id="mode-type-btn">✏️ Tippen</button>
-          <button class="notes-mode-btn" onclick="setNoteMode('draw')" id="mode-draw-btn">🖊️ Zeichnen</button>
+          <button class="notes-mode-btn" onclick="insertInkDrawing()" id="mode-draw-btn">🖊️ Zeichnung einfügen</button>
           <div style="flex:1"></div>
           <select class="nt-select" id="note-ai-select" onchange="noteAI(this.value);this.selectedIndex=0" title="KI-Aktion">
             <option value="">✨ KI</option>
@@ -1269,32 +1274,39 @@ select option { background:#1c1c1c; }
           <input type="color" class="nt-color-btn" value="#e5e5e5" onchange="noteExec('foreColor',this.value)" title="Textfarbe" />
           <button class="nt-btn" onclick="noteExec('removeFormat')">✕</button>
         </div>
-        <div class="draw-toolbar" id="draw-toolbar">
-          <button class="nt-btn active" onclick="setDrawTool('pen')" id="draw-pen-btn">🖊️</button>
-          <button class="nt-btn" onclick="setDrawTool('eraser')" id="draw-eraser-btn">🧽</button>
-          <div class="nt-sep"></div>
-          <button class="draw-size-btn active" onclick="setDrawSize(2)" data-size="2"><div class="draw-size-dot" style="width:4px;height:4px"></div></button>
-          <button class="draw-size-btn" onclick="setDrawSize(4)" data-size="4"><div class="draw-size-dot" style="width:7px;height:7px"></div></button>
-          <button class="draw-size-btn" onclick="setDrawSize(8)" data-size="8"><div class="draw-size-dot" style="width:11px;height:11px"></div></button>
-          <button class="draw-size-btn" onclick="setDrawSize(16)" data-size="16"><div class="draw-size-dot" style="width:15px;height:15px"></div></button>
-          <div class="nt-sep"></div>
-          <input type="color" class="nt-color-btn" id="draw-color" value="#e5e5e5" onchange="drawColor=this.value" />
-          <button class="nt-color-btn" style="background:#e5e5e5" onclick="setDrawColor('#e5e5e5')"></button>
-          <button class="nt-color-btn" style="background:#ef4444" onclick="setDrawColor('#ef4444')"></button>
-          <button class="nt-color-btn" style="background:#3b82f6" onclick="setDrawColor('#3b82f6')"></button>
-          <button class="nt-color-btn" style="background:#10b981" onclick="setDrawColor('#10b981')"></button>
-          <button class="nt-color-btn" style="background:#f59e0b" onclick="setDrawColor('#f59e0b')"></button>
-          <div class="nt-sep"></div>
-          <button class="nt-btn" onclick="clearCanvas()">🗑️</button>
-          <button class="nt-btn" onclick="undoCanvas()">↩</button>
-        </div>
         <div class="note-content-wrap" id="note-content-wrap" style="display:none">
-          <div class="note-editor" id="note-editor" contenteditable="true" data-placeholder="Hier tippen..." oninput="autoSaveNote()"></div>
-        </div>
-        <div class="note-canvas-wrap" id="note-canvas-wrap">
-          <canvas class="note-canvas" id="note-canvas"></canvas>
+          <div class="note-editor" id="note-editor" contenteditable="true" data-placeholder="Hier tippen…  Zeichnung über den Button oben einfügen." oninput="autoSaveNote()" onclick="noteEditorClick(event)"></div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ZEICHEN-OVERLAY (inline Zeichnungen, Apple-Stil) -->
+  <div class="ink-overlay" id="ink-overlay" style="display:none">
+    <div class="ink-overlay-bar">
+      <button class="nt-btn active" onclick="setDrawTool('pen')" id="draw-pen-btn">🖊️</button>
+      <button class="nt-btn" onclick="setDrawTool('eraser')" id="draw-eraser-btn">🧽</button>
+      <div class="nt-sep"></div>
+      <button class="draw-size-btn active" onclick="setDrawSize(2)" data-size="2"><div class="draw-size-dot" style="width:4px;height:4px"></div></button>
+      <button class="draw-size-btn" onclick="setDrawSize(4)" data-size="4"><div class="draw-size-dot" style="width:7px;height:7px"></div></button>
+      <button class="draw-size-btn" onclick="setDrawSize(8)" data-size="8"><div class="draw-size-dot" style="width:11px;height:11px"></div></button>
+      <button class="draw-size-btn" onclick="setDrawSize(16)" data-size="16"><div class="draw-size-dot" style="width:15px;height:15px"></div></button>
+      <div class="nt-sep"></div>
+      <input type="color" class="nt-color-btn" id="draw-color" value="#e5e5e5" onchange="drawColor=this.value" />
+      <button class="nt-color-btn" style="background:#e5e5e5" onclick="setDrawColor('#e5e5e5')"></button>
+      <button class="nt-color-btn" style="background:#ef4444" onclick="setDrawColor('#ef4444')"></button>
+      <button class="nt-color-btn" style="background:#3b82f6" onclick="setDrawColor('#3b82f6')"></button>
+      <button class="nt-color-btn" style="background:#10b981" onclick="setDrawColor('#10b981')"></button>
+      <button class="nt-color-btn" style="background:#f59e0b" onclick="setDrawColor('#f59e0b')"></button>
+      <div class="nt-sep"></div>
+      <button class="nt-btn" onclick="undoCanvas()">↩</button>
+      <button class="nt-btn" onclick="clearCanvas()">🗑️</button>
+      <div style="flex:1"></div>
+      <button class="nt-btn" onclick="cancelInk()">Abbrechen</button>
+      <button class="btn btn-primary btn-sm" onclick="finishInk()">Fertig</button>
+    </div>
+    <div class="ink-canvas-wrap" id="ink-canvas-wrap">
+      <canvas class="note-canvas" id="note-canvas"></canvas>
     </div>
   </div>
 
@@ -6283,7 +6295,14 @@ function renderNotesList() {
 }
 function openNote(id) {
   if(activeNoteId&&activeNoteId!==id) saveCurrentNote();
-  activeNoteId=id; noteMode='type'; canvasHistory=[];
+  activeNoteId=id; canvasHistory=[];
+  // Alte Modus-Zeichnungen einmalig als Inline-Bild übernehmen
+  const n=D.notes.find(x=>x.id===id);
+  if(n&&n.canvasData){
+    n.html=(n.html||'')+`<img class="ink-img" src="${n.canvasData}">`;
+    n.canvasData=null;
+    fsUpdate('notes',n);
+  }
   const list=document.querySelector('.notes-list');
   const scrollTop=list?list.scrollTop:0;
   renderNotes();
@@ -6299,9 +6318,7 @@ function renderNoteEditor() {
   const modeBar=document.getElementById('notes-mode-bar');
   const metaBar=document.getElementById('note-meta-bar');
   const toolbar=document.getElementById('notes-toolbar');
-  const drawBar=document.getElementById('draw-toolbar');
   const contentWrap=document.getElementById('note-content-wrap');
-  const canvasWrap=document.getElementById('note-canvas-wrap');
   const backBtn=document.querySelector('.notes-back-btn');
   if(!activeNoteId||!D.notes.find(n=>n.id===activeNoteId)){
     activeNoteId=null;
@@ -6309,9 +6326,7 @@ function renderNoteEditor() {
     if(modeBar) modeBar.style.display='none';
     if(metaBar) metaBar.style.display='none';
     if(toolbar) toolbar.style.display='none';
-    if(drawBar) drawBar.classList.remove('active');
     if(contentWrap) contentWrap.style.display='none';
-    if(canvasWrap) canvasWrap.classList.remove('active');
     if(backBtn) backBtn.style.display='none';
     return;
   }
@@ -6319,6 +6334,10 @@ function renderNoteEditor() {
   if(empty) empty.style.display='none';
   if(backBtn) backBtn.style.display=window.innerWidth<=600?'block':'none';
   if(modeBar) modeBar.style.display='flex';
+  if(toolbar) toolbar.style.display='flex';
+  if(contentWrap) contentWrap.style.display='block';
+  const editorEl=document.getElementById('note-editor');
+  if(editorEl&&editorEl.innerHTML!==(note.html||'')) editorEl.innerHTML=note.html||'';
   if(metaBar) {
     metaBar.style.display='flex';
     const cats=getKnownNotesCategories();
@@ -6338,24 +6357,7 @@ function renderNoteEditor() {
     if(tagInp) tagInp.value=(note.tags||[]).join(', ');
     document.getElementById('note-pin-btn')?.classList.toggle('active',!!note.pinned);
   }
-  document.getElementById('mode-type-btn')?.classList.toggle('active',noteMode==='type');
-  document.getElementById('mode-draw-btn')?.classList.toggle('active',noteMode==='draw');
-  if(noteMode==='type'){
-    if(toolbar) toolbar.style.display='flex';
-    if(drawBar) drawBar.classList.remove('active');
-    if(contentWrap) contentWrap.style.display='block';
-    if(canvasWrap) canvasWrap.classList.remove('active');
-    const editor=document.getElementById('note-editor');
-    if(editor&&editor.innerHTML!==note.html) editor.innerHTML=note.html||'';
-  } else {
-    if(toolbar) toolbar.style.display='none';
-    if(drawBar) drawBar.classList.add('active');
-    if(contentWrap) contentWrap.style.display='none';
-    if(canvasWrap) canvasWrap.classList.add('active');
-    initCanvas(note);
-  }
 }
-function setNoteMode(mode) { saveCurrentNote(); noteMode=mode; renderNoteEditor(); }
 function noteExec(cmd,val) { document.execCommand(cmd,false,val||null); document.getElementById('note-editor')?.focus(); }
 function noteSetFontSize(px) {
   const editor=document.getElementById('note-editor'); if(!editor) return;
@@ -6386,11 +6388,7 @@ function saveCurrentNote() {
   if(!activeNoteId) return;
   const note=D.notes.find(n=>n.id===activeNoteId); if(!note) return;
   const editor=document.getElementById('note-editor');
-  if(editor&&noteMode==='type') note.html=editor.innerHTML;
-  if(noteMode==='draw'){
-    const canvas=document.getElementById('note-canvas');
-    if(canvas&&canvas.width>0) note.canvasData=canvas.toDataURL('image/png');
-  }
+  if(editor) note.html=editor.innerHTML;
   const catSel=document.getElementById('note-category');
   if(catSel&&catSel.value) note.category=catSel.value;
   const subInp=document.getElementById('note-subtopic');
@@ -6479,18 +6477,20 @@ async function noteAI(action) {
   } catch(err) { toast('KI-Fehler: '+err.message,'err'); }
   finally { if(sel) sel.disabled=false; }
 }
-function initCanvas(note) {
+function initInkCanvas(srcData) {
   const canvas=document.getElementById('note-canvas');
-  const wrap=document.getElementById('note-canvas-wrap');
+  const wrap=document.getElementById('ink-canvas-wrap');
   if(!canvas||!wrap) return;
   const rect=wrap.getBoundingClientRect();
-  canvas.width=rect.width||800; canvas.height=rect.height||600;
+  canvas.width=Math.max((rect.width||800)-2,100); canvas.height=Math.max((rect.height||500)-2,100);
   const newCanvas=canvas.cloneNode(false);
   canvas.parentNode.replaceChild(newCanvas,canvas);
   const ctx=newCanvas.getContext('2d');
   ctx.lineCap='round'; ctx.lineJoin='round';
-  if(note.canvasData){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0,newCanvas.width,newCanvas.height);img.src=note.canvasData;}
-  else{ctx.fillStyle='#1a1a1a';ctx.fillRect(0,0,newCanvas.width,newCanvas.height);canvasHistory=[newCanvas.toDataURL()];}
+  ctx.fillStyle='#1a1a1a'; ctx.fillRect(0,0,newCanvas.width,newCanvas.height);
+  const seed=()=>{ canvasHistory=[newCanvas.toDataURL()]; };
+  if(srcData){const img=new Image();img.onload=()=>{ctx.drawImage(img,0,0,newCanvas.width,newCanvas.height);seed();};img.onerror=seed;img.src=srcData;}
+  else seed();
 
   let pts=[], activeId=null, penActive=false;
   const getPos=e=>{const r=newCanvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top,p:e.pressure};};
@@ -6525,12 +6525,69 @@ function initCanvas(note) {
     isDrawing=false; activeId=null; pts=[];
     if(canvasHistory.length>30) canvasHistory.shift();
     canvasHistory.push(newCanvas.toDataURL());
-    autoSaveNote();
   };
   newCanvas.addEventListener('pointerup',endStroke);
   newCanvas.addEventListener('pointercancel',endStroke);
   newCanvas.addEventListener('pointerleave',e=>{ if(isDrawing&&e.pointerId===activeId) endStroke(); });
   newCanvas.style.touchAction='none';
+}
+
+// ── Inline-Zeichnungen (Apple-Stil: Text + Zeichnung gemischt) ──
+let editingInkImg=null;   // das Bild, das gerade bearbeitet wird (oder null für neu)
+let inkSavedRange=null;   // gemerkte Cursor-Position beim Einfügen
+
+function insertInkDrawing() {
+  if(!activeNoteId) return;
+  const editor=document.getElementById('note-editor');
+  if(editor) editor.focus();
+  const sel=window.getSelection();
+  // Cursor nur merken, wenn er im Editor steht
+  inkSavedRange=(sel&&sel.rangeCount&&editor&&editor.contains(sel.anchorNode))?sel.getRangeAt(0).cloneRange():null;
+  editingInkImg=null;
+  openInkOverlay(null);
+}
+function editInkImage(img) {
+  editingInkImg=img; inkSavedRange=null;
+  openInkOverlay(img.getAttribute('src'));
+}
+function openInkOverlay(srcData) {
+  const ov=document.getElementById('ink-overlay'); if(!ov) return;
+  ov.style.display='flex';
+  setDrawTool('pen');
+  requestAnimationFrame(()=>initInkCanvas(srcData)); // warten bis Overlay Maße hat
+}
+function closeInkOverlay() {
+  const ov=document.getElementById('ink-overlay'); if(ov) ov.style.display='none';
+  editingInkImg=null; inkSavedRange=null;
+}
+function cancelInk() { closeInkOverlay(); }
+function finishInk() {
+  const canvas=document.getElementById('note-canvas');
+  const editor=document.getElementById('note-editor');
+  if(!canvas){ closeInkOverlay(); return; }
+  const data=canvas.toDataURL('image/png');
+  if(editingInkImg){
+    editingInkImg.setAttribute('src',data);
+  } else if(editor){
+    const img=document.createElement('img');
+    img.className='ink-img'; img.setAttribute('src',data);
+    if(inkSavedRange){
+      inkSavedRange.collapse(false);
+      inkSavedRange.insertNode(img);
+      // Cursor hinter die Zeichnung setzen
+      const r=document.createRange(); r.setStartAfter(img); r.collapse(true);
+      const s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    } else {
+      editor.appendChild(img);
+    }
+  }
+  closeInkOverlay();
+  saveCurrentNote();
+  renderNotesList();
+}
+function noteEditorClick(e) {
+  const t=e.target;
+  if(t&&t.tagName==='IMG'&&t.classList.contains('ink-img')){ e.preventDefault(); editInkImage(t); }
 }
 function setDrawTool(tool) {
   drawTool=tool;
