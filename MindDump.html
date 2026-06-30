@@ -783,6 +783,11 @@ select option { background:#1c1c1c; }
   /* Title + action button moved to topbar — hide page-header in content */
   .page-header { display:none; }
 
+  /* Brain Dump: Textfeld niedriger + ohne Resize-Griff, damit der
+     Verarbeiten-Button ohne Scrollen sichtbar bleibt; Button-Reihe klebt unten */
+  #tab-braindump textarea { min-height:110px; max-height:32vh; resize:none; }
+  #tab-braindump .btn-row { flex-wrap:wrap; gap:6px; position:sticky; bottom:6px; z-index:20; background:var(--bg); padding:8px 0; }
+
   /* Filter-Tabs: horizontal scroll */
   .ftabs { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   .ftabs::-webkit-scrollbar { display:none; }
