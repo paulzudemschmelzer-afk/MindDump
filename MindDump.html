@@ -1169,6 +1169,7 @@ function loadLocal() {
   // Local migration: thoughts → notes (only for non-Firebase users, preserves thoughts for safety)
   if(D.thoughts.length) {
     let migrated=false;
+    const migratedThoughtIds=new Set();
     D.thoughts.forEach(t=>{
       if(D.notes.some(n=>n.migratedFrom===t.id)) return;
       const title=(t.content||'').split('\n')[0].trim().slice(0,80)||'Notiz';
@@ -1179,8 +1180,11 @@ function loadLocal() {
         created:t.createdAt?new Date(t.createdAt).toISOString():new Date().toISOString(),
         updated:t.createdAt?new Date(t.createdAt).toISOString():new Date().toISOString()
       });
+      migratedThoughtIds.add(t.id);
       migrated=true;
     });
+    // Migrierte Thoughts entfernen, damit sie nie wieder dupliziert migriert werden koennen
+    if(migratedThoughtIds.size) D.thoughts=D.thoughts.filter(t=>!migratedThoughtIds.has(t.id));
     if(migrated) saveLocal();
   }
   ensureTaskCategorySettings();
@@ -1249,12 +1253,17 @@ function connectFirebase() {
 function subscribeFS() {
   unsubListeners.forEach(u=>u());
   unsubListeners=[];
+  let _notesReady=false, _thoughtsReady=false;
   ['tasks','thoughts','notes','habits','calEvents','goals','subgoals'].forEach(name=>{
     unsubListeners.push(
       col(name).onSnapshot(snap=>{
         D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
-        // Firebase migration: if thoughts exist but no notes, migrate thoughts → notes collection
-        if((name==='notes'||name==='thoughts') && !_fsMigrationDone && D.notes && D.thoughts) _migrateThoughtsToNotesFS();
+        if(name==='notes') _notesReady=true;
+        if(name==='thoughts') _thoughtsReady=true;
+        // Migration erst starten, wenn BEIDE Collections geladen sind — sonst Race Condition:
+        // wenn 'thoughts' vor 'notes' ankommt, ist D.notes noch leer und die Dedup-Pruefung
+        // erkennt bereits migrierte Notizen nicht, wodurch sie erneut angelegt werden.
+        if(!_fsMigrationDone && _notesReady && _thoughtsReady) _migrateThoughtsToNotesFS();
         rerender(name);
         badges();
       }, err=>console.error(name,err))
@@ -1282,7 +1291,7 @@ function subscribeFS() {
     const migratedIds=new Set((D.notes||[]).map(n=>n.migratedFrom).filter(Boolean));
     const toMigrate=D.thoughts.filter(t=>!migratedIds.has(t.id));
     if(!toMigrate.length) return;
-    await Promise.all(toMigrate.map(t=>{
+    await Promise.all(toMigrate.map(async t=>{
       const title=(t.content||'').split('\n')[0].trim().slice(0,80)||'Notiz';
       const note={id:uid(),title,migratedFrom:t.id,
         category:t.topic||'Allgemein',subtopic:t.subtopic||null,
@@ -1291,7 +1300,10 @@ function subscribeFS() {
         created:t.createdAt?new Date(t.createdAt).toISOString():new Date().toISOString(),
         updated:t.createdAt?new Date(t.createdAt).toISOString():new Date().toISOString()
       };
-      return col('notes').doc(note.id).set(omitId(note));
+      await col('notes').doc(note.id).set(omitId(note));
+      // Quell-Thought erst NACH erfolgreichem Notiz-Schreiben loeschen, damit er nie wieder
+      // migriert werden kann (verhindert dauerhaft wiederkehrende Duplikate bei jedem Neu-Login)
+      await col('thoughts').doc(t.id).delete();
     }));
   }
   // Daily log (keyed by date)
