@@ -1070,7 +1070,6 @@ let taskFilter = 'all';
 let taskTagFilter = null;
 let editingTags = [];
 let activeNoteId = null;
-let noteMode = 'type';
 let notesCategoryFilter = 'Alle';
 let notesSortMode = 'updated';
 let notesTagFilter = null;
@@ -1098,7 +1097,6 @@ let currentTab = 'braindump';
 let db = null, auth = null, currentUser = null;
 let unsubListeners = [];
 
-const DAYS = ['So','Mo','Di','Mi','Do','Fr','Sa'];
 const MONTHS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
 
 // === AUTO-KATEGORISIERUNG ===
@@ -1415,7 +1413,7 @@ function formatCategoryLabel(key) {
 function fmtDate(ts) { if(!ts) return ''; return new Date(ts).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}); }
 function fmtDue(ds) {
   if(!ds) return '';
-  const [y,m,d] = ds.split('-').map(Number);
+  const [,m,d] = ds.split('-').map(Number);
   return `${d}. ${MONTHS[m-1]}`;
 }
 
@@ -3332,7 +3330,6 @@ async function removeFromHeute(id) {
 
 async function clearHeute() {
   if(!confirm('Heute-Liste leeren? (Tasks bleiben erhalten)')) return;
-  const todayStr = dateKey();
   const ps = D.tasks.filter(t => t.forToday).map(t => { t.forToday=false; return fsUpdate('tasks',t); });
   await Promise.all(ps);
   renderHeute();
@@ -3700,8 +3697,6 @@ function renderHeuteHabits() {
     +(bad.length?`<div class="heute-habits-bad-section" style="margin-top:${good.length?10:0}px"><div class="heute-habits-bad-title">🚫 Bad Habits vermeiden</div>`+bad.map(habitRow).join('')+`</div>`:'');
 }
 
-// Wird von dragTask() fuer den Grab-Offset beim Drag&Drop gebraucht (Heute-Kalender), Zoom-Logik von Woche entfernt
-let CAL_PX_PER_MIN=1.5;
 const KAT_COLORS = {
   geld:     {bg:'rgba(245,158,11,.3)',  border:'#fbbf24'},
   haushalt: {bg:'rgba(16,185,129,.25)', border:'#34d399'},
@@ -3714,13 +3709,9 @@ const KAT_COLORS = {
 };
 function getKatColor(kat) { return KAT_COLORS[kat] || KAT_COLORS.sonstiges; }
 
-let draggedTaskId=null, dragSourceDay=null, dragGrabOffsetMin=0;
+let draggedTaskId=null;
 function dragTask(e,id){
   draggedTaskId=id; _dragCalEventId=null;
-  const t=D.tasks.find(x=>x.id===id);
-  dragSourceDay=t?.dueDate||null;
-  const blockRect=e.currentTarget.getBoundingClientRect();
-  dragGrabOffsetMin=Math.round((e.clientY-blockRect.top)/CAL_PX_PER_MIN);
   e.dataTransfer.effectAllowed='move';
   e.dataTransfer.setData('text/plain','task:'+id);
 }
