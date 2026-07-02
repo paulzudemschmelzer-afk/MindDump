@@ -2119,15 +2119,6 @@ function renameSubcategory(kat, oldName) {
   renderTasks();
 }
 
-function deleteSubcategory(kat, subName) {
-  const tasks=D.tasks.filter(t=>(t.kategorie||'sonstiges')===kat && t.subkategorie===subName);
-  if(!confirm(`Subkategorie "${subName}" auflösen? ${tasks.length} Task${tasks.length!==1?'s':''} bleiben in ${getTaskCategoryLabel(kat)}.`)) return;
-  tasks.forEach(t=>{ t.subkategorie=null; });
-  if(currentUser&&db) tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
-  toast(`Subkategorie "${subName}" aufgelöst`);
-  renderTasks();
-}
-
 function ensureTaskCategorySettings() {
   if(!Array.isArray(S.taskCategories)) S.taskCategories = [];
   if(!S.taskCategoryLabels || typeof S.taskCategoryLabels !== 'object') S.taskCategoryLabels = {};
@@ -2348,19 +2339,6 @@ function renderTaskSortTabs() {
   tabs.innerHTML = sorts.map(sort =>
     `<button class="ftab ${taskSortMode===sort.id?'active':''}" onclick="setTaskSort('${sort.id}',this)">${sort.label}</button>`
   ).join('');
-}
-
-function editKat(k){
-  const neu=prompt('Kategorie umbenennen:',getTaskCategoryLabel(k));
-  if(!neu||neu===k) return;
-  const slug=normalizeCategoryKey(neu);
-  if(!slug) { toast('Ungueltiger Kategoriename','err'); return; }
-  D.tasks.filter(t=>(t.kategorie||'sonstiges')===k).forEach(t=>{ t.kategorie=slug; });
-  registerTaskCategory(neu, slug);
-  if(slug!==k) removeStoredTaskCategory(k);
-  if(currentUser&&db) D.tasks.forEach(t=>fsUpdate('tasks',t)); else saveLocal();
-  toast(`Kategorie umbenannt: ${getTaskCategoryLabel(k)} -> ${neu}`);
-  renderTasks();
 }
 
 function showCollapsedSubcategories(k){
