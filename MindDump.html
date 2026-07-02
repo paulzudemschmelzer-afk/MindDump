@@ -248,6 +248,10 @@ textarea::placeholder { color:#444; }
 
 
 /* Quick-Add Kalender-Modal — geteilt zwischen Heute-Kalender und Kategorie-Zuordnung */
+/* .ap-event-resize wird auch vom Heute-Kalender-Event-Resize-Handle genutzt (Klassenname historisch von Woche geerbt) */
+.ap-event-resize { position:absolute; bottom:0; left:0; right:0; height:40px; max-height:50%; cursor:ns-resize; border-radius:0 0 5px 5px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:5px; }
+.ap-event-resize:hover { background:rgba(255,255,255,.15); }
+.ap-event-resize::after { content:''; width:20px; height:3px; border-radius:2px; background:rgba(255,255,255,.4); }
 .unsched-kat-count { background:rgba(255,255,255,.1); border-radius:10px; padding:1px 6px; font-size:10px; font-weight:400; }
 .cal-assign-kat { margin-bottom:4px; border-radius:8px; overflow:hidden; border:1px solid rgba(255,255,255,.06); }
 .cal-assign-kat-header { display:flex; align-items:center; justify-content:space-between; padding:7px 12px; font-size:12px; font-weight:600; cursor:pointer; background:rgba(255,255,255,.04); user-select:none; }
@@ -337,7 +341,7 @@ select option { background:#1c1c1c; }
 .dump-task-routing label { font-size:11px; color:var(--sub); }
 .topic-inp-sm { padding:4px 9px; background:#141414; border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px; outline:none; font-family:inherit; min-width:130px; }
 .topic-inp-sm:focus-visible { border-color:var(--accent); }
-.save-sel-row { margin-top:18px; display:flex; gap:8px; align-items:center; }
+.save-sel-row { margin-top:18px; display:flex; gap:8px; align-items:center; position:sticky; bottom:max(12px,env(safe-area-inset-bottom,12px)); z-index:10; background:var(--bg); padding:10px 0 4px; }
 .sel-count { font-size:12px; color:var(--sub); }
 
 
@@ -578,7 +582,7 @@ select option { background:#1c1c1c; }
   #topbar-actions .btn { padding:6px 11px; font-size:12px; }
 
   /* Main fills full viewport width — 54px gives breathing room below topbar */
-  .main { width:100%; padding:0; padding-top:54px; box-sizing:border-box; }
+  .main { width:100%; padding:0; padding-top:54px; padding-bottom:max(80px,env(safe-area-inset-bottom,80px)); box-sizing:border-box; }
   .tab-panel { max-width:100%; padding:0 4px; }
   /* Title + action button moved to topbar — hide page-header in content */
   .page-header { display:none; }
@@ -3597,6 +3601,7 @@ let hcalTouchId=null, hcalTouchType=null, hcalTouchClone=null, hcalTouchMoved=fa
 let hcalTouchLPTimer=null, hcalTouchEl=null, hcalTouchStartX=0, hcalTouchStartY=0, hcalTouchMode=null;
 
 function hcalEventTouchStart(e, id, type='task') {
+  if(e.target.closest('.ap-event-resize')) return;
   e.stopPropagation();
   const el=e.target.closest('.hcal-event'); if(!el) return;
   const touch=e.touches[0];
@@ -4021,12 +4026,11 @@ async function hcalResizeMouseUp(e) {
 }
 
 function hcalResizeTouchStart(e, id) {
-  e.preventDefault(); e.stopPropagation();
-  hcalResizeId=id; hcalResizeStartY=e.touches[0].clientY;
-  hcalResizeEl=e.target.closest('.hcal-event');
-  hcalResizeOrigH=hcalResizeEl.offsetHeight;
-  hcalResizeEl.addEventListener('touchmove',hcalResizeTouchMove,{passive:false});
-  hcalResizeEl.addEventListener('touchend',hcalResizeTouchEnd);
+  e.stopPropagation();
+  const el=e.target.closest('.hcal-event'); if(!el) return;
+  hcalResizeId=id; hcalResizeStartY=e.touches[0].clientY; hcalResizeEl=el; hcalResizeOrigH=el.offsetHeight;
+  document.addEventListener('touchmove',hcalResizeTouchMove,{passive:false});
+  document.addEventListener('touchend',hcalResizeTouchEnd);
 }
 function hcalResizeTouchMove(e) {
   e.preventDefault();
@@ -4036,9 +4040,8 @@ function hcalResizeTouchMove(e) {
   hcalResizeEl.style.height=snap+'px';
 }
 async function hcalResizeTouchEnd(e) {
-  if(!hcalResizeId||!hcalResizeEl) return;
-  hcalResizeEl.removeEventListener('touchmove',hcalResizeTouchMove);
-  hcalResizeEl.removeEventListener('touchend',hcalResizeTouchEnd);
+  document.removeEventListener('touchmove',hcalResizeTouchMove);
+  document.removeEventListener('touchend',hcalResizeTouchEnd);
   const mins=Math.round(hcalResizeEl.offsetHeight/HCAL_PX/15)*15;
   const t=D.tasks.find(x=>x.id===hcalResizeId);
   if(t){t.estimatedTime=mins>=60?((mins/60)+'h'):(mins+'min');renderHeuteCalendar();fsUpdate('tasks',t);}
