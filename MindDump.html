@@ -1036,7 +1036,7 @@ select option { background:#1c1c1c; }
 <script>
 // ── STATE ─────────────────────────────────────────────────────
 let D = { tasks:[], thoughts:[], notes:[], habits:[], calEvents:[], dailyLog:{}, goals:[], subgoals:[] };
-let S = { groqKey:'', fbConfig:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{}, navOrder:[] };
+let S = { groqKey:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{}, navOrder:[] };
 let pendingResult = null;
 let taskFilter = 'all';
 let taskTagFilter = null;
@@ -1183,7 +1183,6 @@ function connectFirebase() {
       else { unsubListeners.forEach(u=>u()); unsubListeners=[]; D={tasks:[],thoughts:[],notes:[],habits:[],calEvents:[],dailyLog:{},goals:[],subgoals:[]}; badges(); }
     });
 
-    S.fbConfig = configStr;
     saveSettings();
     updateFBStatus(true);
     toast('Firebase verbunden! Jetzt anmelden.');
