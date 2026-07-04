@@ -2240,8 +2240,6 @@ function openNewTaskCategoryPrompt(selectId='') {
   if(selectId) {
     const sel = document.getElementById(selectId);
     if(sel) sel.value = key;
-  } else {
-    taskKatFilter = key;
   }
   renderTasks();
   toast(`Kategorie hinzugefuegt: ${getTaskCategoryLabel(key)}`);
