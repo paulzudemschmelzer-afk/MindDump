@@ -87,3 +87,35 @@ war bereits vollständig sauber.
 (Zum Vergleich: vor dem separaten großen Feature-Cleanup in einer früheren
 Session waren es 7930 Zeilen — dieser Dead-Code-Durchgang betraf ausschließlich
 echte Leichen, keine Features.)
+
+## Runde 2 (auf Wunsch fortgesetzt)
+
+Zusätzlich zur Einzelklassen-Prüfung aus Runde 1: vollständige Reachability-
+Prüfung aller 43 Mehrfachklassen-("Compound"-)Selektoren (z.B. `.foo.bar`)
+gegen tatsächliche Klassen-Kombinationen im HTML/JS, plus Abgleich aller 161
+`id="..."`-Attribute im Dokument gegen `getElementById`/`querySelector`-Aufrufe.
+
+**Gefunden und entfernt:**
+- `.notes-mode-btn.active` — es existiert nur noch ein einzelner `.notes-mode-btn`
+  (Zeichnung-einfügen-Button, kein Toggle-Paar mehr), Modifier wird nie gesetzt
+- 4 ungenutzte `id`-Attribute (`sidebar-close-btn`, `tageseinstieg-card`,
+  `notes-sort`, `save-sel-btn`) — Elemente funktionieren komplett über
+  onclick/onchange, IDs wurden nirgends ausgelesen
+- `S.fbConfig` — wird in `connectFirebase()` geschrieben, aber nie gelesen
+
+**Geprüft, kein Fund:** 35 "doppelte" CSS-Selektoren (alle legitime
+Mobile-`@media`-Overrides bzw. `@keyframes`-Prozentschritte, keine echten
+Duplikate). Von 43 Compound-Selektoren waren 42 bei genauerem Hinsehen aktiv
+(dynamisch per Ternary/Template-Literal oder `classList.add/toggle` gesetzt) —
+bestätigt erneut die hohe False-Positive-Rate automatischer Tools bei diesem
+Codierstil.
+
+**Nicht entschieden (liegt beim Nutzer):** Das Schreiben von `S.fbConfig`
+deutete auf einen echten Funktions-Bug hin (manuell verbundene Custom-
+Firebase-Config übersteht keinen Reload, App verbindet sich immer mit der
+fest eingebauten Standard-Config) — das ist kein Dead-Code, sondern fehlendes
+Verhalten. Wurde nur als unbenutztes Feld entfernt, der zugrundeliegende Bug
+selbst wurde bewusst nicht gefixt (außerhalb des Cleanup-Auftrags, keine
+Nutzer-Antwort erhalten).
+
+Bilanz nach Runde 2: 4987 → 4986 Zeilen.
