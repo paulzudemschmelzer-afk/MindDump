@@ -63,6 +63,27 @@
 4. `cleanup: entferne verwaiste Variablen (noteMode, DAYS, dragTask-Reste, y, todayStr)`
 5. `cleanup: entferne verwaiste CSS-Selektoren aus frueherem Feature-Cleanup`
 
+## Verifikation
+
+Nach allen 5 Commits: ESLint (`no-unreachable`, `no-empty`, `no-constant-condition`,
+`no-dupe-keys/-args`, `no-self-compare`, `no-useless-return` u.a.) → 0 Funde.
+`no-unused-vars`-Kandidaten (134) einzeln per Grep gegen den Gesamtcode
+gegengeprüft → 0 echte Treffer (alle Rest-Kandidaten sind dieselben bereits
+dokumentierten dynamischen Referenzen wie `kat-*`, `prio-hoch/mittel/niedrig`,
+`ok`/`err`/`show`, `hp`/`risk`/`strength`). CSS-Klassen/IDs/Custom-Properties/
+`@keyframes`-Audit → 0 neue Funde. `node --check` auf den extrahierten Script-
+Inhalt → syntaktisch valide. Ein zweiter, identischer Verifikationslauf wurde
+bewusst ausgelassen (Aufwand/Ertrag-Abwägung mit dem Nutzer) — der erste Lauf
+war bereits vollständig sauber.
+
 ## Bilanz
 
-Wird nach Abschluss der Löschungen ergänzt.
+| | Zeilen |
+|---|---|
+| Vor diesem Cleanup | 5168 |
+| Nach diesem Cleanup | 4987 |
+| Differenz | −181 |
+
+(Zum Vergleich: vor dem separaten großen Feature-Cleanup in einer früheren
+Session waren es 7930 Zeilen — dieser Dead-Code-Durchgang betraf ausschließlich
+echte Leichen, keine Features.)
