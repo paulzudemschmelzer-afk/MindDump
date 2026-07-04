@@ -480,7 +480,6 @@ select option { background:#1c1c1c; }
 .notes-mode-bar { display:flex; gap:0; border-bottom:1px solid var(--border); }
 .notes-mode-btn { flex:1; padding:8px; text-align:center; font-size:13px; font-weight:600; cursor:pointer; background:none; border:none; color:var(--sub); transition:all .12s; font-family:inherit; border-bottom:2px solid transparent; }
 .notes-mode-btn:hover { color:var(--text); }
-.notes-mode-btn.active { color:var(--accent2); border-bottom-color:var(--accent2); background:rgba(124,58,237,.06); }
 .note-meta-bar { display:flex; gap:6px; padding:6px 12px; border-bottom:1px solid var(--border); background:var(--sidebar); align-items:center; flex-wrap:wrap; }
 .note-meta-bar select { padding:4px 6px; background:var(--card); border:1px solid var(--border); border-radius:5px; color:var(--text); font-size:12px; font-family:inherit; outline:none; min-width:0; flex:1; }
 .note-meta-bar input { padding:4px 8px; background:var(--card); border:1px solid var(--border); border-radius:5px; color:var(--text); font-size:12px; font-family:inherit; outline:none; min-width:0; flex:1; }
@@ -600,7 +599,7 @@ select option { background:#1c1c1c; }
 <aside class="sidebar">
   <div class="logo" style="display:flex;align-items:center;justify-content:space-between">
     <span>Mind<span style="color:var(--accent2)">Dump</span></span>
-    <button id="sidebar-close-btn" onclick="toggleSidebar()" style="background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
+    <button onclick="toggleSidebar()" style="background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
   </div>
   <nav id="main-nav"></nav>
   <div class="sidebar-bottom">
@@ -710,7 +709,7 @@ select option { background:#1c1c1c; }
     </div>
 
     <!-- Tageseinstieg -->
-    <div class="tageseinstieg" id="tageseinstieg-card">
+    <div class="tageseinstieg"
       <div class="te-header">
         <div><span class="te-title">☀ Tageseinstieg</span><span class="te-date" id="te-datum"></span></div>
         <span class="te-saved" id="te-saved" style="display:none">✓ Gespeichert</span>
@@ -835,7 +834,7 @@ select option { background:#1c1c1c; }
         </div>
         <div class="notes-cat-tabs" id="notes-cat-tabs"></div>
         <div class="notes-subbar">
-          <select id="notes-sort" class="nt-select" onchange="setNotesSort(this.value)" style="flex:1;width:100%">
+          <select class="nt-select" onchange="setNotesSort(this.value)" style="flex:1;width:100%">
             <option value="updated">Zuletzt geändert</option>
             <option value="created">Neueste zuerst</option>
             <option value="title">Titel A–Z</option>
@@ -1871,7 +1870,7 @@ function renderDumpResult(p) {
   const total=tasks.length+notizen.length;
   if(total>0){
     html+=`<div class="save-sel-row">
-      <button class="btn btn-primary" id="save-sel-btn" onclick="saveSelected()">✓ Ausgewählte speichern (<span id="sel-count">${total}</span>)</button>
+      <button class="btn btn-primary" onclick="saveSelected()">✓ Ausgewählte speichern (<span id="sel-count">${total}</span>)</button>
       <button class="btn btn-ghost" onclick="document.getElementById('dump-result').innerHTML='';pendingResult=null">Verwerfen</button>
     </div>`;
   }
