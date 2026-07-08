@@ -566,6 +566,57 @@ select option { background:#1c1c1c; }
   .notes-layout.note-open .notes-editor-area { transform:translateX(0); }
   .notes-back-btn { display:flex !important; }
 }
+
+/* ── KARTE (Projekt-Sortier-Layer) ─────────────────────────── */
+.karte-tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; margin-top:8px; }
+.karte-tile { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; cursor:pointer; transition:transform .15s ease, border-color .15s ease; text-align:left; color:var(--text); position:relative; overflow:hidden; }
+.karte-tile:hover { transform:translateY(-3px); border-color:var(--accent2); }
+.karte-tile h3 { margin:0 0 6px; font-size:16px; }
+.karte-tile .tile-meta { font-size:12px; color:var(--sub); }
+.karte-tile .tile-del { position:absolute; top:8px; right:10px; background:transparent; border:0; color:var(--sub); font-size:16px; cursor:pointer; opacity:0; transition:opacity .15s; }
+.karte-tile:hover .tile-del { opacity:1; }
+.karte-tile-add { background:transparent; border:1px dashed var(--border); border-radius:14px; padding:18px; cursor:pointer; color:var(--sub); font-size:13px; display:flex; align-items:center; justify-content:center; min-height:80px; transition:border-color .15s, color .15s; }
+.karte-tile-add:hover { border-color:var(--accent2); color:var(--accent2); }
+
+.karte-detail-head { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+.karte-back { background:transparent; border:1px solid var(--border); border-radius:8px; color:var(--text); cursor:pointer; padding:7px 12px; font-size:13px; }
+.karte-back:hover { border-color:var(--accent2); }
+.karte-detail-head h2 { margin:0; font-size:20px; }
+
+.karte-workbench { display:grid; grid-template-columns:260px 1fr; gap:16px; align-items:start; }
+@media(max-width:800px){ .karte-workbench { grid-template-columns:1fr; } }
+
+.karte-tree { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; }
+.karte-tree .pane-label { font-size:10px; letter-spacing:.12em; color:var(--sub); margin-bottom:12px; text-transform:uppercase; }
+.karte-tree-item { display:flex; align-items:center; gap:8px; width:100%; background:transparent; border:0; border-radius:7px; color:var(--sub); text-align:left; padding:9px 10px; font-size:13px; cursor:pointer; font-family:inherit; }
+.karte-tree-item:hover { background:var(--card2); color:var(--text); }
+.karte-tree-item.active { background:rgba(124,58,237,.14); color:var(--accent2); }
+.karte-tree-item .cnt { margin-left:auto; font-size:11px; color:var(--sub); background:var(--card2); border-radius:9px; padding:1px 7px; }
+.karte-tree-add { margin-top:8px; width:100%; background:transparent; border:1px dashed var(--border); border-radius:8px; color:var(--sub); padding:9px; font-size:12px; cursor:pointer; }
+.karte-tree-add:hover { border-color:var(--accent2); color:var(--accent2); }
+
+.karte-canvas { position:relative; min-height:440px; background:var(--card); border:1px solid var(--border); border-radius:12px; background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px); background-size:22px 22px; overflow:hidden; padding:10px; }
+.karte-node { position:absolute; width:150px; background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:12px; cursor:pointer; transition:transform .18s ease, border-color .18s ease; }
+.karte-node:hover, .karte-node.active { transform:translateY(-3px); border-color:var(--accent2); }
+.karte-node.core { background:rgba(124,58,237,.16); border-color:var(--accent2); }
+.karte-node small { display:block; font-size:10px; color:var(--sub); margin-bottom:5px; text-transform:uppercase; letter-spacing:.08em; }
+.karte-node b { font-size:13px; }
+.karte-node .ncount { display:inline-block; margin-top:6px; font-size:11px; color:var(--accent2); }
+.karte-node-add { position:absolute; bottom:12px; right:12px; background:var(--accent); color:#fff; border:0; border-radius:20px; padding:8px 14px; font-size:12px; cursor:pointer; z-index:3; }
+
+.karte-inspect { margin-top:16px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; }
+.karte-inspect-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.karte-inspect-head h3 { margin:0; font-size:16px; flex:1; }
+.karte-section-label { font-size:11px; letter-spacing:.1em; color:var(--sub); text-transform:uppercase; margin:16px 0 8px; }
+.karte-note-ta { width:100%; min-height:90px; background:var(--bg); border:1px solid var(--border); border-radius:9px; color:var(--text); padding:11px; font-family:inherit; font-size:13px; resize:vertical; }
+.karte-todo { display:flex; align-items:center; gap:9px; padding:9px 10px; border:1px solid var(--border); border-radius:9px; margin-bottom:7px; background:var(--bg); }
+.karte-todo .kt-title { flex:1; font-size:13px; }
+.karte-todo .kt-title.done { text-decoration:line-through; color:var(--sub); }
+.karte-todo .kt-move { background:transparent; border:1px solid var(--border); border-radius:7px; color:var(--sub); font-size:11px; padding:4px 8px; cursor:pointer; }
+.karte-todo .kt-move:hover { border-color:var(--accent2); color:var(--accent2); }
+.karte-eye { background:transparent; border:0; cursor:pointer; font-size:14px; padding:2px 4px; }
+.karte-eye.on { filter:none; } .karte-eye.off { opacity:.35; }
+.karte-empty { color:var(--sub); font-size:13px; padding:14px; text-align:center; }
 </style>
 </head>
 <body>
@@ -885,6 +936,11 @@ select option { background:#1c1c1c; }
     <div id="goals-list"></div>
   </div>
 
+  <!-- KARTE -->
+  <div class="tab-panel" id="tab-karte">
+    <div id="karte-root"></div>
+  </div>
+
   <!-- SETTINGS -->
   <div class="tab-panel" id="tab-settings">
     <div class="page-header"><h1>Settings</h1></div>
@@ -977,7 +1033,7 @@ select option { background:#1c1c1c; }
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────
-let D = { tasks:[], thoughts:[], notes:[], habits:[], calEvents:[], dailyLog:{}, goals:[], subgoals:[] };
+let D = { tasks:[], thoughts:[], notes:[], habits:[], calEvents:[], dailyLog:{}, goals:[], subgoals:[], mapTopics:[], mapNodes:[] };
 let S = { groqKey:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{}, navOrder:[] };
 let pendingResult = null;
 let taskFilter = 'all';
@@ -1101,6 +1157,7 @@ function rerender(colName) {
   if(colName==='notes') renderNotes();
   if(colName==='habits') { renderHabits(); if(currentTab==='heute') renderHeuteHabits(); }
   if(colName==='goals'||colName==='subgoals') { if(currentTab==='goals') renderGoals(); renderHeuteGoals(); }
+  if(currentTab==='karte' && (colName==='tasks'||colName==='mapTopics'||colName==='mapNodes')) renderKarte();
 }
 
 // ── FIREBASE ──────────────────────────────────────────────────
@@ -1122,7 +1179,7 @@ function connectFirebase() {
       currentUser = user;
       renderUserArea();
       if(user) { subscribeFS(); }
-      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; D={tasks:[],thoughts:[],notes:[],habits:[],calEvents:[],dailyLog:{},goals:[],subgoals:[]}; badges(); }
+      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; D={tasks:[],thoughts:[],notes:[],habits:[],calEvents:[],dailyLog:{},goals:[],subgoals:[],mapTopics:[],mapNodes:[]}; badges(); }
     });
 
     saveSettings();
@@ -1137,7 +1194,7 @@ function subscribeFS() {
   unsubListeners.forEach(u=>u());
   unsubListeners=[];
   let _notesReady=false, _thoughtsReady=false;
-  ['tasks','thoughts','notes','habits','calEvents','goals','subgoals'].forEach(name=>{
+  ['tasks','thoughts','notes','habits','calEvents','goals','subgoals','mapTopics','mapNodes'].forEach(name=>{
     unsubListeners.push(
       col(name).onSnapshot(snap=>{
         D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1352,6 +1409,7 @@ const NAV_ITEMS = [
   {id:'habits',    tab:'habits',    icon:'🏆', label:'Habits',   badge:'b-habits',  badgeStyle:'background:#10b981'},
   {id:'goals',     tab:'goals',     icon:'🎯', label:'Ziele'},
   {id:'notes',     tab:'notes',     icon:'📝', label:'Notizen',  badge:'b-notes'},
+  {id:'karte',     tab:'karte',     icon:'🗺', label:'Karte'},
 ];
 const DEFAULT_NAV_ORDER = NAV_ITEMS.map(i=>i.id);
 
@@ -1443,7 +1501,7 @@ function navTouchEnd(e) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
-const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',habits:'Habits',notes:'Notizen',settings:'Settings'};
+const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',habits:'Habits',notes:'Notizen',karte:'Karte',settings:'Settings'};
 const TAB_ACTIONS = {
   tasks:    `<button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">+ Hinzufügen</button>`,
   heute:    `<button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>`,
@@ -1467,14 +1525,15 @@ function go(tab) {
   if(tab==='habits') renderHabits();
   if(tab==='notes') renderNotes();
   if(tab==='goals') renderGoals();
+  if(tab==='karte') renderKarte();
 }
 
 function badges() {
-  const bTasks=document.getElementById('b-tasks'); if(bTasks) bTasks.textContent=D.tasks.filter(t=>!t.done).length;
+  const bTasks=document.getElementById('b-tasks'); if(bTasks) bTasks.textContent=D.tasks.filter(t=>!t.done&&!t.mapOnly).length;
   const bNotes=document.getElementById('b-notes'); if(bNotes) bNotes.textContent=D.notes.length;
   const bHabits=document.getElementById('b-habits'); if(bHabits) bHabits.textContent=(D.habits||[]).filter(h=>!h.archived).length;
   const todayStr=dateKey();
-  const bHeute=document.getElementById('b-heute'); if(bHeute) bHeute.textContent=D.tasks.filter(t=>!t.done&&(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr).length;
+  const bHeute=document.getElementById('b-heute'); if(bHeute) bHeute.textContent=D.tasks.filter(t=>!t.done&&!t.mapOnly&&(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr).length;
 }
 
 // ── TAGS ──────────────────────────────────────────────────────
@@ -2740,11 +2799,13 @@ function renderTasks() {
   if(taskFilter==='done') list=list.filter(t=>t.done);
   if(taskKatFilter!=='alle') list=list.filter(t=>(t.kategorie||'sonstiges')===taskKatFilter);
   if(taskTagFilter) list=list.filter(t=>(t.tags||[]).includes(taskTagFilter));
+  list=list.filter(t=>!t.mapOnly);
 
   renderTagFilterRow();
   // Kategorie-Filter rendern
   const katOrder = getTopLevelTaskCategories();
   const countSource = D.tasks.filter(t => {
+    if (t.mapOnly) return false;
     if (taskFilter === 'open') return !t.done;
     if (taskFilter === 'done') return t.done;
     return true;
@@ -4781,6 +4842,191 @@ function parseEstMinutes(est){
   const h=(est.match(/(\d+)\s*h/)||[])[1];
   const m=(est.match(/(\d+)\s*min/)||[])[1];
   return (Number(h||0)*60)+Number(m||0)||60;
+}
+
+// ── KARTE (Projekt-Sortier-Layer) ─────────────────────────────
+let karteTopicId=null, karteNodeId=null;
+
+function karteTopicTasks(topic){
+  return D.tasks.filter(t=>(t.kategorie||'sonstiges')===topic.taskCategory);
+}
+function karteNodesOf(topicId){
+  return (D.mapNodes||[]).filter(n=>n.topicId===topicId);
+}
+function karteTasksInNode(topic,nodeId){
+  const validNodeIds=karteNodesOf(topic.id).map(n=>n.id);
+  return karteTopicTasks(topic).filter(t=>{
+    if(nodeId===null) return !t.mapNodeId || !validNodeIds.includes(t.mapNodeId);
+    return t.mapNodeId===nodeId;
+  });
+}
+
+function renderKarte(){
+  const root=document.getElementById('karte-root'); if(!root) return;
+  if(!karteTopicId){ renderKarteTiles(root); return; }
+  const topic=(D.mapTopics||[]).find(t=>t.id===karteTopicId);
+  if(!topic){ karteTopicId=null; renderKarteTiles(root); return; }
+  renderKarteDetail(root,topic);
+}
+
+function renderKarteTiles(root){
+  const topics=D.mapTopics||[];
+  let html=`<div class="page-header"><h1>Karte</h1><p>Wähle ein Projekt und zerlege es in Teilkomponenten. Ein Sortier-Layer über deinen bestehenden Aufgaben.</p></div>`;
+  html+=`<div class="karte-tiles">`;
+  topics.forEach(tp=>{
+    const tasks=karteTopicTasks(tp);
+    const open=tasks.filter(t=>!t.done).length;
+    const comps=karteNodesOf(tp.id).length;
+    html+=`<button class="karte-tile" onclick="openKarteTopic('${tp.id}')">
+      <button class="tile-del" onclick="event.stopPropagation();karteDeleteTile('${tp.id}')" title="Kachel entfernen">×</button>
+      <h3>${esc(tp.title)}</h3>
+      <div class="tile-meta">${open} offen · ${comps} Komponente${comps===1?'':'n'}</div>
+    </button>`;
+  });
+  html+=`<button class="karte-tile-add" onclick="karteAddTilePicker()">+ Kachel anlegen</button>`;
+  html+=`</div><div id="karte-picker"></div>`;
+  root.innerHTML=html;
+}
+
+function karteAddTilePicker(){
+  const used=new Set((D.mapTopics||[]).map(t=>t.taskCategory));
+  const cats=getTopLevelTaskCategories().filter(k=>!used.has(k));
+  const box=document.getElementById('karte-picker');
+  if(!cats.length){ box.innerHTML=`<div class="karte-empty">Alle bestehenden Projekte sind schon als Kachel angelegt. Neue Projekte entstehen als Task-Kategorie im Tasks-Tab.</div>`; return; }
+  box.innerHTML=`<div class="karte-section-label">Projekt für neue Kachel wählen</div>`+
+    cats.map(k=>`<button class="karte-tree-item" onclick="karteCreateTile('${k}')"><span>${getTaskCategoryIcon(k)}</span>${esc(getTaskCategoryLabel(k))}<span class="cnt">${D.tasks.filter(t=>(t.kategorie||'sonstiges')===k&&!t.done).length}</span></button>`).join('');
+}
+
+function karteCreateTile(cat){
+  fsAdd('mapTopics',{id:uid(),taskCategory:cat,title:getTaskCategoryLabel(cat),createdAt:Date.now()});
+  if(currentTab==='karte') renderKarte();
+}
+function karteDeleteTile(id){
+  if(!confirm('Kachel entfernen? Deine Aufgaben und ihre Zuordnung bleiben erhalten, nur diese Karten-Ansicht wird gelöscht.')) return;
+  karteNodesOf(id).forEach(n=>fsDel('mapNodes',n.id));
+  fsDel('mapTopics',id);
+  if(currentTab==='karte') renderKarte();
+}
+
+function openKarteTopic(id){ karteTopicId=id; karteNodeId=null; renderKarte(); }
+function karteBackToTiles(){ karteTopicId=null; karteNodeId=null; renderKarte(); }
+
+function renderKarteDetail(root,topic){
+  const nodes=karteNodesOf(topic.id);
+  const centralCount=karteTasksInNode(topic,null).filter(t=>!t.done).length;
+  // Baum links
+  let tree=`<div class="karte-tree"><div class="pane-label">Struktur</div>`;
+  tree+=`<button class="karte-tree-item ${karteNodeId===null?'active':''}" onclick="karteSelectNode(null)"><span>◆</span>${esc(topic.title)}<span class="cnt">${centralCount}</span></button>`;
+  nodes.forEach(n=>{
+    const c=karteTasksInNode(topic,n.id).filter(t=>!t.done).length;
+    tree+=`<button class="karte-tree-item ${karteNodeId===n.id?'active':''}" onclick="karteSelectNode('${n.id}')"><span>└</span>${esc(n.title)}<span class="cnt">${c}</span></button>`;
+  });
+  tree+=`<button class="karte-tree-add" onclick="karteAddNode()">+ Teilkomponente</button></div>`;
+
+  // Canvas rechts (Mindmap)
+  let canvas=`<div class="karte-canvas">`;
+  canvas+=`<button class="karte-node core ${karteNodeId===null?'active':''}" style="left:50%;top:50%;transform:translate(-50%,-50%)" onclick="karteSelectNode(null)"><small>Projekt</small><b>${esc(topic.title)}</b><span class="ncount">${centralCount} zentral</span></button>`;
+  const n=nodes.length;
+  nodes.forEach((nd,i)=>{
+    const ang=(-90+(360/Math.max(n,1))*i)*Math.PI/180;
+    const x=50+38*Math.cos(ang), y=50+40*Math.sin(ang);
+    const c=karteTasksInNode(topic,nd.id).filter(t=>!t.done).length;
+    canvas+=`<button class="karte-node ${karteNodeId===nd.id?'active':''}" style="left:${x}%;top:${y}%;transform:translate(-50%,-50%)" onclick="karteSelectNode('${nd.id}')"><small>Komponente</small><b>${esc(nd.title)}</b><span class="ncount">${c} Aufgabe${c===1?'':'n'}</span></button>`;
+  });
+  canvas+=`<button class="karte-node-add" onclick="karteAddNode()">+ Komponente</button>`;
+  canvas+=`</div>`;
+
+  let html=`<div class="karte-detail-head"><button class="karte-back" onclick="karteBackToTiles()">← Kacheln</button><h2>${esc(topic.title)}</h2></div>`;
+  html+=`<div class="karte-workbench">${tree}${canvas}</div>`;
+  html+=`<div id="karte-inspect"></div>`;
+  root.innerHTML=html;
+  karteRenderInspector(topic);
+}
+
+function karteSelectNode(nodeId){ karteNodeId=nodeId; const t=(D.mapTopics||[]).find(x=>x.id===karteTopicId); if(t) renderKarteDetail(document.getElementById('karte-root'),t); }
+
+function karteAddNode(){
+  const name=prompt('Name der Teilkomponente (z. B. Design, Datenbank, Backend):');
+  if(!name||!name.trim()) return;
+  fsAdd('mapNodes',{id:uid(),topicId:karteTopicId,title:name.trim(),note:'',createdAt:Date.now()});
+  const t=(D.mapTopics||[]).find(x=>x.id===karteTopicId); if(t) renderKarteDetail(document.getElementById('karte-root'),t);
+}
+function karteDeleteNode(id){
+  if(!confirm('Komponente löschen? Zugeordnete Aufgaben wandern zurück ins Zentrum.')) return;
+  const topic=(D.mapTopics||[]).find(x=>x.id===karteTopicId);
+  karteTopicTasks(topic).filter(t=>t.mapNodeId===id).forEach(t=>{ t.mapNodeId=null; fsUpdate('tasks',t); });
+  fsDel('mapNodes',id);
+  karteNodeId=null;
+  renderKarteDetail(document.getElementById('karte-root'),topic);
+}
+function karteRenameNode(id){
+  const nd=(D.mapNodes||[]).find(x=>x.id===id); if(!nd) return;
+  const name=prompt('Komponente umbenennen:',nd.title); if(!name||!name.trim()) return;
+  nd.title=name.trim(); fsUpdate('mapNodes',nd);
+  const t=(D.mapTopics||[]).find(x=>x.id===karteTopicId); if(t) renderKarteDetail(document.getElementById('karte-root'),t);
+}
+
+function karteRenderInspector(topic){
+  const box=document.getElementById('karte-inspect'); if(!box) return;
+  const node=karteNodeId?(D.mapNodes||[]).find(n=>n.id===karteNodeId):null;
+  const tasks=karteTasksInNode(topic,karteNodeId);
+  const nodes=karteNodesOf(topic.id);
+  let html=`<div class="karte-inspect">`;
+  if(node){
+    html+=`<div class="karte-inspect-head"><h3>${esc(node.title)}</h3>
+      <button class="karte-back" onclick="karteRenameNode('${node.id}')">Umbenennen</button>
+      <button class="karte-back" style="color:var(--red)" onclick="karteDeleteNode('${node.id}')">Löschen</button></div>`;
+    html+=`<div class="karte-section-label">Wissen / Notiz</div>`;
+    html+=`<textarea class="karte-note-ta" placeholder="Was besteht hier schon? Was willst du ändern? Freie Notiz zu dieser Komponente…" onchange="karteSaveNote('${node.id}',this.value)">${esc(node.note||'')}</textarea>`;
+  } else {
+    html+=`<div class="karte-inspect-head"><h3>Zentral — alle Aufgaben</h3></div>`;
+    html+=`<div class="karte-section-label" style="margin-top:0">Verteile Aufgaben von hier in die Teilkomponenten</div>`;
+  }
+  html+=`<div class="karte-section-label">Aufgaben (${tasks.length})</div>`;
+  const moveOptions=(cur)=>`<option value="">Zentral</option>`+nodes.map(n=>`<option value="${n.id}"${cur===n.id?' selected':''}>${esc(n.title)}</option>`).join('');
+  if(!tasks.length){
+    html+=`<div class="karte-empty">Keine Aufgaben hier.${node?' Hol welche aus dem Zentrum oder lege neue an.':''}</div>`;
+  } else {
+    tasks.forEach(t=>{
+      html+=`<div class="karte-todo">
+        <span class="checkbox ${t.done?'checked':''}" onclick="karteToggleDone('${t.id}')" style="width:20px;height:20px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:5px;cursor:pointer">${t.done?'✓':''}</span>
+        <span class="kt-title ${t.done?'done':''}">${esc(t.title)}</span>
+        <button class="karte-eye ${t.mapOnly?'off':'on'}" title="${t.mapOnly?'Nur in Karte — klicken, um auch im Tasks-Screen zu zeigen':'Auch im Tasks-Screen — klicken, um auf nur-Karte zu setzen'}" onclick="karteToggleMapOnly('${t.id}')">${t.mapOnly?'🙈':'👁'}</button>
+        <select class="kt-move" onchange="karteMoveTask('${t.id}',this.value)">${moveOptions(t.mapNodeId)}</select>
+      </div>`;
+    });
+  }
+  html+=`<button class="karte-tree-add" style="margin-top:10px" onclick="karteAddTask()">+ Neue Aufgabe${node?' in '+esc(node.title):''}</button>`;
+  html+=`</div>`;
+  box.innerHTML=html;
+}
+
+function karteSaveNote(nodeId,val){
+  const nd=(D.mapNodes||[]).find(n=>n.id===nodeId); if(!nd) return;
+  nd.note=val; fsUpdate('mapNodes',nd); toast('Notiz gespeichert');
+}
+function karteToggleDone(id){
+  const t=D.tasks.find(x=>x.id===id); if(!t) return;
+  t.done=!t.done; fsUpdate('tasks',t);
+  const topic=(D.mapTopics||[]).find(x=>x.id===karteTopicId); if(topic) renderKarteDetail(document.getElementById('karte-root'),topic);
+}
+function karteToggleMapOnly(id){
+  const t=D.tasks.find(x=>x.id===id); if(!t) return;
+  t.mapOnly=!t.mapOnly; fsUpdate('tasks',t);
+  toast(t.mapOnly?'Nur noch in der Karte sichtbar':'Erscheint jetzt auch im Tasks-Screen');
+  const topic=(D.mapTopics||[]).find(x=>x.id===karteTopicId); if(topic) karteRenderInspector(topic);
+}
+function karteMoveTask(id,nodeVal){
+  const t=D.tasks.find(x=>x.id===id); if(!t) return;
+  t.mapNodeId=nodeVal||null; fsUpdate('tasks',t);
+  const topic=(D.mapTopics||[]).find(x=>x.id===karteTopicId); if(topic) renderKarteDetail(document.getElementById('karte-root'),topic);
+}
+function karteAddTask(){
+  const title=prompt('Neue Aufgabe:'); if(!title||!title.trim()) return;
+  const topic=(D.mapTopics||[]).find(x=>x.id===karteTopicId); if(!topic) return;
+  const onlyMap=confirm('Nur in der Karte anzeigen?\n\nOK = nur hier in der Karte.\nAbbrechen = auch im normalen Tasks-Screen.');
+  fsAdd('tasks',{id:uid(),title:title.trim(),context:'',priority:'mittel',kategorie:topic.taskCategory,subkategorie:null,dueDate:null,estimatedTime:null,recurrence:null,tags:[],done:false,mapNodeId:karteNodeId||null,mapOnly:onlyMap,createdAt:Date.now()});
+  renderKarteDetail(document.getElementById('karte-root'),topic);
 }
 
 init();
