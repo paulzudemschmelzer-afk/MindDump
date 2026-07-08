@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>MindDump</title>
+<title>Scatterbrain</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#111111">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="MindDump">
+<meta name="apple-mobile-web-app-title" content="Scatterbrain">
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <script>
@@ -574,7 +574,7 @@ select option { background:#1c1c1c; }
 <div id="sidebar-backdrop" onclick="toggleSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199;"></div>
 <aside class="sidebar">
   <div class="logo" style="display:flex;align-items:center;justify-content:space-between">
-    <span>Mind<span style="color:var(--accent2)">Dump</span></span>
+    <span>Scatter<span style="color:var(--accent2)">brain</span></span>
     <button onclick="toggleSidebar()" style="background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
   </div>
   <nav id="main-nav"></nav>
@@ -1284,7 +1284,7 @@ function showLoginGate(show) {
       gate = document.createElement('div');
       gate.id = 'login-gate';
       gate.style.cssText = 'position:fixed;inset:0;background:#111;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;';
-      gate.innerHTML = `<div style="font-size:28px;font-weight:700;">Mind<span style="color:#a78bfa">Dump</span></div>
+      gate.innerHTML = `<div style="font-size:28px;font-weight:700;">Scatter<span style="color:#a78bfa">brain</span></div>
         <p style="color:#777;font-size:14px;">Bitte anmelden um fortzufahren</p>
         <button onclick="signIn()" style="padding:12px 28px;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;">Mit Google anmelden</button>`;
       document.body.appendChild(gate);
@@ -4586,7 +4586,7 @@ function exportData(){
     thoughtCategoryLabels:S.thoughtCategoryLabels||{}
   }},null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download='minddump-'+dateKey()+'.json'; a.click(); URL.revokeObjectURL(url);
+  const a=document.createElement('a'); a.href=url; a.download='scatterbrain-'+dateKey()+'.json'; a.click(); URL.revokeObjectURL(url);
 }
 function importTrigger(){ document.getElementById('import-file').click(); }
 function importData(e){

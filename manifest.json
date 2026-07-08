@@ -1,6 +1,6 @@
 {
-  "name": "MindDump",
-  "short_name": "MindDump",
+  "name": "Scatterbrain",
+  "short_name": "Scatterbrain",
   "description": "Brain Dump, Tasks, Habits & mehr — dein persönliches Denk-Werkzeug.",
   "start_url": "MindDump.html",
   "scope": "./",
