@@ -744,7 +744,7 @@ select option { background:#1c1c1c; }
   <!-- HEUTE -->
   <div class="tab-panel" id="tab-heute">
     <div class="page-header header-row">
-      <div><h1>Heute</h1><p>Dein Fokus für heute.</p></div>
+      <div><h1 id="heute-greeting">Heute</h1><p id="heute-subline">Dein Fokus für heute.</p></div>
       <button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>
     </div>
 
@@ -3101,6 +3101,20 @@ function flashBtn(el, color='blue') {
   void el.offsetWidth;
   el.classList.add(cls);
 }
+function renderHeuteGreeting(openTasks, openHabits) {
+  const greetEl = document.getElementById('heute-greeting');
+  const subEl = document.getElementById('heute-subline');
+  if(!greetEl || !subEl) return;
+  const hour = new Date().getHours();
+  const salute = hour < 11 ? 'Moin' : hour < 18 ? 'Hallo' : 'Guten Abend';
+  const firstName = currentUser?.displayName?.split(' ')[0];
+  greetEl.textContent = firstName ? `${salute}, ${firstName} 👋` : `${salute} 👋`;
+  const dateLabel = new Date().toLocaleDateString('de-DE', {weekday:'short', day:'numeric', month:'long'});
+  const parts = [dateLabel, `${openTasks} ${openTasks===1?'Aufgabe':'Aufgaben'} heute`];
+  if(openHabits) parts.push(`${openHabits} ${openHabits===1?'Habit':'Habits'} offen`);
+  subEl.textContent = parts.join(' · ');
+}
+
 function renderHeute() {
   const todayStr = dateKey();
   const list = D.tasks.filter(t => (t.forToday || t.dueDate === todayStr) && t.hideFromHeute !== todayStr)
@@ -3110,6 +3124,10 @@ function renderHeute() {
       if(aHasOrder||bHasOrder) return (a.heuteOrder??9999)-(b.heuteOrder??9999);
       const o={hoch:0,mittel:1,niedrig:2}; return (o[a.priority]??1)-(o[b.priority]??1);
     });
+  renderHeuteGreeting(
+    list.filter(t=>!t.done).length,
+    (D.habits||[]).filter(h=>!h.archived && !habitCheckins(h).some(c=>c.date===todayStr)).length
+  );
   const el = document.getElementById('heute-list');
   if(!list.length) {
     el.innerHTML='<div class="heute-empty-drop">Tasks hierher ziehen oder per ☀ in der Task-Liste markieren</div>';
