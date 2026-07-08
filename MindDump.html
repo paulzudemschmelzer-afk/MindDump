@@ -569,14 +569,17 @@ select option { background:#1c1c1c; }
 
 /* ── KARTE (Projekt-Sortier-Layer) ─────────────────────────── */
 .karte-tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; margin-top:8px; }
-.karte-tile { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; cursor:pointer; transition:transform .15s ease, border-color .15s ease; text-align:left; color:var(--text); position:relative; overflow:hidden; }
-.karte-tile:hover { transform:translateY(-3px); border-color:var(--accent2); }
-.karte-tile h3 { margin:0 0 6px; font-size:16px; }
+.karte-tile { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; cursor:pointer; transition:transform .15s ease, border-color .15s ease; text-align:left; color:var(--text); position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:flex-start; }
+.karte-tile:hover { transform:translateY(-3px); border-color:var(--tile-accent,var(--accent2)); }
+.karte-tile-badge { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:19px; margin-bottom:14px; background:var(--tile-accent,var(--accent)); box-shadow:0 6px 16px -7px var(--tile-accent,var(--accent)); }
+.karte-tile-stat { font-size:25px; font-weight:700; line-height:1; margin-bottom:6px; color:var(--text); }
+.karte-tile h3 { margin:0 0 4px; font-size:14px; font-weight:600; }
 .karte-tile .tile-meta { font-size:12px; color:var(--sub); }
 .karte-tile .tile-del { position:absolute; top:8px; right:10px; background:transparent; border:0; color:var(--sub); font-size:16px; cursor:pointer; opacity:0; transition:opacity .15s; }
 .karte-tile:hover .tile-del { opacity:1; }
-.karte-tile-add { background:transparent; border:1px dashed var(--border); border-radius:14px; padding:18px; cursor:pointer; color:var(--sub); font-size:13px; display:flex; align-items:center; justify-content:center; min-height:80px; transition:border-color .15s, color .15s; }
+.karte-tile-add { background:transparent; border:1px dashed var(--border); border-radius:14px; padding:18px; cursor:pointer; color:var(--sub); font-size:13px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; min-height:80px; transition:border-color .15s, color .15s; }
 .karte-tile-add:hover { border-color:var(--accent2); color:var(--accent2); }
+.karte-tile-add-badge { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:19px; margin-bottom:12px; background:rgba(124,58,237,.14); border:1px dashed var(--accent2); color:var(--accent2); }
 
 .karte-detail-head { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
 .karte-back { background:transparent; border:1px solid var(--border); border-radius:8px; color:var(--text); cursor:pointer; padding:7px 12px; font-size:13px; }
@@ -590,19 +593,19 @@ select option { background:#1c1c1c; }
 .karte-tree .pane-label { font-size:10px; letter-spacing:.12em; color:var(--sub); margin-bottom:12px; text-transform:uppercase; }
 .karte-tree-item { display:flex; align-items:center; gap:8px; width:100%; background:transparent; border:0; border-radius:7px; color:var(--sub); text-align:left; padding:9px 10px; font-size:13px; cursor:pointer; font-family:inherit; }
 .karte-tree-item:hover { background:var(--card2); color:var(--text); }
-.karte-tree-item.active { background:rgba(124,58,237,.14); color:var(--accent2); }
+.karte-tree-item.active { background:color-mix(in srgb, var(--tile-accent,var(--accent2)) 16%, transparent); color:var(--tile-accent,var(--accent2)); }
 .karte-tree-item .cnt { margin-left:auto; font-size:11px; color:var(--sub); background:var(--card2); border-radius:9px; padding:1px 7px; }
 .karte-tree-add { margin-top:8px; width:100%; background:transparent; border:1px dashed var(--border); border-radius:8px; color:var(--sub); padding:9px; font-size:12px; cursor:pointer; }
 .karte-tree-add:hover { border-color:var(--accent2); color:var(--accent2); }
 
 .karte-canvas { position:relative; min-height:440px; background:var(--card); border:1px solid var(--border); border-radius:12px; background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px); background-size:22px 22px; overflow:hidden; padding:10px; }
 .karte-node { position:absolute; width:150px; background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:12px; cursor:pointer; transition:transform .18s ease, border-color .18s ease; }
-.karte-node:hover, .karte-node.active { transform:translateY(-3px); border-color:var(--accent2); }
-.karte-node.core { background:rgba(124,58,237,.16); border-color:var(--accent2); }
+.karte-node:hover, .karte-node.active { transform:translateY(-3px); border-color:var(--tile-accent,var(--accent2)); }
+.karte-node.core { background:color-mix(in srgb, var(--tile-accent,var(--accent2)) 18%, var(--card2)); border-color:var(--tile-accent,var(--accent2)); }
 .karte-node small { display:block; font-size:10px; color:var(--sub); margin-bottom:5px; text-transform:uppercase; letter-spacing:.08em; }
 .karte-node b { font-size:13px; }
-.karte-node .ncount { display:inline-block; margin-top:6px; font-size:11px; color:var(--accent2); }
-.karte-node-add { position:absolute; bottom:12px; right:12px; background:var(--accent); color:#fff; border:0; border-radius:20px; padding:8px 14px; font-size:12px; cursor:pointer; z-index:3; }
+.karte-node .ncount { display:inline-block; margin-top:6px; font-size:11px; color:var(--tile-accent,var(--accent2)); }
+.karte-node-add { position:absolute; bottom:12px; right:12px; background:var(--tile-accent,var(--accent)); color:#fff; border:0; border-radius:20px; padding:8px 14px; font-size:12px; cursor:pointer; z-index:3; }
 
 .karte-inspect { margin-top:16px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; }
 .karte-inspect-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
@@ -617,6 +620,8 @@ select option { background:#1c1c1c; }
 .karte-eye { background:transparent; border:0; cursor:pointer; font-size:14px; padding:2px 4px; }
 .karte-eye.on { filter:none; } .karte-eye.off { opacity:.35; }
 .karte-empty { color:var(--sub); font-size:13px; padding:14px; text-align:center; }
+.karte-picker-group { margin-bottom:10px; }
+.karte-picker-cat { font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:.08em; margin:10px 0 4px; }
 </style>
 </head>
 <body>
@@ -4847,8 +4852,18 @@ function parseEstMinutes(est){
 // ── KARTE (Projekt-Sortier-Layer) ─────────────────────────────
 let karteTopicId=null, karteNodeId=null;
 
+const KARTE_BADGE_COLORS=['#7c3aed','#f59e0b','#10b981','#0ea5e9','#ec4899','#14b8a6'];
+function karteColorFor(key){
+  let h=0; for(const c of String(key)) h=(h*31+c.charCodeAt(0))>>>0;
+  return KARTE_BADGE_COLORS[h%KARTE_BADGE_COLORS.length];
+}
 function karteTopicTasks(topic){
-  return D.tasks.filter(t=>(t.kategorie||'sonstiges')===topic.taskCategory);
+  return D.tasks.filter(t=>(t.kategorie||'sonstiges')===topic.taskCategory && (!topic.subkategorie || t.subkategorie===topic.subkategorie));
+}
+function karteFreeSubcategoriesOf(kat){
+  const subs=new Set();
+  D.tasks.forEach(t=>{ if((t.kategorie||'sonstiges')===kat && t.subkategorie) subs.add(t.subkategorie); });
+  return [...subs].sort();
 }
 function karteNodesOf(topicId){
   return (D.mapNodes||[]).filter(n=>n.topicId===topicId);
@@ -4877,28 +4892,50 @@ function renderKarteTiles(root){
     const tasks=karteTopicTasks(tp);
     const open=tasks.filter(t=>!t.done).length;
     const comps=karteNodesOf(tp.id).length;
-    html+=`<button class="karte-tile" onclick="openKarteTopic('${tp.id}')">
+    const scope=tp.subkategorie?`Teilbereich von ${esc(getTaskCategoryLabel(tp.taskCategory))}`:'Ganzes Projekt';
+    const color=karteColorFor(tp.taskCategory);
+    html+=`<button class="karte-tile" style="--tile-accent:${color}" onclick="openKarteTopic('${tp.id}')">
       <button class="tile-del" onclick="event.stopPropagation();karteDeleteTile('${tp.id}')" title="Kachel entfernen">×</button>
+      <div class="karte-tile-badge">${getTaskCategoryIcon(tp.taskCategory)}</div>
+      <div class="karte-tile-stat">${open}</div>
       <h3>${esc(tp.title)}</h3>
-      <div class="tile-meta">${open} offen · ${comps} Komponente${comps===1?'':'n'}</div>
+      <div class="tile-meta">${scope} · ${comps} Komponente${comps===1?'':'n'}</div>
     </button>`;
   });
-  html+=`<button class="karte-tile-add" onclick="karteAddTilePicker()">+ Kachel anlegen</button>`;
+  html+=`<button class="karte-tile-add" onclick="karteAddTilePicker()"><div class="karte-tile-add-badge">+</div>Kachel anlegen</button>`;
   html+=`</div><div id="karte-picker"></div>`;
   root.innerHTML=html;
 }
 
 function karteAddTilePicker(){
-  const used=new Set((D.mapTopics||[]).map(t=>t.taskCategory));
-  const cats=getTopLevelTaskCategories().filter(k=>!used.has(k));
+  const usedWhole=new Set((D.mapTopics||[]).filter(t=>!t.subkategorie).map(t=>t.taskCategory));
+  const usedSub=new Set((D.mapTopics||[]).filter(t=>t.subkategorie).map(t=>t.taskCategory+'::'+t.subkategorie));
+  const cats=getTopLevelTaskCategories();
   const box=document.getElementById('karte-picker');
-  if(!cats.length){ box.innerHTML=`<div class="karte-empty">Alle bestehenden Projekte sind schon als Kachel angelegt. Neue Projekte entstehen als Task-Kategorie im Tasks-Tab.</div>`; return; }
-  box.innerHTML=`<div class="karte-section-label">Projekt für neue Kachel wählen</div>`+
-    cats.map(k=>`<button class="karte-tree-item" onclick="karteCreateTile('${k}')"><span>${getTaskCategoryIcon(k)}</span>${esc(getTaskCategoryLabel(k))}<span class="cnt">${D.tasks.filter(t=>(t.kategorie||'sonstiges')===k&&!t.done).length}</span></button>`).join('');
+  let html=`<div class="karte-section-label">Kachel anlegen</div>`;
+  let any=false;
+  cats.forEach(k=>{
+    const subs=karteFreeSubcategoriesOf(k).filter(s=>!usedSub.has(k+'::'+s));
+    const wholeAvailable=!usedWhole.has(k);
+    if(!wholeAvailable && !subs.length) return;
+    any=true;
+    html+=`<div class="karte-picker-group"><div class="karte-picker-cat">${getTaskCategoryIcon(k)} ${esc(getTaskCategoryLabel(k))}</div>`;
+    if(wholeAvailable) html+=`<button class="karte-tree-item" data-kat="${esc(k)}" onclick="karteCreateTileFromBtn(this)"><span>◆</span>Ganzes Projekt<span class="cnt">${D.tasks.filter(t=>(t.kategorie||'sonstiges')===k&&!t.done).length}</span></button>`;
+    subs.forEach(s=>{
+      const cnt=D.tasks.filter(t=>(t.kategorie||'sonstiges')===k&&t.subkategorie===s&&!t.done).length;
+      html+=`<button class="karte-tree-item" data-kat="${esc(k)}" data-sub="${esc(s)}" onclick="karteCreateTileFromBtn(this)"><span>└</span>${esc(s)}<span class="cnt">${cnt}</span></button>`;
+    });
+    html+=`</div>`;
+  });
+  if(!any) html+=`<div class="karte-empty">Alle bestehenden Projekte und Subkategorien sind schon als Kachel angelegt.</div>`;
+  box.innerHTML=html;
 }
 
-function karteCreateTile(cat){
-  fsAdd('mapTopics',{id:uid(),taskCategory:cat,title:getTaskCategoryLabel(cat),createdAt:Date.now()});
+function karteCreateTileFromBtn(btn){ karteCreateTile(btn.dataset.kat, btn.dataset.sub||null); }
+
+function karteCreateTile(cat, subkat){
+  const title=subkat||getTaskCategoryLabel(cat);
+  fsAdd('mapTopics',{id:uid(),taskCategory:cat,subkategorie:subkat||null,title,createdAt:Date.now()});
   if(currentTab==='karte') renderKarte();
 }
 function karteDeleteTile(id){
@@ -4936,9 +4973,12 @@ function renderKarteDetail(root,topic){
   canvas+=`<button class="karte-node-add" onclick="karteAddNode()">+ Komponente</button>`;
   canvas+=`</div>`;
 
-  let html=`<div class="karte-detail-head"><button class="karte-back" onclick="karteBackToTiles()">← Kacheln</button><h2>${esc(topic.title)}</h2></div>`;
+  const color=karteColorFor(topic.taskCategory);
+  let html=`<div style="--tile-accent:${color}">`;
+  html+=`<div class="karte-detail-head"><button class="karte-back" onclick="karteBackToTiles()">← Kacheln</button><h2>${esc(topic.title)}</h2></div>`;
   html+=`<div class="karte-workbench">${tree}${canvas}</div>`;
   html+=`<div id="karte-inspect"></div>`;
+  html+=`</div>`;
   root.innerHTML=html;
   karteRenderInspector(topic);
 }
@@ -5025,7 +5065,7 @@ function karteAddTask(){
   const title=prompt('Neue Aufgabe:'); if(!title||!title.trim()) return;
   const topic=(D.mapTopics||[]).find(x=>x.id===karteTopicId); if(!topic) return;
   const onlyMap=confirm('Nur in der Karte anzeigen?\n\nOK = nur hier in der Karte.\nAbbrechen = auch im normalen Tasks-Screen.');
-  fsAdd('tasks',{id:uid(),title:title.trim(),context:'',priority:'mittel',kategorie:topic.taskCategory,subkategorie:null,dueDate:null,estimatedTime:null,recurrence:null,tags:[],done:false,mapNodeId:karteNodeId||null,mapOnly:onlyMap,createdAt:Date.now()});
+  fsAdd('tasks',{id:uid(),title:title.trim(),context:'',priority:'mittel',kategorie:topic.taskCategory,subkategorie:topic.subkategorie||null,dueDate:null,estimatedTime:null,recurrence:null,tags:[],done:false,mapNodeId:karteNodeId||null,mapOnly:onlyMap,createdAt:Date.now()});
   renderKarteDetail(document.getElementById('karte-root'),topic);
 }
 
