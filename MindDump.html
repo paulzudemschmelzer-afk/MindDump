@@ -569,59 +569,63 @@ select option { background:#1c1c1c; }
 
 /* ── KARTE (Projekt-Sortier-Layer) ─────────────────────────── */
 .karte-tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; margin-top:8px; }
-.karte-tile { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; cursor:pointer; transition:transform .15s ease, border-color .15s ease; text-align:left; color:var(--text); position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:flex-start; }
-.karte-tile:hover { transform:translateY(-3px); border-color:var(--tile-accent,var(--accent2)); }
+#tab-karte { --k-bg:#150f2e; --k-panel:#1d1640; --k-card:#271f4d; --k-card-hover:#312868; --k-border:rgba(255,255,255,.07); --k-border-strong:rgba(255,255,255,.16); --k-sub:#9b93c4; }
+#karte-root { background:var(--k-bg); border-radius:20px; padding:22px; }
+#karte-root .page-header p { color:var(--k-sub); }
+
+.karte-tile { background:var(--k-card); border:1px solid var(--k-border); border-radius:14px; padding:18px; cursor:pointer; transition:transform .15s ease, background .15s ease; text-align:left; color:var(--text); position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:flex-start; }
+.karte-tile:hover { transform:translateY(-3px); background:var(--k-card-hover); }
 .karte-tile-badge { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:19px; margin-bottom:14px; background:var(--tile-accent,var(--accent)); box-shadow:0 6px 16px -7px var(--tile-accent,var(--accent)); }
 .karte-tile-stat { font-size:25px; font-weight:700; line-height:1; margin-bottom:6px; color:var(--text); }
 .karte-tile h3 { margin:0 0 4px; font-size:14px; font-weight:600; }
-.karte-tile .tile-meta { font-size:12px; color:var(--sub); }
-.karte-tile .tile-del { position:absolute; top:8px; right:10px; background:transparent; border:0; color:var(--sub); font-size:16px; cursor:pointer; opacity:0; transition:opacity .15s; }
+.karte-tile .tile-meta { font-size:12px; color:var(--k-sub); }
+.karte-tile .tile-del { position:absolute; top:8px; right:10px; background:transparent; border:0; color:var(--k-sub); font-size:16px; cursor:pointer; opacity:0; transition:opacity .15s; }
 .karte-tile:hover .tile-del { opacity:1; }
-.karte-tile-add { background:transparent; border:1px dashed var(--border); border-radius:14px; padding:18px; cursor:pointer; color:var(--sub); font-size:13px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; min-height:80px; transition:border-color .15s, color .15s; }
+.karte-tile-add { background:transparent; border:1px dashed var(--k-border-strong); border-radius:14px; padding:18px; cursor:pointer; color:var(--k-sub); font-size:13px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; min-height:80px; transition:border-color .15s, color .15s; }
 .karte-tile-add:hover { border-color:var(--accent2); color:var(--accent2); }
-.karte-tile-add-badge { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:19px; margin-bottom:12px; background:rgba(124,58,237,.14); border:1px dashed var(--accent2); color:var(--accent2); }
+.karte-tile-add-badge { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:19px; margin-bottom:12px; background:rgba(167,139,250,.14); border:1px dashed var(--accent2); color:var(--accent2); }
 
 .karte-detail-head { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
-.karte-back { background:transparent; border:1px solid var(--border); border-radius:8px; color:var(--text); cursor:pointer; padding:7px 12px; font-size:13px; }
+.karte-back { background:transparent; border:1px solid var(--k-border-strong); border-radius:8px; color:var(--text); cursor:pointer; padding:7px 12px; font-size:13px; }
 .karte-back:hover { border-color:var(--accent2); }
 .karte-detail-head h2 { margin:0; font-size:20px; }
 
 .karte-workbench { display:grid; grid-template-columns:260px 1fr; gap:16px; align-items:start; }
 @media(max-width:800px){ .karte-workbench { grid-template-columns:1fr; } }
 
-.karte-tree { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; }
-.karte-tree .pane-label { font-size:10px; letter-spacing:.12em; color:var(--sub); margin-bottom:12px; text-transform:uppercase; }
-.karte-tree-item { display:flex; align-items:center; gap:8px; width:100%; background:transparent; border:0; border-radius:7px; color:var(--sub); text-align:left; padding:9px 10px; font-size:13px; cursor:pointer; font-family:inherit; }
-.karte-tree-item:hover { background:var(--card2); color:var(--text); }
-.karte-tree-item.active { background:color-mix(in srgb, var(--tile-accent,var(--accent2)) 16%, transparent); color:var(--tile-accent,var(--accent2)); }
-.karte-tree-item .cnt { margin-left:auto; font-size:11px; color:var(--sub); background:var(--card2); border-radius:9px; padding:1px 7px; }
-.karte-tree-add { margin-top:8px; width:100%; background:transparent; border:1px dashed var(--border); border-radius:8px; color:var(--sub); padding:9px; font-size:12px; cursor:pointer; }
+.karte-tree { background:var(--k-panel); border:1px solid var(--k-border); border-radius:12px; padding:14px; }
+.karte-tree .pane-label { font-size:10px; letter-spacing:.12em; color:var(--k-sub); margin-bottom:12px; text-transform:uppercase; }
+.karte-tree-item { display:flex; align-items:center; gap:8px; width:100%; background:transparent; border:0; border-radius:7px; color:var(--k-sub); text-align:left; padding:9px 10px; font-size:13px; cursor:pointer; font-family:inherit; }
+.karte-tree-item:hover { background:var(--k-card-hover); color:var(--text); }
+.karte-tree-item.active { background:rgba(167,139,250,.16); color:var(--accent2); }
+.karte-tree-item .cnt { margin-left:auto; font-size:11px; color:var(--k-sub); background:var(--k-card); border-radius:9px; padding:1px 7px; }
+.karte-tree-add { margin-top:8px; width:100%; background:transparent; border:1px dashed var(--k-border-strong); border-radius:8px; color:var(--k-sub); padding:9px; font-size:12px; cursor:pointer; }
 .karte-tree-add:hover { border-color:var(--accent2); color:var(--accent2); }
 
-.karte-canvas { position:relative; min-height:440px; background:var(--card); border:1px solid var(--border); border-radius:12px; background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px); background-size:22px 22px; overflow:hidden; padding:10px; }
-.karte-node { position:absolute; width:150px; background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:12px; cursor:pointer; transition:transform .18s ease, border-color .18s ease; }
-.karte-node:hover, .karte-node.active { transform:translateY(-3px); border-color:var(--tile-accent,var(--accent2)); }
-.karte-node.core { background:color-mix(in srgb, var(--tile-accent,var(--accent2)) 18%, var(--card2)); border-color:var(--tile-accent,var(--accent2)); }
-.karte-node small { display:block; font-size:10px; color:var(--sub); margin-bottom:5px; text-transform:uppercase; letter-spacing:.08em; }
+.karte-canvas { position:relative; min-height:440px; background:var(--k-panel); border:1px solid var(--k-border); border-radius:12px; background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px); background-size:22px 22px; overflow:hidden; padding:10px; }
+.karte-node { position:absolute; width:150px; background:var(--k-card); border:1px solid var(--k-border); border-radius:12px; padding:12px; cursor:pointer; transition:transform .18s ease, border-color .18s ease; }
+.karte-node:hover, .karte-node.active { transform:translateY(-3px); border-color:var(--accent2); }
+.karte-node.core { background:rgba(167,139,250,.18); border-color:var(--accent2); }
+.karte-node small { display:block; font-size:10px; color:var(--k-sub); margin-bottom:5px; text-transform:uppercase; letter-spacing:.08em; }
 .karte-node b { font-size:13px; }
-.karte-node .ncount { display:inline-block; margin-top:6px; font-size:11px; color:var(--tile-accent,var(--accent2)); }
-.karte-node-add { position:absolute; bottom:12px; right:12px; background:var(--tile-accent,var(--accent)); color:#fff; border:0; border-radius:20px; padding:8px 14px; font-size:12px; cursor:pointer; z-index:3; }
+.karte-node .ncount { display:inline-block; margin-top:6px; font-size:11px; color:var(--accent2); }
+.karte-node-add { position:absolute; bottom:12px; right:12px; background:var(--accent); color:#fff; border:0; border-radius:20px; padding:8px 14px; font-size:12px; cursor:pointer; z-index:3; }
 
-.karte-inspect { margin-top:16px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; }
+.karte-inspect { margin-top:16px; background:var(--k-panel); border:1px solid var(--k-border); border-radius:12px; padding:16px; }
 .karte-inspect-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
 .karte-inspect-head h3 { margin:0; font-size:16px; flex:1; }
-.karte-section-label { font-size:11px; letter-spacing:.1em; color:var(--sub); text-transform:uppercase; margin:16px 0 8px; }
-.karte-note-ta { width:100%; min-height:90px; background:var(--bg); border:1px solid var(--border); border-radius:9px; color:var(--text); padding:11px; font-family:inherit; font-size:13px; resize:vertical; }
-.karte-todo { display:flex; align-items:center; gap:9px; padding:9px 10px; border:1px solid var(--border); border-radius:9px; margin-bottom:7px; background:var(--bg); }
+.karte-section-label { font-size:11px; letter-spacing:.1em; color:var(--k-sub); text-transform:uppercase; margin:16px 0 8px; }
+.karte-note-ta { width:100%; min-height:90px; background:var(--k-bg); border:1px solid var(--k-border-strong); border-radius:9px; color:var(--text); padding:11px; font-family:inherit; font-size:13px; resize:vertical; }
+.karte-todo { display:flex; align-items:center; gap:9px; padding:9px 10px; border:1px solid var(--k-border); border-radius:9px; margin-bottom:7px; background:var(--k-bg); }
 .karte-todo .kt-title { flex:1; font-size:13px; }
-.karte-todo .kt-title.done { text-decoration:line-through; color:var(--sub); }
-.karte-todo .kt-move { background:transparent; border:1px solid var(--border); border-radius:7px; color:var(--sub); font-size:11px; padding:4px 8px; cursor:pointer; }
+.karte-todo .kt-title.done { text-decoration:line-through; color:var(--k-sub); }
+.karte-todo .kt-move { background:transparent; border:1px solid var(--k-border-strong); border-radius:7px; color:var(--k-sub); font-size:11px; padding:4px 8px; cursor:pointer; }
 .karte-todo .kt-move:hover { border-color:var(--accent2); color:var(--accent2); }
 .karte-eye { background:transparent; border:0; cursor:pointer; font-size:14px; padding:2px 4px; }
 .karte-eye.on { filter:none; } .karte-eye.off { opacity:.35; }
-.karte-empty { color:var(--sub); font-size:13px; padding:14px; text-align:center; }
+.karte-empty { color:var(--k-sub); font-size:13px; padding:14px; text-align:center; }
 .karte-picker-group { margin-bottom:10px; }
-.karte-picker-cat { font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:.08em; margin:10px 0 4px; }
+.karte-picker-cat { font-size:11px; color:var(--k-sub); text-transform:uppercase; letter-spacing:.08em; margin:10px 0 4px; }
 </style>
 </head>
 <body>
