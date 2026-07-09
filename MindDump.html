@@ -412,8 +412,41 @@ select option { background:#1c1c1c; }
 .heute-chip.done { color:var(--green); border-color:rgba(52,217,160,.3); background:rgba(52,217,160,.08); }
 .heute-chip.done .dot { background:var(--green); }
 
+/* Heute: Dashboard-Grid (Aufgaben + Habits nebeneinander, Mockup Schicht 1) */
+.heute-grid { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:14px; margin-top:14px; align-items:start; }
+@media(max-width:900px){ .heute-grid { grid-template-columns:1fr; } }
+.dash-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
+.dash-card-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--sub); margin-bottom:10px; }
+
+/* Habits: 7-Tage-Punktreihen */
+.habit-dots { display:flex; gap:5px; margin-top:5px; }
+.hdot { width:9px; height:9px; border-radius:50%; background:transparent; border:1.5px solid var(--border); flex-shrink:0; }
+.hdot.full { background:var(--accent); border-color:var(--accent); }
+.hdot.minimal { background:var(--accent2); border-color:var(--accent2); opacity:.55; }
+.hdot.miss { background:var(--red); border-color:var(--red); opacity:.7; }
+.hdot.today { box-shadow:0 0 0 2px rgba(164,147,255,.25); }
+.hh-done-mark { font-size:14px; color:var(--green); font-weight:700; padding:0 6px; }
+
+/* Heute: Projekt-Kacheln (Mockup: Fortschrittsbalken + Bereich-Tags) */
+.dash-projects { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; margin-top:8px; }
+.dash-tile { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; text-align:left; color:var(--text); cursor:pointer; display:flex; flex-direction:column; gap:12px; transition:transform .15s ease, border-color .15s ease; font-family:inherit; }
+.dash-tile:hover { transform:translateY(-3px); border-color:var(--accent2); }
+.dash-tile-head { display:flex; gap:10px; align-items:center; min-width:0; width:100%; }
+.dash-tile-badge { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.dash-tile h3 { margin:0; font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dash-tile-sub { font-size:11.5px; color:var(--sub); margin-top:2px; }
+.dash-tile-progress { display:flex; align-items:center; gap:8px; width:100%; }
+.dash-tile-bar { flex:1; height:6px; border-radius:3px; background:var(--card2); overflow:hidden; }
+.dash-tile-bar span { display:block; height:100%; border-radius:3px; background:var(--accent); }
+.dash-tile-pct { font-size:11px; color:var(--sub); min-width:30px; text-align:right; }
+.dash-tile-tags { display:flex; gap:6px; flex-wrap:wrap; }
+.dash-tile-tag { font-size:10.5px; padding:2px 8px; border-radius:9px; background:rgba(123,92,255,.14); color:var(--accent2); border:1px solid rgba(123,92,255,.25); }
+.dash-tile-new { align-items:center; justify-content:center; border-style:dashed; color:var(--sub); gap:8px; min-height:110px; }
+.dash-tile-new:hover { color:var(--accent2); }
+.dash-tile-add-badge { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--accent2); color:var(--accent2); font-size:18px; }
+
 /* Heute habits */
-.heute-habits-section { background:linear-gradient(180deg, rgba(52,217,160,.10), rgba(52,217,160,.03)), var(--card); border:1px solid var(--today-habits-border); border-radius:12px; padding:14px 16px; margin-top:14px; margin-bottom:4px; box-shadow:inset 0 1px 0 rgba(255,255,255,.03); }
+.heute-habits-section { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
 .heute-habits-title { font-size:12px; font-weight:700; color:var(--today-habits-accent); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
 .heute-habit-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid rgba(52,217,160,.10); }
 .heute-habit-row:last-child { border-bottom:none; }
@@ -765,27 +798,33 @@ select option { background:#1c1c1c; }
     <div class="heute-stats-row" id="heute-stats-row"></div>
     <!-- Ziele Reminder -->
     <div id="heute-goals-section"></div>
-    <!-- Habits Schnellcheck -->
-    <div class="heute-habits-section" id="heute-habits-section"></div>
-    <!-- Tasks -->
-    <div class="heute-section-label">🗂 Meine Tasks</div>
-    <div class="heute-drop" id="heute-drop"
-      ondragover="event.preventDefault();document.getElementById('heute-drop').classList.add('drag-over')"
-      ondragleave="document.getElementById('heute-drop').classList.remove('drag-over')"
-      ondrop="dropHeute(event)">
-      <div id="heute-list"></div>
+    <!-- Zwei Spalten: Aufgaben heute + Habits (Mockup Schicht 1) -->
+    <div class="heute-grid">
+      <div class="dash-card">
+        <div class="dash-card-title">☀ Heute</div>
+        <div class="heute-drop" id="heute-drop"
+          ondragover="event.preventDefault();document.getElementById('heute-drop').classList.add('drag-over')"
+          ondragleave="document.getElementById('heute-drop').classList.remove('drag-over')"
+          ondrop="dropHeute(event)">
+          <div id="heute-list"></div>
+        </div>
+        <div class="heute-quick-add" style="margin-top:8px">
+          <input type="text" id="heute-title" placeholder="+ Task hinzufügen" onkeydown="if(event.key==='Enter')addHeuteQuickTask()" />
+          <select id="heute-prio" title="Prioritaet">
+            <option value="mittel">Mittel</option>
+            <option value="hoch">Hoch</option>
+            <option value="niedrig">Niedrig</option>
+          </select>
+          <select id="heute-kat" title="Kategorie"></select>
+          <input type="text" id="heute-est" class="quick-est" placeholder="Zeit (z.B. 30min)" onkeydown="if(event.key==='Enter')addHeuteQuickTask()" />
+          <button class="btn btn-primary btn-sm" onclick="addHeuteQuickTask()">Speichern</button>
+        </div>
+      </div>
+      <!-- Habits mit 7-Tage-Punktreihen -->
+      <div class="heute-habits-section" id="heute-habits-section"></div>
     </div>
-    <div class="heute-quick-add" style="margin-top:8px">
-      <input type="text" id="heute-title" placeholder="+ Task hinzufügen" onkeydown="if(event.key==='Enter')addHeuteQuickTask()" />
-      <select id="heute-prio" title="Prioritaet">
-        <option value="mittel">Mittel</option>
-        <option value="hoch">Hoch</option>
-        <option value="niedrig">Niedrig</option>
-      </select>
-      <select id="heute-kat" title="Kategorie"></select>
-      <input type="text" id="heute-est" class="quick-est" placeholder="Zeit (z.B. 30min)" onkeydown="if(event.key==='Enter')addHeuteQuickTask()" />
-      <button class="btn btn-primary btn-sm" onclick="addHeuteQuickTask()">Speichern</button>
-    </div>
+    <!-- Meine Projekte (Kacheln, Mockup Schicht 1) -->
+    <div id="heute-projects-section"></div>
     <!-- Eingebetteter Kalender -->
     <div class="heute-cal-wrap" id="heute-cal-wrap" style="margin-top:20px">
       <div class="heute-cal-toolbar">
@@ -1185,6 +1224,7 @@ function rerender(colName) {
   if(colName==='habits') { renderHabits(); if(currentTab==='heute') { renderHeuteHabits(); renderHeuteStats(dateKey(), D.tasks.filter(t=>(t.forToday||t.dueDate===dateKey())&&t.hideFromHeute!==dateKey()&&t.done).length, D.tasks.filter(t=>(t.forToday||t.dueDate===dateKey())&&t.hideFromHeute!==dateKey()).length); } }
   if(colName==='goals'||colName==='subgoals') { if(currentTab==='goals') renderGoals(); renderHeuteGoals(); }
   if(currentTab==='karte' && (colName==='tasks'||colName==='mapTopics'||colName==='mapNodes')) renderKarte();
+  if(currentTab==='heute' && (colName==='mapTopics'||colName==='mapNodes')) renderHeuteProjects();
 }
 
 // ── FIREBASE ──────────────────────────────────────────────────
@@ -3120,17 +3160,11 @@ function renderHeuteStats(todayStr, doneToday, totalToday) {
   if(!el) return;
   const pct = totalToday ? Math.round(doneToday/totalToday*100) : 0;
   const habits = (D.habits||[]).filter(h=>!h.archived);
-  let html = `<div class="heute-progress-card">
+  // Habit-Chips entfernt — Habits haben jetzt ihre eigene Karte mit Punktreihen daneben
+  el.innerHTML = `<div class="heute-progress-card">
     <div class="heute-progress-pct">${totalToday ? pct+'%' : '—'}</div>
     <div class="heute-progress-label">${totalToday ? `${doneToday} von ${totalToday} erledigt` : 'Keine Aufgaben heute'}</div>
   </div>`;
-  if(habits.length) {
-    html += `<div class="heute-chip-row">` + habits.map(h=>{
-      const done = habitCheckins(h).some(c=>c.date===todayStr && c.mode!=='miss');
-      return `<button class="heute-chip ${done?'done':''}" onclick="${done?'':`quickHabitCheckin('${h.id}','full',event)`}" title="${done?'Heute erledigt':'Als erledigt markieren'}"><span class="dot"></span>${esc(h.name)}</button>`;
-    }).join('') + `</div>`;
-  }
-  el.innerHTML = html;
 }
 
 function renderHeuteGreeting(openTasks, openHabits) {
@@ -3164,7 +3198,7 @@ function renderHeute() {
   const el = document.getElementById('heute-list');
   if(!list.length) {
     el.innerHTML='<div class="heute-empty-drop">Tasks hierher ziehen oder per ☀ in der Task-Liste markieren</div>';
-    renderHeuteGoals(); renderHeuteHabits();
+    renderHeuteGoals(); renderHeuteHabits(); renderHeuteProjects();
     renderHeuteCalendar();
     return;
   }
@@ -3202,9 +3236,42 @@ function renderHeute() {
     </div>`;
   }).join('');
   badges();
-  renderHeuteGoals(); renderHeuteHabits();
+  renderHeuteGoals(); renderHeuteHabits(); renderHeuteProjects();
   renderHeuteCalendar();
 }
+
+// ── HEUTE: MEINE PROJEKTE (Kacheln aus der Karte, Mockup Schicht 1) ──
+function renderHeuteProjects() {
+  const el=document.getElementById('heute-projects-section'); if(!el) return;
+  const topics=D.mapTopics||[];
+  let html=`<div class="heute-section-label" style="margin-top:20px">🗂 Meine Projekte</div><div class="dash-projects">`;
+  topics.forEach(tp=>{
+    const tasks=karteTopicTasks(tp);
+    const done=tasks.filter(t=>t.done).length;
+    const open=tasks.length-done;
+    const pct=tasks.length?Math.round(done/tasks.length*100):0;
+    const nodes=karteNodesOf(tp.id);
+    const tags=nodes.slice(0,3).map(n=>`<span class="dash-tile-tag">${esc(n.title)}</span>`).join('')
+      +(nodes.length>3?`<span class="dash-tile-tag">+${nodes.length-3}</span>`:'');
+    const color=karteColorFor(tp.taskCategory);
+    html+=`<button class="dash-tile" onclick="dashOpenProject('${tp.id}')">
+      <div class="dash-tile-head">
+        <div class="dash-tile-badge" style="background:${color}">${getTaskCategoryIcon(tp.taskCategory)}</div>
+        <div style="flex:1;min-width:0">
+          <h3>${esc(tp.title)}</h3>
+          <div class="dash-tile-sub">${open} offen · ${nodes.length} Bereich${nodes.length===1?'':'e'}</div>
+        </div>
+      </div>
+      <div class="dash-tile-progress"><div class="dash-tile-bar"><span style="width:${pct}%"></span></div><span class="dash-tile-pct">${tasks.length?pct+'%':'–'}</span></div>
+      ${tags?`<div class="dash-tile-tags">${tags}</div>`:''}
+    </button>`;
+  });
+  html+=`<button class="dash-tile dash-tile-new" onclick="dashNewProject()"><div class="dash-tile-add-badge">+</div>Neues Projekt</button>`;
+  html+=`</div>`;
+  el.innerHTML=html;
+}
+function dashOpenProject(id){ karteTopicId=id; karteNodeId=null; go('karte'); }
+function dashNewProject(){ karteTopicId=null; karteNodeId=null; go('karte'); karteAddTilePicker(); }
 
 async function dropHeute(e) {
   e.preventDefault();
@@ -3576,26 +3643,38 @@ function renderHeuteHabits() {
   const all=(D.habits||[]).filter(h=>!h.archived);
   const good=all.filter(h=>h.type!=='bad');
   const bad=all.filter(h=>h.type==='bad');
-  if(!all.length){el.innerHTML='';return;}
+  if(!all.length){el.innerHTML='';el.style.display='none';return;}
+  el.style.display='';
+  const todayStr=dateKey();
+  const last7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return dateKey(d);});
+  const dotRow=(h)=>last7.map(ds=>{
+    const c=habitCheckins(h).find(x=>x.date===ds);
+    const cls=c?(c.mode==='miss'?' miss':c.mode==='minimal'?' minimal':' full'):'';
+    return `<span class="hdot${cls}${ds===todayStr?' today':''}"></span>`;
+  }).join('');
   const habitRow=(h)=>{
     const isBad=h.type==='bad';
+    const doneToday=habitCheckins(h).some(c=>c.date===todayStr);
     return `<div class="heute-habit-row${isBad?' bad':''}">
       <div style="flex:1;min-width:0">
         <div class="heute-habit-name${isBad?' bad':''}">${esc(h.name)}</div>
-        ${h.why?`<div class="heute-habit-why">${esc(h.why)}</div>`:''}
+        <div class="habit-dots">${dotRow(h)}</div>
       </div>
       <div style="display:flex;gap:5px;flex-shrink:0">
-        ${isBad
-          ?`<button class="hh-btn hh-btn-bad-avoid" onclick="quickHabitCheckin('${h.id}','full',event)">✓ Gemieden</button>
-             <button class="hh-btn hh-btn-bad-relapse" onclick="quickHabitCheckin('${h.id}','miss',event)">✗ Rückfall</button>`
-          :`<button class="hh-btn hh-btn-full" onclick="quickHabitCheckin('${h.id}','full',event)">✅ Erledigt</button>
-             <button class="hh-btn hh-btn-min"  onclick="quickHabitCheckin('${h.id}','minimal',event)">➖ Minimal</button>
-             <button class="hh-btn hh-btn-miss" onclick="quickHabitCheckin('${h.id}','miss',event)">✗ Skip</button>`
+        ${doneToday
+          ?`<span class="hh-done-mark" title="Heute eingetragen">✓</span>`
+          :isBad
+          ?`<button class="hh-btn hh-btn-bad-avoid" onclick="quickHabitCheckin('${h.id}','full',event)" title="Gemieden">✓</button>
+             <button class="hh-btn hh-btn-bad-relapse" onclick="quickHabitCheckin('${h.id}','miss',event)" title="Rückfall">✗</button>`
+          :`<button class="hh-btn hh-btn-full" onclick="quickHabitCheckin('${h.id}','full',event)" title="Erledigt">✅</button>
+             <button class="hh-btn hh-btn-min"  onclick="quickHabitCheckin('${h.id}','minimal',event)" title="Minimal">➖</button>
+             <button class="hh-btn hh-btn-miss" onclick="quickHabitCheckin('${h.id}','miss',event)" title="Skip">✗</button>`
         }
       </div>
     </div>`;
   };
-  el.innerHTML=(good.length?`<div class="heute-habits-title">🏆 Habits</div>`+good.map(habitRow).join(''):'')
+  el.innerHTML=`<div class="dash-card-title">🏆 Habits</div>`
+    +good.map(habitRow).join('')
     +(bad.length?`<div class="heute-habits-bad-section" style="margin-top:${good.length?10:0}px"><div class="heute-habits-bad-title">🚫 Bad Habits vermeiden</div>`+bad.map(habitRow).join('')+`</div>`:'');
 }
 
