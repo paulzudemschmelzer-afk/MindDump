@@ -565,6 +565,34 @@ select option { background:#1c1c1c; }
 .sb-detail-head { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
 .sb-detail-head h3 { margin:0; font-size:17px; font-family:'Sora','Inter',sans-serif; color:#fff; flex:1; }
 
+/* Scatterbrain Design-Pass: Lucide-Icons, Tab-Leiste, Breadcrumbs, Kreis-Checks (Brand-Sheet) */
+.sb-ic { display:inline-flex; width:16px; height:16px; flex-shrink:0; }
+.sb-ic svg { width:100%; height:100%; }
+.sb-card { border-radius:16px; box-shadow:0 12px 32px -22px rgba(0,0,0,.9); }
+.sb-proj-card { border-radius:16px; box-shadow:0 12px 32px -22px rgba(0,0,0,.9); }
+.sb-h2 { font-size:21px; letter-spacing:-.01em; }
+.sb-tabsbar { display:flex; gap:6px; align-items:center; margin-bottom:18px; border-bottom:1px solid rgba(255,255,255,.06); padding-bottom:10px; overflow-x:auto; }
+.sb-ttab { display:inline-flex; align-items:center; gap:7px; background:transparent; border:1px solid transparent; border-radius:9px; color:#8d87a3; font-size:12.5px; padding:6px 12px; cursor:pointer; white-space:nowrap; font-family:inherit; }
+.sb-ttab:hover { background:#1a1526; color:#eceaf4; }
+.sb-ttab.active { background:#1a1526; border-color:rgba(123,92,255,.4); color:#eceaf4; }
+.sb-ttab-x { display:inline-flex; width:12px; height:12px; opacity:.5; }
+.sb-ttab-x:hover { opacity:1; color:#f76d7a; }
+.sb-ttab-x svg { width:100%; height:100%; }
+.sb-ttab-plus { padding:6px 8px; }
+.sb-crumbs { display:flex; align-items:center; gap:7px; font-size:12px; color:#8d87a3; margin:-6px 0 14px; flex-wrap:wrap; }
+.sb-crumbs button { background:transparent; border:0; color:#8d87a3; font-size:12px; cursor:pointer; padding:0; font-family:inherit; }
+.sb-crumbs button:hover { color:#cfc5ff; }
+.sb-crumbs span { color:#eceaf4; }
+.sb-crumbs i { font-style:normal; opacity:.4; }
+.sb-dash3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; align-items:start; }
+.sb-circ { width:19px; height:19px; border-radius:50%; border:1.5px solid #453f5c; background:transparent; cursor:pointer; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; padding:0; color:#0b0912; }
+.sb-circ:hover { border-color:#a493ff; }
+.sb-circ.done { background:#34d9a0; border-color:#34d9a0; cursor:default; }
+.sb-circ svg { width:12px; height:12px; }
+.sb-focus-title { font-family:'Sora','Inter',sans-serif; font-size:17px; font-weight:700; color:#fff; margin-bottom:8px; }
+.sb-nav-item .sb-ic { color:#6f6889; }
+.sb-nav-item.active .sb-ic, .sb-nav-item:hover .sb-ic { color:#a493ff; }
+
 /* ── NOTES ── */
 .notes-layout { display:flex; gap:0; height:calc(100vh - 120px); }
 .notes-sidebar { width:240px; min-width:240px; border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
@@ -5060,7 +5088,24 @@ function toggleSidebar() {
 // ═══ SCATTERBRAIN 1:1 — Gesamtkonzept-Poster als Spec ═══════════
 // Eigenes Modul (Tab "sb"), ersetzt nichts Bestehendes. Nutzt die
 // echten Daten: tasks, notes, habits, calEvents, mapTopics, mapNodes.
-const SB_LOGO='<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5c-8.2 1.4-14 8-14 16 0 5.2 2.4 9.8 6 12.8V44h12v-5h4a3 3 0 0 0 3-3v-4h3.4c1.2 0 1.9-1.3 1.3-2.3l-3-5.2C34.6 15 29.5 6.5 21 5Z"/><path d="M25 12l-7.5 12h5L20 34l9.5-13h-5.5L27 12Z" fill="currentColor" stroke="none"/></svg>';
+// Logo nach Brand-Sheet: Kopf im Profil nach rechts, Blitz im Schädel, Line-Art
+const SB_LOGO='<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.5 45V35.5C12.8 32.2 9.5 26.8 9.5 20.8 9.5 11.3 17 4 26.3 4 34.6 4 41 10.3 41 18.2c0 2.4-.6 4.6-1.7 6.6l2.6 4.2c.5.9 0 1.9-1 2l-2.1.3c.4 1 .3 1.9-.2 2.8.6.9.6 1.9.1 2.9-.6 1.4-2 2-3.5 2h-2.7v6"/><path d="M27.5 9.5 17 23.5h6.2L20.5 33.5 32 19h-6.3l1.8-9.5Z" fill="currentColor" stroke="none" stroke-width="0"/></svg>';
+
+// Lucide-Icons (inline, ISC-Lizenz) — Produktbeschreibung: "Alle Icons stammen aus Lucide"
+const SB_I={
+  zap:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+  sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>',
+  folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
+  note:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
+  repeat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>',
+  calendar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>',
+  settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  target:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+};
 
 let sbView='dash', sbTopicId=null, sbNodeId=null, sbTaskId=null, sbDetailFrom=null,
     sbProjectTab='uebersicht', sbBereichTab='uebersicht', sbStrukturMode='mindmap',
@@ -5092,23 +5137,50 @@ function sbHabitDots(h){
   }).join('');
 }
 
+let sbOpenTabs=[]; // offene Projekt-Tabs in der Top-Leiste (wie Arc/Obsidian)
+
+function sbTabsBar(){
+  const tabs=sbOpenTabs.map(id=>(D.mapTopics||[]).find(t=>t.id===id)).filter(Boolean);
+  return `<div class="sb-tabsbar">
+    <button class="sb-ttab${sbView==='dash'?' active':''}" onclick="sbGo('dash')"><span class="sb-ic">${SB_I.sun}</span>Dashboard</button>
+    ${tabs.map(tp=>`<button class="sb-ttab${(['project','struktur','bereich','detail'].includes(sbView)&&sbTopicId===tp.id)?' active':''}" onclick="sbOpenProject('${tp.id}')">${esc(tp.title)}<span class="sb-ttab-x" onclick="event.stopPropagation();sbCloseTab('${tp.id}')">${SB_I.x}</span></button>`).join('')}
+    <button class="sb-ttab sb-ttab-plus" onclick="sbGo('projects')" title="Projekt öffnen"><span class="sb-ic">${SB_I.plus}</span></button>
+  </div>`;
+}
+function sbCloseTab(id){
+  sbOpenTabs=sbOpenTabs.filter(x=>x!==id);
+  if(sbTopicId===id&&['project','struktur','bereich','detail'].includes(sbView)){ sbView='dash'; sbTopicId=null; }
+  renderSB();
+}
+function sbCrumbs(){
+  if(!['project','struktur','bereich','detail'].includes(sbView)) return '';
+  const tp=sbTopic(); if(!tp) return '';
+  const parts=[`<button onclick="sbGo('projects')">Projekte</button>`,`<button onclick="sbProjTab('uebersicht')">${esc(tp.title)}</button>`];
+  if(sbView==='struktur') parts.push('<span>Struktur</span>');
+  if(sbView==='bereich'||sbView==='detail'){
+    const nd=sbNodeObj();
+    if(nd) parts.push(sbView==='bereich'?`<span>${esc(nd.title)}</span>`:`<button onclick="sbView='bereich';renderSB()">${esc(nd.title)}</button>`);
+  }
+  if(sbView==='detail'){ const t=D.tasks.find(x=>x.id===sbTaskId); if(t) parts.push(`<span>${esc(t.title)}</span>`); }
+  return `<div class="sb-crumbs">${parts.join('<i>/</i>')}</div>`;
+}
+
 function renderSB(){
   const root=document.getElementById('sb-root'); if(!root) return;
   const items=[
-    {v:'dump',    ico:'⚡', label:'Brain Dump'},
-    {v:'dash',    ico:'☀', label:'Heute'},
-    {v:'projects',ico:'▦', label:'Projekte'},
-    {v:'@notes',  ico:'📄', label:'Notizen'},
-    {v:'@habits', ico:'🏆', label:'Habits'},
-    {v:'@goals',  ico:'🎯', label:'Ziele'},
-    {v:'leistung',ico:'📈', label:'Leistungsübersicht'},
-    {v:'woche',   ico:'🗓', label:'Wochenübersicht'},
-    {v:'@settings',ico:'⚙', label:'Einstellungen'},
+    {v:'dump',     ic:SB_I.zap,     label:'Brain Dump'},
+    {v:'dash',     ic:SB_I.sun,     label:'Heute'},
+    {v:'projects', ic:SB_I.folder,  label:'Projekte'},
+    {v:'@notes',   ic:SB_I.note,    label:'Notizen'},
+    {v:'@habits',  ic:SB_I.repeat,  label:'Habits'},
+    {v:'leistung', ic:SB_I.chart,   label:'Leistungsübersicht'},
+    {v:'woche',    ic:SB_I.calendar,label:'Wochenübersicht'},
+    {v:'@settings',ic:SB_I.settings,label:'Einstellungen'},
   ];
   const activeV=['project','struktur','bereich','detail'].includes(sbView)?'projects':sbView;
   const side=`<div class="sb-side">
     <div class="sb-brand"><span class="sb-brand-logo">${SB_LOGO}</span><span>Scatterbrain</span></div>
-    <nav class="sb-nav">${items.map(it=>`<button class="sb-nav-item${it.v===activeV?' active':''}" onclick="sbGo('${it.v}')"><span>${it.ico}</span>${it.label}</button>`).join('')}</nav>
+    <nav class="sb-nav">${items.map(it=>`<button class="sb-nav-item${it.v===activeV?' active':''}" onclick="sbGo('${it.v}')"><span class="sb-ic">${it.ic}</span>${it.label}</button>`).join('')}</nav>
     <div class="sb-user"><span class="sb-user-badge">${esc((currentUser?.displayName||'?').trim()[0]||'?')}</span>${esc(currentUser?.displayName?.split(' ')[0]||'Nicht angemeldet')}</div>
   </div>`;
   let content='';
@@ -5121,7 +5193,7 @@ function renderSB(){
   else if(sbView==='detail') content=sbDetail();
   else if(sbView==='woche') content=sbWoche();
   else if(sbView==='leistung') content=sbLeistung();
-  root.innerHTML=side+`<div class="sb-content">${content}</div>`;
+  root.innerHTML=side+`<div class="sb-content">${sbTabsBar()}${sbCrumbs()}${content}</div>`;
   if(sbView==='struktur'&&sbStrukturMode==='mindmap') sbDrawMindmapLines();
 }
 function sbGo(v){
@@ -5152,32 +5224,71 @@ function sbRunDump(){
   if(inp){ inp.value=v; go('braindump'); processDump(); }
 }
 
-// ── Heute / Dashboard (Ebene 1) ──
+// ── Heute / Dashboard (Ebene 1): Aufgaben | Habits | Fokus des Tages ──
+function sbFocusTask(){ const today=dateKey(); return D.tasks.find(t=>t.focusDate===today); }
+async function sbSetFocus(id){
+  const today=dateKey();
+  for(const t of D.tasks.filter(x=>x.focusDate===today&&x.id!==id)){ delete t.focusDate; await fsUpdate('tasks',t); }
+  const t=D.tasks.find(x=>x.id===id);
+  if(t){ t.focusDate=today; await fsUpdate('tasks',t); }
+  if(currentTab==='sb') renderSB();
+}
+async function sbClearFocus(){
+  const today=dateKey();
+  for(const t of D.tasks.filter(x=>x.focusDate===today)){ delete t.focusDate; await fsUpdate('tasks',t); }
+  if(currentTab==='sb') renderSB();
+}
 function sbDash(){
   const todayStr=dateKey();
-  const dateLabel=new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long'});
+  const dateLabel=new Date().toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long'});
   const todos=D.tasks.filter(t=>(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr)
     .sort((a,b)=>(a.done?1:0)-(b.done?1:0)).slice(0,10);
   const habits=(D.habits||[]).filter(h=>!h.archived);
   const tops=D.mapTopics||[];
+  const focus=sbFocusTask();
+  const openTodos=todos.filter(t=>!t.done);
   return `<div class="sb-head-row"><div><h2 class="sb-h2">Heute, ${dateLabel}</h2><div class="sb-sub">Dein Start. Alles im Blick. Nichts überladen.</div></div></div>
-  <div class="sb-dash-grid">
+  <div class="sb-dash3">
     <div class="sb-card">
       <div class="sb-card-title">Heutige Aufgaben</div>
-      ${todos.length?todos.map(t=>`<label class="sb-todo${t.done?' done':''}"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}')"><span class="sb-todo-title">${esc(t.title)}</span><span class="sb-chip">${esc(getTaskCategoryLabel(t.kategorie||'sonstiges'))}</span></label>`).join(''):'<div class="sb-empty">Keine Aufgaben für heute markiert</div>'}
+      ${todos.length?todos.map(t=>`<div class="sb-todo${t.done?' done':''}">
+        <button class="sb-circ${t.done?' done':''}" onclick="toggleTask('${t.id}')" title="${t.done?'Wieder öffnen':'Erledigt'}">${t.done?SB_I.check:''}</button>
+        <span class="sb-todo-title">${esc(t.title)}</span>
+        <span class="sb-chip">${esc(getTaskCategoryLabel(t.kategorie||'sonstiges'))}</span>
+      </div>`).join(''):'<div class="sb-empty">Keine Aufgaben für heute markiert</div>'}
       <button class="sb-link-btn" onclick="sbQuickTask()">+ Neue Aufgabe</button>
     </div>
     <div class="sb-card">
       <div class="sb-card-title">Habits</div>
-      ${habits.length?habits.map(h=>`<div class="sb-habit"><span class="sb-habit-name">${esc(h.name)}</span><span class="habit-dots">${sbHabitDots(h)}</span></div>`).join(''):'<div class="sb-empty">Noch keine Habits</div>'}
+      ${habits.length?habits.map(h=>{
+        const done=habitCheckins(h).some(c=>c.date===todayStr&&c.mode!=='miss');
+        return `<div class="sb-todo">
+          <button class="sb-circ${done?' done':''}" ${done?'':`onclick="quickHabitCheckin('${h.id}','full',event)"`} title="${done?'Heute erledigt':'Abhaken'}">${done?SB_I.check:''}</button>
+          <span class="sb-todo-title">${esc(h.name)}</span>
+          <span class="habit-dots">${sbHabitDots(h)}</span>
+        </div>`;}).join(''):'<div class="sb-empty">Noch keine Habits</div>'}
+    </div>
+    <div class="sb-card">
+      <div class="sb-card-title">Fokus des Tages</div>
+      ${focus?`<div class="sb-focus">
+          <div class="sb-focus-title">${esc(focus.title)}</div>
+          <span class="sb-chip">${esc(getTaskCategoryLabel(focus.kategorie||'sonstiges'))}</span>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            ${focus.done?'<span class="sb-status" style="color:#34d9a0">● Erledigt</span>':`<button class="sb-btn-primary" style="margin:0" onclick="toggleTask('${focus.id}')">Erledigt</button>`}
+            <button class="sb-back" onclick="sbClearFocus()">Ändern</button>
+          </div>
+        </div>`
+      :openTodos.length?`<div class="sb-empty" style="margin-bottom:8px">Wähle EINE Aufgabe, die heute zählt:</div>`
+        +openTodos.slice(0,5).map(t=>`<button class="sb-area-row" onclick="sbSetFocus('${t.id}')"><span class="sb-ic" style="color:#a493ff">${SB_I.target}</span>${esc(t.title)}</button>`).join('')
+      :'<div class="sb-empty">Erst eine Aufgabe für heute anlegen, dann den Fokus wählen.</div>'}
     </div>
   </div>
-  <div class="sb-card-title" style="margin:6px 0 10px">Aktive Projekte</div>
+  <div class="sb-card-title" style="margin:20px 0 10px">Aktive Projekte</div>
   <div class="sb-proj-grid">
     ${tops.map(tp=>{const p=sbProgress(tp);const color=karteColorFor(tp.taskCategory);
       return `<button class="sb-proj-card" onclick="sbOpenProject('${tp.id}')">
         <div class="sb-proj-head"><span class="sb-proj-ico" style="background:${color}">${getTaskCategoryIcon(tp.taskCategory)}</span>
-          <div style="flex:1;min-width:0"><div class="sb-proj-title">${esc(tp.title)}</div><span class="sb-status" style="color:#8d87a3">${p.open} offen</span></div></div>
+          <div style="flex:1;min-width:0"><div class="sb-proj-title">${esc(tp.title)}</div>${sbStatusChip(tp)||`<span class="sb-status" style="color:#8d87a3">${p.open} offen</span>`}</div></div>
         <div class="sb-bar"><span style="width:${p.pct}%"></span></div>
         <div class="sb-proj-foot"><span class="sb-pct">${p.total?p.pct+'%':'—'}</span></div>
       </button>`;}).join('')}
@@ -5209,7 +5320,11 @@ function sbProjects(){
     <button class="sb-proj-card sb-proj-new" onclick="dashNewProject()">+ Neue Projektkachel</button>
   </div>`;
 }
-function sbOpenProject(id){ sbTopicId=id; sbNodeId=null; sbProjectTab='uebersicht'; sbView='project'; if(currentTab!=='sb') go('sb'); else renderSB(); }
+function sbOpenProject(id){
+  sbTopicId=id; sbNodeId=null; sbProjectTab='uebersicht'; sbView='project';
+  if(!sbOpenTabs.includes(id)) sbOpenTabs.push(id);
+  if(currentTab!=='sb') go('sb'); else renderSB();
+}
 
 // ── Projekt-Innenansicht (Ebene 2) ──
 function sbProjTabs(active){

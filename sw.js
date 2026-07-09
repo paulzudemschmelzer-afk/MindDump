@@ -1,5 +1,5 @@
 // Scatterbrain Service Worker — App-Shell-Caching für Offline-Nutzung
-const CACHE = 'scatterbrain-v2';
+const CACHE = 'scatterbrain-v3';
 const SHELL = ['MindDump.html', 'manifest.json', 'icon.svg'];
 
 self.addEventListener('install', e => {
