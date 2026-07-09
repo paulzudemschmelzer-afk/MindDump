@@ -5037,6 +5037,7 @@ function karteRenderInspector(topic){
   const node=karteNodeId?(D.mapNodes||[]).find(n=>n.id===karteNodeId):null;
   const tasks=karteTasksInNode(topic,karteNodeId);
   const nodes=karteNodesOf(topic.id);
+  const ideas=(node?node.ideas:topic.ideas)||[];
   let html=`<div class="karte-inspect">`;
   if(node){
     html+=`<div class="karte-inspect-head"><h3>${esc(node.title)}</h3>
@@ -5048,6 +5049,19 @@ function karteRenderInspector(topic){
     html+=`<div class="karte-inspect-head"><h3>Zentral — alle Aufgaben</h3></div>`;
     html+=`<div class="karte-section-label" style="margin-top:0">Verteile Aufgaben von hier in die Teilkomponenten</div>`;
   }
+  html+=`<div class="karte-section-label">Ideen (${ideas.length})</div>`;
+  if(!ideas.length){
+    html+=`<div class="karte-empty">Noch keine Ideen hier.</div>`;
+  } else {
+    ideas.forEach((txt,i)=>{
+      html+=`<div class="karte-todo">
+        <span style="flex:0 0 auto">💡</span>
+        <span class="kt-title">${esc(txt)}</span>
+        <button class="kt-move" onclick="karteRemoveIdea('${node?node.id:''}',${i})">×</button>
+      </div>`;
+    });
+  }
+  html+=`<button class="karte-tree-add" style="margin-top:6px" onclick="karteAddIdea('${node?node.id:''}')">+ Neue Idee</button>`;
   html+=`<div class="karte-section-label">Aufgaben (${tasks.length})</div>`;
   const moveOptions=(cur)=>`<option value="">Zentral</option>`+nodes.map(n=>`<option value="${n.id}"${cur===n.id?' selected':''}>${esc(n.title)}</option>`).join('');
   if(!tasks.length){
@@ -5070,6 +5084,27 @@ function karteRenderInspector(topic){
 function karteSaveNote(nodeId,val){
   const nd=(D.mapNodes||[]).find(n=>n.id===nodeId); if(!nd) return;
   nd.note=val; fsUpdate('mapNodes',nd); toast('Notiz gespeichert');
+}
+function karteAddIdea(nodeId){
+  const text=prompt('Neue Idee:'); if(!text||!text.trim()) return;
+  const topic=(D.mapTopics||[]).find(x=>x.id===karteTopicId); if(!topic) return;
+  if(nodeId){
+    const nd=(D.mapNodes||[]).find(n=>n.id===nodeId); if(!nd) return;
+    nd.ideas=[...(nd.ideas||[]),text.trim()]; fsUpdate('mapNodes',nd);
+  } else {
+    topic.ideas=[...(topic.ideas||[]),text.trim()]; fsUpdate('mapTopics',topic);
+  }
+  karteRenderInspector(topic);
+}
+function karteRemoveIdea(nodeId,idx){
+  const topic=(D.mapTopics||[]).find(x=>x.id===karteTopicId); if(!topic) return;
+  if(nodeId){
+    const nd=(D.mapNodes||[]).find(n=>n.id===nodeId); if(!nd) return;
+    nd.ideas=(nd.ideas||[]).filter((_,i)=>i!==idx); fsUpdate('mapNodes',nd);
+  } else {
+    topic.ideas=(topic.ideas||[]).filter((_,i)=>i!==idx); fsUpdate('mapTopics',topic);
+  }
+  karteRenderInspector(topic);
 }
 function karteToggleDone(id){
   const t=D.tasks.find(x=>x.id===id); if(!t) return;
