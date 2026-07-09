@@ -456,6 +456,115 @@ select option { background:#1c1c1c; }
 
 .habit-chip { font-size:11px; background:rgba(123,92,255,.15); color:var(--accent2); border-radius:20px; padding:3px 10px; border:1px solid rgba(123,92,255,.2); white-space:nowrap; }
 
+/* ── SCATTERBRAIN 1:1 (Gesamtkonzept-Poster) ── */
+#tab-sb.active { padding:0; }
+#sb-root { display:grid; grid-template-columns:216px minmax(0,1fr); min-height:calc(100vh - 110px); background:#0b0912; border:1px solid rgba(255,255,255,.06); border-radius:20px; overflow:hidden; }
+@media(max-width:800px){ #sb-root { grid-template-columns:1fr; } .sb-side { flex-direction:row; align-items:center; overflow-x:auto; } .sb-nav { flex-direction:row; flex-wrap:nowrap; } .sb-user { display:none !important; } }
+.sb-side { background:#100d18; border-right:1px solid rgba(255,255,255,.06); display:flex; flex-direction:column; padding:16px 10px; gap:14px; }
+.sb-brand { display:flex; align-items:center; gap:9px; font-family:'Sora','Inter',sans-serif; font-weight:700; font-size:15px; color:#fff; padding:2px 8px; letter-spacing:.02em; }
+.sb-brand-logo { width:30px; height:30px; color:#a493ff; display:flex; flex-shrink:0; filter:drop-shadow(0 0 6px rgba(123,92,255,.55)); }
+.sb-brand-logo svg { width:100%; height:100%; }
+.sb-logo-ico svg { width:20px; height:20px; }
+.sb-nav { display:flex; flex-direction:column; gap:2px; flex:1; }
+.sb-nav-item { display:flex; align-items:center; gap:9px; background:transparent; border:0; border-radius:9px; color:#8d87a3; font-size:13px; padding:8px 10px; cursor:pointer; text-align:left; font-family:inherit; white-space:nowrap; }
+.sb-nav-item:hover { background:#1a1526; color:#eceaf4; }
+.sb-nav-item.active { background:rgba(123,92,255,.18); color:#cfc5ff; }
+.sb-user { display:flex; align-items:center; gap:8px; color:#8d87a3; font-size:12.5px; padding:8px; border-top:1px solid rgba(255,255,255,.06); }
+.sb-user-badge { width:26px; height:26px; border-radius:50%; background:#7b5cff; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }
+.sb-content { padding:22px; min-width:0; }
+.sb-h2 { font-family:'Sora','Inter',sans-serif; font-size:19px; margin:0; color:#fff; }
+.sb-sub { font-size:12.5px; color:#8d87a3; }
+.sb-head-row { display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+.sb-card { background:#16121f; border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:16px; margin-bottom:14px; position:relative; }
+.sb-card-title { font-size:11.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:#8d87a3; margin-bottom:10px; }
+.sb-empty { color:#8d87a3; font-size:12.5px; padding:6px 0; }
+.sb-dash-grid { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:14px; align-items:start; }
+@media(max-width:900px){ .sb-dash-grid { grid-template-columns:1fr; } }
+.sb-todo { display:flex; align-items:center; gap:9px; font-size:13px; color:#eceaf4; padding:8px 0; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.05); }
+.sb-todo:last-of-type { border-bottom:0; }
+.sb-todo.done { text-decoration:line-through; color:#8d87a3; }
+.sb-todo input { accent-color:#7b5cff; width:15px; height:15px; flex-shrink:0; }
+.sb-todo .sb-todo-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sb-chip { font-size:10px; padding:2px 8px; border-radius:9px; background:rgba(123,92,255,.16); color:#a493ff; border:1px solid rgba(123,92,255,.28); flex-shrink:0; }
+.sb-habit { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+.sb-habit:last-child { border-bottom:0; }
+.sb-habit-name { font-size:13px; color:#eceaf4; }
+.sb-entry { display:flex; align-items:center; gap:9px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.05); font-size:13px; color:#eceaf4; }
+.sb-entry:last-of-type { border-bottom:0; }
+.sb-entry-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.sb-entry-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sb-entry-time { font-size:11px; color:#8d87a3; flex-shrink:0; }
+.sb-dump textarea { width:100%; min-height:110px; background:#0b0912; border:1px solid rgba(255,255,255,.08); border-radius:10px; color:#eceaf4; padding:12px; font-family:inherit; font-size:13.5px; resize:vertical; outline:none; }
+.sb-dump textarea:focus { border-color:rgba(123,92,255,.6); }
+.sb-fab { position:absolute; right:26px; bottom:24px; width:34px; height:34px; border-radius:10px; background:#7b5cff; border:0; color:#fff; font-size:18px; cursor:pointer; }
+.sb-link-btn { background:transparent; border:1px dashed rgba(255,255,255,.18); color:#8d87a3; border-radius:8px; padding:7px 12px; font-size:12px; cursor:pointer; margin-top:8px; font-family:inherit; }
+.sb-link-btn:hover { color:#cfc5ff; border-color:rgba(123,92,255,.5); }
+.sb-mini-link { background:transparent; border:0; color:#a493ff; font-size:12px; cursor:pointer; padding:2px 4px; font-family:inherit; }
+.sb-btn-primary { background:#7b5cff; border:0; color:#fff; border-radius:9px; padding:8px 14px; font-size:12.5px; cursor:pointer; margin-left:auto; font-family:inherit; }
+.sb-proj-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(215px,1fr)); gap:14px; }
+.sb-proj-card { background:#16121f; border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:16px; text-align:left; color:#eceaf4; cursor:pointer; display:flex; flex-direction:column; gap:12px; font-family:inherit; transition:transform .15s ease,border-color .15s ease; }
+.sb-proj-card:hover { transform:translateY(-3px); border-color:rgba(123,92,255,.5); }
+.sb-proj-new { border-style:dashed; align-items:center; justify-content:center; color:#8d87a3; min-height:120px; font-size:13px; }
+.sb-proj-head { display:flex; gap:10px; align-items:center; width:100%; min-width:0; }
+.sb-proj-ico { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+.sb-proj-title { font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sb-status { font-size:11px; }
+.sb-bar { height:6px; border-radius:3px; background:#0b0912; overflow:hidden; width:100%; }
+.sb-bar span { display:block; height:100%; background:#7b5cff; border-radius:3px; }
+.sb-proj-foot { display:flex; align-items:center; gap:8px; width:100%; }
+.sb-taglist { display:flex; gap:6px; flex-wrap:wrap; flex:1; }
+.sb-pct { font-size:11px; color:#8d87a3; }
+.sb-back { background:transparent; border:1px solid rgba(255,255,255,.14); border-radius:8px; color:#eceaf4; padding:6px 11px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+.sb-back:hover { border-color:rgba(123,92,255,.5); }
+.sb-tabs { display:flex; gap:2px; border-bottom:1px solid rgba(255,255,255,.08); margin-bottom:16px; flex-wrap:wrap; }
+.sb-tab { background:transparent; border:0; color:#8d87a3; font-size:13px; padding:9px 13px; cursor:pointer; border-bottom:2px solid transparent; font-family:inherit; }
+.sb-tab.active { color:#cfc5ff; border-bottom-color:#7b5cff; }
+.sb-tab:disabled { opacity:.35; cursor:default; }
+.sb-proj-cols { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; align-items:start; }
+.sb-goal { width:100%; min-height:80px; background:#0b0912; border:1px solid rgba(255,255,255,.08); border-radius:10px; color:#eceaf4; padding:10px; font-family:inherit; font-size:13px; resize:vertical; outline:none; }
+.sb-goal:focus { border-color:rgba(123,92,255,.6); }
+.sb-kv { display:flex; align-items:center; gap:10px; font-size:12.5px; color:#8d87a3; padding:7px 0; }
+.sb-kv b { color:#eceaf4; }
+.sb-kv select,.sb-kv input { background:#0b0912; border:1px solid rgba(255,255,255,.1); color:#eceaf4; border-radius:7px; padding:5px 8px; font-size:12px; font-family:inherit; }
+.sb-area-row { display:flex; align-items:center; gap:10px; width:100%; background:#1a1526; border:1px solid rgba(255,255,255,.06); border-radius:11px; padding:11px 13px; margin-bottom:8px; color:#eceaf4; font-size:13px; cursor:pointer; text-align:left; font-family:inherit; }
+.sb-area-row:hover { border-color:rgba(123,92,255,.5); }
+.sb-area-row .cnt { margin-left:auto; font-size:11px; color:#8d87a3; }
+.sb-qa { display:block; width:100%; background:#1a1526; border:1px solid rgba(255,255,255,.08); border-radius:10px; color:#eceaf4; text-align:left; font-size:13px; padding:11px 12px; margin-bottom:8px; cursor:pointer; font-family:inherit; }
+.sb-qa:hover { border-color:rgba(123,92,255,.5); }
+.sb-mm-wrap { min-height:460px; background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px); background-size:22px 22px; overflow:hidden; }
+.sb-mm-svg { position:absolute; inset:0; pointer-events:none; }
+.sb-mm-center { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); background:#7b5cff; color:#fff; border-radius:12px; padding:12px 18px; font-weight:700; font-size:14px; box-shadow:0 0 24px -6px rgba(123,92,255,.8); }
+.sb-mm-node { position:absolute; transform:translate(-50%,-50%); background:#1a1526; border:1px solid rgba(123,92,255,.4); border-radius:11px; color:#eceaf4; padding:9px 13px; font-size:12.5px; cursor:pointer; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:inherit; }
+.sb-mm-node:hover { border-color:#a493ff; }
+.sb-mm-cnt { display:inline-block; margin-left:7px; font-size:10.5px; color:#a493ff; }
+.sb-tree-root { font-size:14px; font-weight:700; color:#fff; margin-bottom:8px; }
+.sb-tree-item { display:block; width:100%; text-align:left; background:transparent; border:0; color:#eceaf4; font-size:13px; padding:8px 10px; border-radius:8px; cursor:pointer; font-family:inherit; }
+.sb-tree-item:hover { background:#1a1526; }
+.sb-table { width:100%; border-collapse:collapse; font-size:13px; }
+.sb-table th { text-align:left; color:#8d87a3; font-size:11px; text-transform:uppercase; letter-spacing:.06em; padding:8px; border-bottom:1px solid rgba(255,255,255,.08); }
+.sb-table td { padding:9px 8px; border-bottom:1px solid rgba(255,255,255,.05); color:#eceaf4; }
+.sb-table tbody tr { cursor:pointer; }
+.sb-table tbody tr:hover td { background:#1a1526; }
+.sb-toggle { display:flex; gap:2px; background:#0b0912; border:1px solid rgba(255,255,255,.08); border-radius:9px; padding:3px; margin-left:auto; }
+.sb-toggle-btn { background:transparent; border:0; color:#8d87a3; font-size:12px; padding:5px 11px; border-radius:7px; cursor:pointer; font-family:inherit; }
+.sb-toggle-btn.active { background:rgba(123,92,255,.25); color:#cfc5ff; }
+.sb-week-strip { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+.sb-day { display:flex; flex-direction:column; align-items:center; gap:3px; background:#16121f; border:1px solid rgba(255,255,255,.07); border-radius:11px; color:#8d87a3; padding:9px 0; cursor:pointer; flex:1; min-width:52px; font-size:11px; font-family:inherit; }
+.sb-day b { color:#eceaf4; font-size:15px; }
+.sb-day .sb-day-dots { display:flex; gap:3px; min-height:6px; }
+.sb-day .sb-day-dots i { width:5px; height:5px; border-radius:50%; background:#7b5cff; }
+.sb-day.today { border-color:rgba(123,92,255,.4); }
+.sb-day.active { background:rgba(123,92,255,.22); border-color:#7b5cff; color:#cfc5ff; }
+.sb-day.active b { color:#fff; }
+.sb-range { font-size:12.5px; color:#8d87a3; }
+.sb-block { border-radius:10px; padding:10px 12px; margin:8px 0; font-size:13px; color:#fff; display:flex; justify-content:space-between; gap:10px; }
+.sb-block span { color:rgba(255,255,255,.75); font-size:12px; }
+.sb-stat { display:flex; flex-direction:column; gap:10px; align-items:flex-start; }
+.sb-stat-num { font-family:'Sora','Inter',sans-serif; font-size:26px; font-weight:800; color:#fff; }
+.sb-stat-label { font-size:12px; color:#8d87a3; }
+.sb-detail-head { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.sb-detail-head h3 { margin:0; font-size:17px; font-family:'Sora','Inter',sans-serif; color:#fff; flex:1; }
+
 /* ── NOTES ── */
 .notes-layout { display:flex; gap:0; height:calc(100vh - 120px); }
 .notes-sidebar { width:240px; min-width:240px; border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
@@ -1008,6 +1117,9 @@ select option { background:#1c1c1c; }
   </div>
 
   <!-- SETTINGS -->
+  <!-- SCATTERBRAIN (Gesamtkonzept-Mockups 1:1, eigenes Modul — ersetzt nichts Bestehendes) -->
+  <div class="tab-panel" id="tab-sb"><div id="sb-root"></div></div>
+
   <div class="tab-panel" id="tab-settings">
     <div class="page-header"><h1>Settings</h1></div>
 
@@ -1225,6 +1337,7 @@ function rerender(colName) {
   if(colName==='goals'||colName==='subgoals') { if(currentTab==='goals') renderGoals(); renderHeuteGoals(); }
   if(currentTab==='karte' && (colName==='tasks'||colName==='mapTopics'||colName==='mapNodes')) renderKarte();
   if(currentTab==='heute' && (colName==='mapTopics'||colName==='mapNodes')) renderHeuteProjects();
+  if(currentTab==='sb' && ['tasks','notes','habits','mapTopics','mapNodes','calEvents'].includes(colName)) renderSB();
 }
 
 // ── FIREBASE ──────────────────────────────────────────────────
@@ -1490,7 +1603,9 @@ function renderNav() {
     const badge=item.badge?`<span class="badge" id="${item.badge}"${item.badgeStyle?` style="${item.badgeStyle}"`:''}></span>`:'';
     const isActive=currentTab===item.tab;
     return `<button class="nav-btn${isActive?' active':''}" onclick="go('${item.tab}')" data-nav-id="${item.id}" ontouchstart="navTouchStart(event,'${item.id}')" ontouchmove="navTouchCancelLP(event)" ontouchend="navTouchEnd(event)" onmousedown="navMouseDown(event,'${item.id}')"><span class="nav-icon">${item.icon}</span>${item.label}${badge}</button>`;
-  }).join('')+`<button class="nav-btn" onclick="go('settings')" style="margin-top:auto"><span class="nav-icon">⚙</span>Settings</button>`;
+  }).join('')
+    +`<button class="nav-btn" onclick="go('sb')" style="margin-top:auto"><span class="nav-icon sb-logo-ico">${SB_LOGO}</span>Scatterbrain</button>`
+    +`<button class="nav-btn" onclick="go('settings')"><span class="nav-icon">⚙</span>Settings</button>`;
   badges();
 }
 
@@ -1568,7 +1683,7 @@ function navTouchEnd(e) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
-const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',habits:'Habits',notes:'Notizen',karte:'Karte',settings:'Settings'};
+const TAB_TITLES = {braindump:'Brain Dump',tasks:'Tasks',heute:'Heute',habits:'Habits',notes:'Notizen',karte:'Karte',sb:'Scatterbrain',settings:'Settings'};
 const TAB_ACTIONS = {
   tasks:    `<button class="btn btn-ghost btn-sm" onclick="editingTags=[];syncTagWrap('form-tag-wrap');toggleForm('add-task-form')">+ Hinzufügen</button>`,
   heute:    `<button class="btn btn-ghost btn-sm" onclick="clearHeute()">Liste leeren</button>`,
@@ -1593,6 +1708,7 @@ function go(tab) {
   if(tab==='notes') renderNotes();
   if(tab==='goals') renderGoals();
   if(tab==='karte') renderKarte();
+  if(tab==='sb') renderSB();
 }
 
 function badges() {
@@ -4941,6 +5057,406 @@ function toggleSidebar() {
 }
 
 // ── INIT ─────────────────────────────────────────────────────
+// ═══ SCATTERBRAIN 1:1 — Gesamtkonzept-Poster als Spec ═══════════
+// Eigenes Modul (Tab "sb"), ersetzt nichts Bestehendes. Nutzt die
+// echten Daten: tasks, notes, habits, calEvents, mapTopics, mapNodes.
+const SB_LOGO='<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5c-8.2 1.4-14 8-14 16 0 5.2 2.4 9.8 6 12.8V44h12v-5h4a3 3 0 0 0 3-3v-4h3.4c1.2 0 1.9-1.3 1.3-2.3l-3-5.2C34.6 15 29.5 6.5 21 5Z"/><path d="M25 12l-7.5 12h5L20 34l9.5-13h-5.5L27 12Z" fill="currentColor" stroke="none"/></svg>';
+
+let sbView='dash', sbTopicId=null, sbNodeId=null, sbTaskId=null, sbDetailFrom=null,
+    sbProjectTab='uebersicht', sbBereichTab='uebersicht', sbStrukturMode='mindmap',
+    sbWeekOffset=0, sbSelDay=dateKey();
+
+function sbTopic(){ return (D.mapTopics||[]).find(t=>t.id===sbTopicId)||null; }
+function sbNodeObj(){ return (D.mapNodes||[]).find(n=>n.id===sbNodeId)||null; }
+function sbAgo(ts){
+  if(!ts) return '';
+  const d=typeof ts==='number'?ts:Date.parse(ts); if(!d||isNaN(d)) return '';
+  const min=Math.floor((Date.now()-d)/60000);
+  if(min<1) return 'gerade eben';
+  if(min<60) return 'vor '+min+' Min';
+  const h=Math.floor(min/60); if(h<24) return 'vor '+h+' Std';
+  const days=Math.floor(h/24); return days===1?'gestern':'vor '+days+' Tagen';
+}
+function sbProgress(tp){
+  const tasks=karteTopicTasks(tp);
+  const done=tasks.filter(t=>t.done).length;
+  return {total:tasks.length,done,open:tasks.length-done,pct:tasks.length?Math.round(done/tasks.length*100):0};
+}
+function sbHabitDots(h){
+  const todayStr=dateKey();
+  const last7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return dateKey(d);});
+  return last7.map(ds=>{
+    const c=habitCheckins(h).find(x=>x.date===ds);
+    const cls=c?(c.mode==='miss'?' miss':c.mode==='minimal'?' minimal':' full'):'';
+    return `<span class="hdot${cls}${ds===todayStr?' today':''}"></span>`;
+  }).join('');
+}
+
+function renderSB(){
+  const root=document.getElementById('sb-root'); if(!root) return;
+  const items=[
+    {v:'dump',    ico:'⚡', label:'Brain Dump'},
+    {v:'dash',    ico:'☀', label:'Heute'},
+    {v:'projects',ico:'▦', label:'Projekte'},
+    {v:'@notes',  ico:'📄', label:'Notizen'},
+    {v:'@habits', ico:'🏆', label:'Habits'},
+    {v:'@goals',  ico:'🎯', label:'Ziele'},
+    {v:'leistung',ico:'📈', label:'Leistungsübersicht'},
+    {v:'woche',   ico:'🗓', label:'Wochenübersicht'},
+    {v:'@settings',ico:'⚙', label:'Einstellungen'},
+  ];
+  const activeV=['project','struktur','bereich','detail'].includes(sbView)?'projects':sbView;
+  const side=`<div class="sb-side">
+    <div class="sb-brand"><span class="sb-brand-logo">${SB_LOGO}</span><span>Scatterbrain</span></div>
+    <nav class="sb-nav">${items.map(it=>`<button class="sb-nav-item${it.v===activeV?' active':''}" onclick="sbGo('${it.v}')"><span>${it.ico}</span>${it.label}</button>`).join('')}</nav>
+    <div class="sb-user"><span class="sb-user-badge">${esc((currentUser?.displayName||'?').trim()[0]||'?')}</span>${esc(currentUser?.displayName?.split(' ')[0]||'Nicht angemeldet')}</div>
+  </div>`;
+  let content='';
+  if(sbView==='dump') content=sbDump();
+  else if(sbView==='dash') content=sbDash();
+  else if(sbView==='projects') content=sbProjects();
+  else if(sbView==='project') content=sbProject();
+  else if(sbView==='struktur') content=sbStruktur();
+  else if(sbView==='bereich') content=sbBereich();
+  else if(sbView==='detail') content=sbDetail();
+  else if(sbView==='woche') content=sbWoche();
+  else if(sbView==='leistung') content=sbLeistung();
+  root.innerHTML=side+`<div class="sb-content">${content}</div>`;
+  if(sbView==='struktur'&&sbStrukturMode==='mindmap') sbDrawMindmapLines();
+}
+function sbGo(v){
+  if(v.startsWith('@')){ go(v.slice(1)); return; }
+  sbView=v; renderSB();
+}
+
+// ── Brain Dump (Sidebar-Punkt 1) ──
+function sbDump(){
+  const entries=[
+    ...D.tasks.map(t=>({title:t.title,ts:t.createdAt||0,color:'#7b5cff'})),
+    ...D.notes.map(n=>({title:n.title,ts:Date.parse(n.created||'')||0,color:'#34d9a0'})),
+  ].sort((a,b)=>b.ts-a.ts).slice(0,8);
+  return `<div class="sb-head-row"><div><h2 class="sb-h2">Brain Dump</h2><div class="sb-sub">Schreib alles rein — die KI strukturiert es.</div></div></div>
+  <div class="sb-card sb-dump">
+    <textarea id="sb-dump-input" placeholder="Schreibe alles, was dir gerade im Kopf ist…"></textarea>
+    <button class="sb-fab" onclick="sbRunDump()" title="Verarbeiten">+</button>
+  </div>
+  <div class="sb-card">
+    <div class="sb-card-title">Letzte Einträge</div>
+    ${entries.length?entries.map(e=>`<div class="sb-entry"><span class="sb-entry-dot" style="background:${e.color}"></span><span class="sb-entry-title">${esc(e.title)}</span><span class="sb-entry-time">${sbAgo(e.ts)}</span></div>`).join(''):'<div class="sb-empty">Noch keine Einträge</div>'}
+  </div>`;
+}
+function sbRunDump(){
+  const v=document.getElementById('sb-dump-input')?.value.trim();
+  if(!v){ toast('Erst was reinschreiben','err'); return; }
+  const inp=document.getElementById('dump-input');
+  if(inp){ inp.value=v; go('braindump'); processDump(); }
+}
+
+// ── Heute / Dashboard (Ebene 1) ──
+function sbDash(){
+  const todayStr=dateKey();
+  const dateLabel=new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long'});
+  const todos=D.tasks.filter(t=>(t.forToday||t.dueDate===todayStr)&&t.hideFromHeute!==todayStr)
+    .sort((a,b)=>(a.done?1:0)-(b.done?1:0)).slice(0,10);
+  const habits=(D.habits||[]).filter(h=>!h.archived);
+  const tops=D.mapTopics||[];
+  return `<div class="sb-head-row"><div><h2 class="sb-h2">Heute, ${dateLabel}</h2><div class="sb-sub">Dein Start. Alles im Blick. Nichts überladen.</div></div></div>
+  <div class="sb-dash-grid">
+    <div class="sb-card">
+      <div class="sb-card-title">Heutige Aufgaben</div>
+      ${todos.length?todos.map(t=>`<label class="sb-todo${t.done?' done':''}"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}')"><span class="sb-todo-title">${esc(t.title)}</span><span class="sb-chip">${esc(getTaskCategoryLabel(t.kategorie||'sonstiges'))}</span></label>`).join(''):'<div class="sb-empty">Keine Aufgaben für heute markiert</div>'}
+      <button class="sb-link-btn" onclick="sbQuickTask()">+ Neue Aufgabe</button>
+    </div>
+    <div class="sb-card">
+      <div class="sb-card-title">Habits</div>
+      ${habits.length?habits.map(h=>`<div class="sb-habit"><span class="sb-habit-name">${esc(h.name)}</span><span class="habit-dots">${sbHabitDots(h)}</span></div>`).join(''):'<div class="sb-empty">Noch keine Habits</div>'}
+    </div>
+  </div>
+  <div class="sb-card-title" style="margin:6px 0 10px">Aktive Projekte</div>
+  <div class="sb-proj-grid">
+    ${tops.map(tp=>{const p=sbProgress(tp);const color=karteColorFor(tp.taskCategory);
+      return `<button class="sb-proj-card" onclick="sbOpenProject('${tp.id}')">
+        <div class="sb-proj-head"><span class="sb-proj-ico" style="background:${color}">${getTaskCategoryIcon(tp.taskCategory)}</span>
+          <div style="flex:1;min-width:0"><div class="sb-proj-title">${esc(tp.title)}</div><span class="sb-status" style="color:#8d87a3">${p.open} offen</span></div></div>
+        <div class="sb-bar"><span style="width:${p.pct}%"></span></div>
+        <div class="sb-proj-foot"><span class="sb-pct">${p.total?p.pct+'%':'—'}</span></div>
+      </button>`;}).join('')}
+    <button class="sb-proj-card sb-proj-new" onclick="dashNewProject()">+ Neues Projekt</button>
+  </div>`;
+}
+async function sbQuickTask(){
+  const title=prompt('Neue Aufgabe für heute:'); if(!title||!title.trim()) return;
+  await fsAdd('tasks',{id:uid(),title:title.trim(),context:'',priority:'mittel',kategorie:autoKategorie(title,''),subkategorie:null,dueDate:null,estimatedTime:null,recurrence:null,tags:[],forToday:true,done:false,createdAt:Date.now()});
+  if(currentTab==='sb') renderSB();
+}
+
+// ── Projekte (Ebene 1→2) ──
+function sbStatusChip(tp){
+  const map={'idee':['Idee','#34d9a0'],'planung':['Planung','#f5b84e'],'in-bearbeitung':['In Bearbeitung','#a493ff'],'ruht':['Ruht','#8d87a3']};
+  const m=map[tp.sbStatus]; return m?`<span class="sb-status" style="color:${m[1]}">● ${m[0]}</span>`:'';
+}
+function sbProjects(){
+  const tops=D.mapTopics||[];
+  return `<div class="sb-head-row"><h2 class="sb-h2">Projekte</h2><button class="sb-btn-primary" onclick="dashNewProject()">+ Neues Projekt</button></div>
+  <div class="sb-proj-grid">
+    ${tops.map(tp=>{const p=sbProgress(tp);const nodes=karteNodesOf(tp.id);const color=karteColorFor(tp.taskCategory);
+      return `<button class="sb-proj-card" onclick="sbOpenProject('${tp.id}')">
+        <div class="sb-proj-head"><span class="sb-proj-ico" style="background:${color}">${getTaskCategoryIcon(tp.taskCategory)}</span>
+          <div style="flex:1;min-width:0"><div class="sb-proj-title">${esc(tp.title)}</div>${sbStatusChip(tp)||`<span class="sb-status" style="color:#8d87a3">${p.open} offen</span>`}</div></div>
+        <div class="sb-bar"><span style="width:${p.pct}%"></span></div>
+        <div class="sb-proj-foot"><div class="sb-taglist">${nodes.slice(0,3).map(n=>`<span class="sb-chip">${esc(n.title)}</span>`).join('')}</div><span class="sb-pct">${p.total?p.pct+'%':''}</span></div>
+      </button>`;}).join('')}
+    <button class="sb-proj-card sb-proj-new" onclick="dashNewProject()">+ Neue Projektkachel</button>
+  </div>`;
+}
+function sbOpenProject(id){ sbTopicId=id; sbNodeId=null; sbProjectTab='uebersicht'; sbView='project'; if(currentTab!=='sb') go('sb'); else renderSB(); }
+
+// ── Projekt-Innenansicht (Ebene 2) ──
+function sbProjTabs(active){
+  const tabs=[['uebersicht','Überblick'],['struktur','Struktur'],['todos','Aufgaben'],['notizen','Notizen']];
+  return `<div class="sb-tabs">${tabs.map(([k,l])=>`<button class="sb-tab${active===k?' active':''}" onclick="sbProjTab('${k}')">${l}</button>`).join('')}<button class="sb-tab" disabled title="Noch nicht gebaut">Dateien</button></div>`;
+}
+function sbProjTab(k){
+  if(k==='struktur'){ sbView='struktur'; renderSB(); return; }
+  sbProjectTab=k; sbView='project'; renderSB();
+}
+function sbProject(){
+  const tp=sbTopic(); if(!tp){ sbView='projects'; return sbProjects(); }
+  const p=sbProgress(tp);
+  const nodes=karteNodesOf(tp.id);
+  let body='';
+  if(sbProjectTab==='uebersicht'){
+    body=`<div class="sb-proj-cols">
+      <div class="sb-card">
+        <div class="sb-card-title">Ziel</div>
+        <textarea class="sb-goal" id="sb-goal" placeholder="Wofür gibt es dieses Projekt?">${esc(tp.goal||'')}</textarea>
+        <button class="sb-mini-link" onclick="sbSaveGoal()">Speichern</button>
+        <div class="sb-kv"><span>Status</span><select id="sb-status" onchange="sbSaveStatus()"><option value="">–</option>${[['idee','Idee'],['planung','Planung'],['in-bearbeitung','In Bearbeitung'],['ruht','Ruht']].map(([k,l])=>`<option value="${k}"${tp.sbStatus===k?' selected':''}>${l}</option>`).join('')}</select></div>
+        <div class="sb-kv"><span>Fortschritt</span><div class="sb-bar" style="flex:1"><span style="width:${p.pct}%"></span></div><b>${p.pct}%</b></div>
+        <div class="sb-kv"><span>Fällig</span><input type="date" id="sb-due" value="${tp.due||''}" onchange="sbSaveDue()"></div>
+      </div>
+      <div class="sb-card">
+        <div class="sb-card-title">Aktive Bereiche</div>
+        ${nodes.length?nodes.map(n=>{const nt=karteTasksInNode(tp,n.id);const open=nt.filter(t=>!t.done).length;
+          return `<button class="sb-area-row" onclick="sbOpenBereich('${n.id}')"><span>◈</span>${esc(n.title)}<span class="cnt">${nt.length-open}/${nt.length} Aufgaben</span></button>`;}).join(''):'<div class="sb-empty">Noch keine Bereiche — über Struktur anlegen</div>'}
+        <button class="sb-link-btn" onclick="sbAddNode()">+ Bereich hinzufügen</button>
+      </div>
+      <div class="sb-card">
+        <div class="sb-card-title">Schnellzugriff</div>
+        <button class="sb-qa" onclick="sbQuickNote()">📝 Neue Notiz</button>
+        <button class="sb-qa" onclick="sbQuickProjTask()">☑ Neue Aufgabe</button>
+        <button class="sb-qa" onclick="sbQuickIdea()">💡 Neue Idee</button>
+      </div>
+    </div>`;
+  } else if(sbProjectTab==='todos'){
+    const tasks=karteTopicTasks(tp);
+    body=`<div class="sb-card"><div class="sb-card-title">Aufgaben</div>
+      ${tasks.length?tasks.map(t=>`<label class="sb-todo${t.done?' done':''}"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}')"><span class="sb-todo-title" onclick="event.preventDefault();sbOpenDetail('${t.id}','project')">${esc(t.title)}</span>${t.dueDate?`<span class="sb-chip">${t.dueDate}</span>`:''}</label>`).join(''):'<div class="sb-empty">Noch keine Aufgaben</div>'}
+      <button class="sb-link-btn" onclick="sbQuickProjTask()">+ Aufgabe hinzufügen</button></div>`;
+  } else if(sbProjectTab==='notizen'){
+    const notes=D.notes.filter(n=>n.category===tp.title);
+    body=`<div class="sb-card"><div class="sb-card-title">Notizen (Kategorie „${esc(tp.title)}“)</div>
+      ${notes.length?notes.map(n=>`<div class="sb-entry" style="cursor:pointer" onclick="go('notes')"><span class="sb-entry-dot" style="background:#34d9a0"></span><span class="sb-entry-title">${esc(n.title)}</span><span class="sb-entry-time">${sbAgo(Date.parse(n.updated||n.created||''))}</span></div>`).join(''):'<div class="sb-empty">Noch keine Notizen in dieser Kategorie</div>'}
+      <button class="sb-link-btn" onclick="sbQuickNote()">+ Neue Notiz</button></div>`;
+  }
+  return `<div class="sb-head-row">
+    <button class="sb-back" onclick="sbGo('projects')">← Zurück</button>
+    <span class="sb-proj-ico" style="background:${karteColorFor(tp.taskCategory)}">${getTaskCategoryIcon(tp.taskCategory)}</span>
+    <div><h2 class="sb-h2">${esc(tp.title)}</h2><span class="sb-sub">${p.pct}% Fortschritt</span></div>
+  </div>`+sbProjTabs(sbProjectTab)+body;
+}
+async function sbSaveGoal(){ const tp=sbTopic(); if(!tp) return; tp.goal=document.getElementById('sb-goal').value.trim(); await fsUpdate('mapTopics',tp); toast('Ziel gespeichert'); }
+async function sbSaveStatus(){ const tp=sbTopic(); if(!tp) return; tp.sbStatus=document.getElementById('sb-status').value||null; await fsUpdate('mapTopics',tp); }
+async function sbSaveDue(){ const tp=sbTopic(); if(!tp) return; tp.due=document.getElementById('sb-due').value||null; await fsUpdate('mapTopics',tp); }
+async function sbQuickNote(){
+  const tp=sbTopic(); if(!tp) return;
+  const title=prompt('Titel der neuen Notiz:'); if(!title||!title.trim()) return;
+  const now=new Date().toISOString();
+  await fsAdd('notes',{id:uid(),title:title.trim(),category:tp.title,subtopic:null,html:'',canvasData:null,created:now,updated:now});
+  toast('Notiz angelegt'); if(currentTab==='sb') renderSB();
+}
+async function sbQuickProjTask(){
+  const tp=sbTopic(); if(!tp) return;
+  const title=prompt('Neue Aufgabe in „'+tp.title+'“:'); if(!title||!title.trim()) return;
+  await fsAdd('tasks',{id:uid(),title:title.trim(),context:'',priority:'mittel',kategorie:tp.taskCategory,subkategorie:tp.subkategorie||null,dueDate:null,estimatedTime:null,recurrence:null,tags:[],done:false,createdAt:Date.now()});
+  if(currentTab==='sb') renderSB();
+}
+async function sbQuickIdea(){
+  const tp=sbTopic(); if(!tp) return;
+  const txt=prompt('Neue Idee:'); if(!txt||!txt.trim()) return;
+  tp.ideas=[...(tp.ideas||[]),txt.trim()]; await fsUpdate('mapTopics',tp); toast('Idee gespeichert');
+}
+
+// ── Struktur (Ebene 3): Mindmap / Baum / Tabelle ──
+function sbStruktur(){
+  const tp=sbTopic(); if(!tp){ sbView='projects'; return sbProjects(); }
+  const nodes=karteNodesOf(tp.id);
+  const modes=[['mindmap','Mindmap'],['baum','Baum'],['tabelle','Tabelle']];
+  let body='';
+  if(sbStrukturMode==='mindmap'){
+    const nodeHtml=nodes.map((n,i)=>{
+      const ang=(i/Math.max(nodes.length,1))*2*Math.PI-Math.PI/2;
+      const x=50+Math.cos(ang)*32, y=50+Math.sin(ang)*34;
+      const open=karteTasksInNode(tp,n.id).filter(t=>!t.done).length;
+      return `<button class="sb-mm-node" style="left:${x}%;top:${y}%" onclick="sbOpenBereich('${n.id}')">${esc(n.title)}${open?`<span class="sb-mm-cnt">${open}</span>`:''}</button>`;
+    }).join('');
+    body=`<div class="sb-card sb-mm-wrap"><svg class="sb-mm-svg" id="sb-mm-svg"></svg>
+      <div class="sb-mm-center" id="sb-mm-center">${esc(tp.title)}</div>${nodeHtml}
+      <button class="sb-link-btn" style="position:absolute;bottom:10px;right:12px;margin:0" onclick="sbAddNode()">+ Bereich</button></div>`;
+  } else if(sbStrukturMode==='baum'){
+    body=`<div class="sb-card"><div class="sb-tree-root">▣ ${esc(tp.title)}</div>
+      ${nodes.map(n=>{const open=karteTasksInNode(tp,n.id).filter(t=>!t.done).length;
+        return `<button class="sb-tree-item" onclick="sbOpenBereich('${n.id}')">└ ${esc(n.title)}<span class="sb-mm-cnt">${open} offen</span></button>`;}).join('')||'<div class="sb-empty">Noch keine Bereiche</div>'}
+      <button class="sb-link-btn" onclick="sbAddNode()">+ Bereich</button></div>`;
+  } else {
+    body=`<div class="sb-card"><table class="sb-table"><thead><tr><th>Bereich</th><th>Offen</th><th>Ideen</th><th>Notiz</th></tr></thead><tbody>
+      ${nodes.map(n=>{const open=karteTasksInNode(tp,n.id).filter(t=>!t.done).length;
+        return `<tr onclick="sbOpenBereich('${n.id}')"><td>${esc(n.title)}</td><td>${open}</td><td>${(n.ideas||[]).length}</td><td>${n.note?'✓':'—'}</td></tr>`;}).join('')||'<tr><td colspan="4" class="sb-empty">Noch keine Bereiche</td></tr>'}
+    </tbody></table><button class="sb-link-btn" onclick="sbAddNode()">+ Bereich</button></div>`;
+  }
+  return `<div class="sb-head-row"><button class="sb-back" onclick="sbProjTab('uebersicht')">← ${esc(tp.title)}</button>
+    <div class="sb-toggle">${modes.map(([k,l])=>`<button class="sb-toggle-btn${sbStrukturMode===k?' active':''}" onclick="sbStrukturMode='${k}';renderSB()">${l}</button>`).join('')}</div>
+  </div>`+sbProjTabs('struktur')+body;
+}
+function sbDrawMindmapLines(){
+  const svg=document.getElementById('sb-mm-svg'); const c=document.getElementById('sb-mm-center');
+  if(!svg||!c) return;
+  const wrap=svg.parentElement, wr=wrap.getBoundingClientRect(), cr=c.getBoundingClientRect();
+  const cx=cr.left-wr.left+cr.width/2, cy=cr.top-wr.top+cr.height/2;
+  svg.setAttribute('width',wrap.clientWidth); svg.setAttribute('height',wrap.clientHeight);
+  let lines='';
+  wrap.querySelectorAll('.sb-mm-node').forEach(n=>{
+    const r=n.getBoundingClientRect();
+    lines+=`<line x1="${cx}" y1="${cy}" x2="${r.left-wr.left+r.width/2}" y2="${r.top-wr.top+r.height/2}" stroke="rgba(123,92,255,.45)" stroke-width="1.5"/>`;
+  });
+  svg.innerHTML=lines;
+}
+async function sbAddNode(){
+  const tp=sbTopic(); if(!tp) return;
+  const name=prompt('Name des neuen Bereichs (z.B. Design, Technik, Marketing):'); if(!name||!name.trim()) return;
+  await fsAdd('mapNodes',{id:uid(),topicId:tp.id,title:name.trim(),note:'',createdAt:Date.now()});
+  if(currentTab==='sb') renderSB();
+}
+function sbOpenBereich(id){ sbNodeId=id; sbBereichTab='uebersicht'; sbView='bereich'; renderSB(); }
+
+// ── Bereich (Ebene 4): Überblick / Aufgaben / Notizen / Ideen / Info ──
+function sbBereich(){
+  const tp=sbTopic(), nd=sbNodeObj();
+  if(!tp||!nd){ sbView='struktur'; return sbStruktur(); }
+  const tabs=[['uebersicht','Überblick'],['todos','Aufgaben'],['notizen','Notizen'],['ideen','Ideen'],['meta','Info']];
+  const nTasks=karteTasksInNode(tp,nd.id);
+  let body='';
+  if(sbBereichTab==='uebersicht'){
+    body=`<div class="sb-proj-cols"><div class="sb-card"><div class="sb-card-title">Auf einen Blick</div>
+      <div class="sb-kv"><span>Offene Aufgaben</span><b>${nTasks.filter(t=>!t.done).length}</b></div>
+      <div class="sb-kv"><span>Erledigt</span><b>${nTasks.filter(t=>t.done).length}</b></div>
+      <div class="sb-kv"><span>Ideen</span><b>${(nd.ideas||[]).length}</b></div>
+      <div class="sb-kv"><span>Notiz</span><b>${nd.note?'vorhanden':'—'}</b></div>
+    </div></div>`;
+  } else if(sbBereichTab==='todos'){
+    body=`<div class="sb-card">${nTasks.length?nTasks.map(t=>`<label class="sb-todo${t.done?' done':''}"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}')"><span class="sb-todo-title" onclick="event.preventDefault();sbOpenDetail('${t.id}','bereich')">${esc(t.title)}</span>${t.dueDate?`<span class="sb-chip">${t.dueDate}</span>`:''}<span class="sb-chip" style="background:${t.done?'rgba(52,217,160,.15)':'rgba(245,184,78,.15)'};color:${t.done?'#34d9a0':'#f5b84e'};border-color:transparent">${t.done?'Erledigt':'Offen'}</span></label>`).join(''):'<div class="sb-empty">Keine Aufgaben in diesem Bereich</div>'}
+      <button class="sb-link-btn" onclick="sbQuickNodeTask()">+ Aufgabe hinzufügen</button></div>`;
+  } else if(sbBereichTab==='notizen'){
+    body=`<div class="sb-card"><div class="sb-card-title">Notiz</div>
+      <textarea class="sb-goal" id="sb-node-note" style="min-height:180px" placeholder="Notizen zu diesem Bereich…">${esc(nd.note||'')}</textarea>
+      <button class="sb-mini-link" onclick="sbSaveNodeNote()">Speichern</button></div>`;
+  } else if(sbBereichTab==='ideen'){
+    const ideas=nd.ideas||[];
+    body=`<div class="sb-card">${ideas.length?ideas.map((x,i)=>`<div class="sb-entry"><span class="sb-entry-dot" style="background:#f5b84e"></span><span class="sb-entry-title">${esc(x)}</span><button class="sb-mini-link" onclick="sbDelNodeIdea(${i})" title="Löschen">×</button></div>`).join(''):'<div class="sb-empty">Noch keine Ideen</div>'}
+      <button class="sb-link-btn" onclick="sbAddNodeIdea()">+ Neue Idee</button></div>`;
+  } else if(sbBereichTab==='meta'){
+    body=`<div class="sb-card"><div class="sb-card-title">Meta-Infos</div>
+      <textarea class="sb-goal" id="sb-node-meta" style="min-height:140px" placeholder="Wichtige Infos auf einen Blick (Farben, Links, Entscheidungen…)">${esc(nd.meta||'')}</textarea>
+      <button class="sb-mini-link" onclick="sbSaveNodeMeta()">Speichern</button></div>`;
+  }
+  return `<div class="sb-head-row"><button class="sb-back" onclick="sbView='struktur';renderSB()">← ${esc(tp.title)}</button><h2 class="sb-h2">◈ ${esc(nd.title)}</h2></div>
+    <div class="sb-tabs">${tabs.map(([k,l])=>`<button class="sb-tab${sbBereichTab===k?' active':''}" onclick="sbBereichTab='${k}';renderSB()">${l}</button>`).join('')}</div>`+body;
+}
+async function sbSaveNodeNote(){ const nd=sbNodeObj(); if(!nd) return; nd.note=document.getElementById('sb-node-note').value; await fsUpdate('mapNodes',nd); toast('Notiz gespeichert'); }
+async function sbSaveNodeMeta(){ const nd=sbNodeObj(); if(!nd) return; nd.meta=document.getElementById('sb-node-meta').value; await fsUpdate('mapNodes',nd); toast('Meta-Infos gespeichert'); }
+async function sbAddNodeIdea(){ const nd=sbNodeObj(); if(!nd) return; const x=prompt('Neue Idee:'); if(!x||!x.trim()) return; nd.ideas=[...(nd.ideas||[]),x.trim()]; await fsUpdate('mapNodes',nd); if(currentTab==='sb')renderSB(); }
+async function sbDelNodeIdea(i){ const nd=sbNodeObj(); if(!nd) return; if(!confirm('Idee löschen?')) return; nd.ideas=(nd.ideas||[]).filter((_,j)=>j!==i); await fsUpdate('mapNodes',nd); if(currentTab==='sb')renderSB(); }
+async function sbQuickNodeTask(){
+  const tp=sbTopic(), nd=sbNodeObj(); if(!tp||!nd) return;
+  const title=prompt('Neue Aufgabe in „'+nd.title+'“:'); if(!title||!title.trim()) return;
+  await fsAdd('tasks',{id:uid(),title:title.trim(),context:'',priority:'mittel',kategorie:tp.taskCategory,subkategorie:tp.subkategorie||null,mapNodeId:nd.id,dueDate:null,estimatedTime:null,recurrence:null,tags:[],done:false,createdAt:Date.now()});
+  if(currentTab==='sb') renderSB();
+}
+
+// ── Detailansicht (Ebene 5): ein einzelnes Element ──
+function sbOpenDetail(taskId,from){ sbTaskId=taskId; sbDetailFrom=from||'project'; sbView='detail'; renderSB(); }
+function sbDetail(){
+  const t=D.tasks.find(x=>x.id===sbTaskId);
+  if(!t){ sbView='projects'; return sbProjects(); }
+  const tp=sbTopic();
+  const nd=(D.mapNodes||[]).find(n=>n.id===t.mapNodeId);
+  const backLabel=sbDetailFrom==='bereich'&&nd?nd.title:(tp?tp.title:'Zurück');
+  return `<div class="sb-head-row"><button class="sb-back" onclick="sbView='${sbDetailFrom==='bereich'?'bereich':'project'}';renderSB()">← ${esc(backLabel)}</button></div>
+  <div class="sb-card" style="max-width:640px">
+    <div class="sb-detail-head"><h3>${esc(t.title)}</h3>
+      <span class="sb-chip" style="background:${t.done?'rgba(52,217,160,.15)':'rgba(123,92,255,.16)'};color:${t.done?'#34d9a0':'#a493ff'}">${t.done?'Erledigt':'In Arbeit'}</span></div>
+    <div class="sb-card-title" style="margin-top:12px">Beschreibung</div>
+    <textarea class="sb-goal" id="sb-task-ctx" placeholder="Worum geht es genau?">${esc(t.context||'')}</textarea>
+    <button class="sb-mini-link" onclick="sbSaveTaskCtx()">Speichern</button>
+    <div class="sb-kv"><span>Bereich</span><b>${nd?esc(nd.title):'—'}</b></div>
+    <div class="sb-kv"><span>Projekt/Kategorie</span><b>${esc(getTaskCategoryLabel(t.kategorie||'sonstiges'))}</b></div>
+    <div class="sb-kv"><span>Priorität</span><select id="sb-task-prio" onchange="sbSaveTaskPrio()">${['hoch','mittel','niedrig'].map(p=>`<option value="${p}"${(t.priority||'mittel')===p?' selected':''}>${p[0].toUpperCase()+p.slice(1)}</option>`).join('')}</select></div>
+    <div class="sb-kv"><span>Fällig</span><input type="date" id="sb-task-due" value="${t.dueDate||''}" onchange="sbSaveTaskDue()"></div>
+    ${(t.tags||[]).length?`<div class="sb-kv"><span>Tags</span><div class="sb-taglist">${t.tags.map(x=>`<span class="sb-chip">#${esc(x)}</span>`).join('')}</div></div>`:''}
+    <div style="margin-top:12px"><button class="sb-btn-primary" style="margin:0" onclick="toggleTask('${t.id}');sbView='${sbDetailFrom==='bereich'?'bereich':'project'}';renderSB()">${t.done?'Als offen markieren':'✓ Als erledigt markieren'}</button></div>
+  </div>`;
+}
+async function sbSaveTaskCtx(){ const t=D.tasks.find(x=>x.id===sbTaskId); if(!t) return; t.context=document.getElementById('sb-task-ctx').value; await fsUpdate('tasks',t); toast('Gespeichert'); }
+async function sbSaveTaskPrio(){ const t=D.tasks.find(x=>x.id===sbTaskId); if(!t) return; t.priority=document.getElementById('sb-task-prio').value; await fsUpdate('tasks',t); }
+async function sbSaveTaskDue(){ const t=D.tasks.find(x=>x.id===sbTaskId); if(!t) return; t.dueDate=document.getElementById('sb-task-due').value||null; await fsUpdate('tasks',t); }
+
+// ── Wochenübersicht ──
+function sbWoche(){
+  const base=new Date(); base.setDate(base.getDate()+sbWeekOffset*7); base.setHours(12,0,0,0);
+  const dow=base.getDay(); const mo=new Date(base); mo.setDate(mo.getDate()-(dow===0?6:dow-1));
+  const days=Array.from({length:7},(_,i)=>{const d=new Date(mo);d.setDate(d.getDate()+i);return d;});
+  if(!days.some(d=>dateKey(d)===sbSelDay)) sbSelDay=dateKey(days[0]);
+  const names=['Mo','Di','Mi','Do','Fr','Sa','So'];
+  const todayStr=dateKey();
+  const rangeLabel=days[0].toLocaleDateString('de-DE',{day:'numeric',month:'short'})+' – '+days[6].toLocaleDateString('de-DE',{day:'numeric',month:'short',year:'numeric'});
+  const sel=sbSelDay;
+  const evs=(D.calEvents||[]).filter(e=>e.date===sel).sort((a,b)=>(a.startTime||'').localeCompare(b.startTime||''));
+  const dayTasks=D.tasks.filter(t=>t.dueDate===sel);
+  const selLabel=new Date(sel+'T12:00').toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
+  return `<div class="sb-head-row"><h2 class="sb-h2">Wochenübersicht</h2>
+    <div style="display:flex;gap:6px;align-items:center;margin-left:auto">
+      <button class="sb-back" onclick="sbWeekOffset--;renderSB()">‹</button>
+      <span class="sb-range">${rangeLabel}</span>
+      <button class="sb-back" onclick="sbWeekOffset++;renderSB()">›</button>
+      <button class="sb-back" onclick="sbWeekOffset=0;sbSelDay=dateKey();renderSB()">Heute</button>
+    </div></div>
+  <div class="sb-week-strip">${days.map((d,i)=>{const ds=dateKey(d);
+    const cnt=(D.calEvents||[]).filter(e=>e.date===ds).length+D.tasks.filter(t=>t.dueDate===ds&&!t.done).length;
+    return `<button class="sb-day${ds===sel?' active':''}${ds===todayStr?' today':''}" onclick="sbSelDay='${ds}';renderSB()"><span>${names[i]}</span><b>${d.getDate()}</b><span class="sb-day-dots">${Array.from({length:Math.min(cnt,3)},()=>'<i></i>').join('')}</span></button>`;}).join('')}</div>
+  <div class="sb-card">
+    <div class="sb-head-row" style="margin-bottom:8px"><div class="sb-card-title" style="margin:0">${selLabel}</div><button class="sb-link-btn" style="margin:0 0 0 auto" onclick="openQuickAddCal('${sel}','09:00')">+ Eintrag hinzufügen</button></div>
+    ${evs.map(e=>{const c=CALEVENT_COLORS[e.type]||CALEVENT_COLORS.event;
+      return `<div class="sb-block" style="background:${c.bg}"><b>${esc(e.title||'')}</b><span>${e.startTime||''}–${e.endTime||''}</span></div>`;}).join('')}
+    ${dayTasks.map(t=>`<label class="sb-todo${t.done?' done':''}"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}')"><span class="sb-todo-title">${esc(t.title)}</span></label>`).join('')}
+    ${(!evs.length&&!dayTasks.length)?'<div class="sb-empty">Noch nichts geplant an diesem Tag</div>':''}
+  </div>`;
+}
+
+// ── Leistungsübersicht (nur echte Metriken, nichts erfunden) ──
+function sbLeistung(){
+  const openT=D.tasks.filter(t=>!t.done).length;
+  const doneT=D.tasks.filter(t=>t.done).length;
+  const projects=(D.mapTopics||[]).length;
+  const habits=(D.habits||[]).filter(h=>!h.archived);
+  const last7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-i);return dateKey(d);});
+  let hits=0; habits.forEach(h=>{ last7.forEach(ds=>{ if(habitCheckins(h).some(c=>c.date===ds&&c.mode!=='miss')) hits++; }); });
+  const quote=habits.length?Math.round(hits/(habits.length*7)*100):null;
+  const tiles=[['Offene Aufgaben',openT,'☑'],['Erledigt gesamt',doneT,'✔'],['Aktive Projekte',projects,'▦'],['Habit-Quote (7 Tage)',quote===null?'—':quote+'%','🏆'],['Notizen',D.notes.length,'📄']];
+  return `<div class="sb-head-row"><div><h2 class="sb-h2">Leistungsübersicht</h2><div class="sb-sub">Metriken, die dich wirklich weiterbringen.</div></div></div>
+  <div class="sb-proj-grid">${tiles.map(([l,v,ic])=>`<div class="sb-card sb-stat" style="margin:0"><span class="sb-proj-ico" style="background:#7b5cff">${ic}</span><div class="sb-stat-num">${v}</div><div class="sb-stat-label">${l}</div></div>`).join('')}</div>
+  <p class="sb-empty" style="margin-top:14px">Produktive Stunden, Fokus-% und Wochenvergleich folgen, sobald die App die nötigen Verlaufsdaten wirklich erfasst — hier wird nichts erfunden.</p>`;
+}
+
 function init() {
   loadLocal();
   renderTaskCategoryInputs();
