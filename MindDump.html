@@ -465,6 +465,7 @@ select option { background:#1c1c1c; }
 .sb-brand-logo { width:30px; height:30px; color:#a493ff; display:flex; flex-shrink:0; filter:drop-shadow(0 0 6px rgba(123,92,255,.55)); }
 .sb-brand-logo svg { width:100%; height:100%; }
 .sb-logo-ico svg { width:20px; height:20px; }
+.sb-ver { font-size:9.5px; font-weight:600; color:#a493ff; background:rgba(123,92,255,.14); border:1px solid rgba(123,92,255,.3); border-radius:7px; padding:1px 6px; margin-left:2px; align-self:center; }
 .sb-nav { display:flex; flex-direction:column; gap:2px; flex:1; }
 .sb-nav-item { display:flex; align-items:center; gap:9px; background:transparent; border:0; border-radius:9px; color:#8d87a3; font-size:13px; padding:8px 10px; cursor:pointer; text-align:left; font-family:inherit; white-space:nowrap; }
 .sb-nav-item:hover { background:#1a1526; color:#eceaf4; }
@@ -5179,7 +5180,7 @@ function renderSB(){
   ];
   const activeV=['project','struktur','bereich','detail'].includes(sbView)?'projects':sbView;
   const side=`<div class="sb-side">
-    <div class="sb-brand"><span class="sb-brand-logo">${SB_LOGO}</span><span>Scatterbrain</span></div>
+    <div class="sb-brand"><span class="sb-brand-logo">${SB_LOGO}</span><span>Scatterbrain</span><span class="sb-ver" title="Build 21.07.2026">v1.1</span></div>
     <nav class="sb-nav">${items.map(it=>`<button class="sb-nav-item${it.v===activeV?' active':''}" onclick="sbGo('${it.v}')"><span class="sb-ic">${it.ic}</span>${it.label}</button>`).join('')}</nav>
     <div class="sb-user"><span class="sb-user-badge">${esc((currentUser?.displayName||'?').trim()[0]||'?')}</span>${esc(currentUser?.displayName?.split(' ')[0]||'Nicht angemeldet')}</div>
   </div>`;
