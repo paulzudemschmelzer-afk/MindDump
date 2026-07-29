@@ -3,180 +3,431 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mind Dump</title>
+    <title>Scatterbrain</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=DM+Serif+Display:ital@0;1&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="page-shell">
-      <header class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">mental overflow, but make it usable</p>
-          <h1>Mind Dump</h1>
-          <p class="hero-text">
-            Schreib alles ungefiltert raus, markiere Wichtiges und finde deine
-            Gedanken wieder, bevor sie im Kopf kreisen.
-          </p>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Hauptnavigation">
+        <div class="brand-lockup">
+          <div class="logo-mark">
+            <img src="./assets/scatterbrain-logo.jpeg" alt="Scatterbrain Logo" />
+          </div>
+          <div>
+            <p class="brand-name">Scatterbrain</p>
+            <p class="brand-tagline">Focus. Organize. Elevate.</p>
+          </div>
         </div>
-        <div class="hero-stats" aria-label="Uebersicht">
-          <article>
-            <span id="totalCount">0</span>
-            <p>Eintraege</p>
-          </article>
-          <article>
-            <span id="starredCount">0</span>
-            <p>Merken</p>
-          </article>
-          <article>
-            <span id="archivedCount">0</span>
-            <p>Archiv</p>
-          </article>
-        </div>
-      </header>
 
-      <main class="layout">
-        <section class="composer panel">
-          <div class="section-head">
-            <div>
-              <p class="section-kicker">Capture</p>
-              <h2>Raus aus dem Kopf</h2>
-            </div>
-            <button id="clearDraftButton" class="ghost-button" type="button">
-              Entwurf loeschen
+        <nav class="side-nav">
+          <button class="nav-item active" type="button" data-view="dashboard">
+            <span class="icon-box">01</span>
+            Dashboard
+          </button>
+          <button class="nav-item" type="button" data-view="brain">
+            <span class="icon-box">BD</span>
+            Brain Dump
+          </button>
+          <button class="nav-item" type="button" data-view="projects">
+            <span class="icon-box">PR</span>
+            Projekte
+          </button>
+          <button class="nav-item" type="button" data-view="structure">
+            <span class="icon-box">ST</span>
+            Struktur
+          </button>
+          <button class="nav-item" type="button" data-view="week">
+            <span class="icon-box">WK</span>
+            Wochenuebersicht
+          </button>
+          <button class="nav-item" type="button" data-view="performance">
+            <span class="icon-box">RF</span>
+            Leistung
+          </button>
+        </nav>
+
+        <div class="focus-card">
+          <p class="micro-label">Anti-Verzettelung</p>
+          <strong>1 Aufbau-Block</strong>
+          <span>Heute nur ein grosser Fokus. Alles andere landet im Parking.</span>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="micro-label">Persoenliche Kommandozentrale</p>
+            <h1>Weniger verzetteln. Mehr Fokus.</h1>
+          </div>
+          <div class="tab-strip" role="tablist" aria-label="Offene Ansichten">
+            <button class="tab-pill active" type="button" data-view="dashboard">
+              Dashboard
+            </button>
+            <button class="tab-pill" type="button" data-view="projects">
+              Projekt
+            </button>
+            <button class="tab-pill" type="button" data-view="week">
+              Woche
+            </button>
+            <button class="tab-pill" type="button" data-view="performance">
+              Reflexion
             </button>
           </div>
+        </header>
 
-          <form id="entryForm" class="entry-form">
-            <label class="field">
-              <span>Titel</span>
-              <input
-                id="titleInput"
-                name="title"
-                type="text"
-                maxlength="80"
-                placeholder="Worum geht's grob?"
-              />
-            </label>
-
-            <label class="field">
-              <span>Gedanken-Dump</span>
-              <textarea
-                id="contentInput"
-                name="content"
-                rows="8"
-                maxlength="1200"
-                placeholder="Schreib roh, unsortiert und ohne Druck. Du kannst spaeter ordnen."
-                required
-              ></textarea>
-            </label>
-
-            <div class="form-row">
-              <label class="field">
-                <span>Tags</span>
-                <input
-                  id="tagsInput"
-                  name="tags"
-                  type="text"
-                  placeholder="z. B. arbeit, privat, idee"
-                />
-              </label>
-
-              <label class="toggle">
-                <input id="starInput" name="starred" type="checkbox" />
-                <span>Sofort merken</span>
-              </label>
-            </div>
-
-            <div class="form-actions">
-              <p id="draftState" class="draft-state" aria-live="polite">
-                Entwurf wird lokal gespeichert.
-              </p>
-              <button class="primary-button" type="submit">
-                Eintrag speichern
-              </button>
-            </div>
-          </form>
-        </section>
-
-        <section class="board panel">
-          <div class="section-head board-head">
-            <div>
-              <p class="section-kicker">Review</p>
-              <h2>Gedanken sortieren</h2>
-            </div>
-            <div class="actions-inline">
-              <button id="exportButton" class="ghost-button" type="button">
-                Export JSON
-              </button>
-              <label class="import-button">
-                Import JSON
-                <input id="importInput" type="file" accept="application/json" />
-              </label>
-            </div>
-          </div>
-
-          <div class="toolbar">
-            <label class="search-field">
-              <span class="sr-only">Suche</span>
-              <input
-                id="searchInput"
-                type="search"
-                placeholder="Suche nach Inhalt oder Tags"
-              />
-            </label>
-
-            <div class="filters" role="tablist" aria-label="Filter">
-              <button class="filter-chip active" type="button" data-filter="all">
-                Alle
-              </button>
-              <button class="filter-chip" type="button" data-filter="starred">
-                Gemerkt
-              </button>
-              <button class="filter-chip" type="button" data-filter="active">
-                Aktiv
-              </button>
-              <button class="filter-chip" type="button" data-filter="archived">
-                Archiv
-              </button>
-            </div>
-          </div>
-
-          <div id="entriesGrid" class="entries-grid" aria-live="polite"></div>
-          <template id="entryTemplate">
-            <article class="entry-card">
-              <div class="entry-top">
+        <section id="dashboard" class="view active-view" aria-labelledby="dashboard-title">
+          <div class="dashboard-grid">
+            <article class="panel hero-panel span-6">
+              <div class="panel-head">
                 <div>
-                  <p class="entry-date"></p>
-                  <h3 class="entry-title"></h3>
+                  <p class="micro-label">Vision</p>
+                  <h2 id="dashboard-title">Ein System, das mitdenkt.</h2>
                 </div>
-                <button class="star-button" type="button" aria-label="Merken">
-                  [ ]
+                <span class="status-pill">Lokaler Prototyp</span>
+              </div>
+              <p>
+                Scatterbrain sammelt rohe Gedanken, sortiert sie in klare
+                Ebenen und zwingt den Tag auf wenige wichtige Schritte.
+              </p>
+              <div class="principle-row">
+                <div><strong>Alles</strong><span>erfassen</span></div>
+                <div><strong>KI</strong><span>strukturieren</span></div>
+                <div><strong>Fokus</strong><span>erzwingen</span></div>
+                <div><strong>Ziele</strong><span>erreichen</span></div>
+              </div>
+            </article>
+
+            <article class="panel span-3">
+              <p class="micro-label">Fuer wen?</p>
+              <h2>Koepfe mit vielen parallelen Gedanken.</h2>
+              <p>
+                Fuer Menschen, die Ideen, Aufgaben, Notizen und Planung an
+                einem Ort brauchen.
+              </p>
+              <div class="mini-grid">
+                <span>Business</span>
+                <span>Aufbau</span>
+                <span>Fokus</span>
+                <span>Umsetzung</span>
+              </div>
+            </article>
+
+            <article class="panel span-3">
+              <p class="micro-label">Regeln</p>
+              <h2>Fokus wird sichtbar.</h2>
+              <ul class="rule-list">
+                <li>Max. 3 aktive Projekte</li>
+                <li>Max. 1 Aufbau-Block pro Tag</li>
+                <li>Parking fuer alles Nebensaechliche</li>
+                <li>Heute-Plan ist Prioritaet</li>
+              </ul>
+            </article>
+
+            <article class="panel span-7">
+              <div class="panel-head">
+                <div>
+                  <p class="micro-label">Workflow-Kreislauf</p>
+                  <h2>Von Chaos zu Umsetzung.</h2>
+                </div>
+              </div>
+              <div class="workflow" aria-label="Workflow">
+                <div class="workflow-step active">
+                  <span>1</span>
+                  <strong>Brain Dump</strong>
+                  <small>Alles erfassen</small>
+                </div>
+                <div class="workflow-step">
+                  <span>2</span>
+                  <strong>Projekte</strong>
+                  <small>sortieren</small>
+                </div>
+                <div class="workflow-step">
+                  <span>3</span>
+                  <strong>Bereiche</strong>
+                  <small>zerlegen</small>
+                </div>
+                <div class="workflow-step">
+                  <span>4</span>
+                  <strong>Heute</strong>
+                  <small>fokussieren</small>
+                </div>
+                <div class="workflow-step">
+                  <span>5</span>
+                  <strong>Leistung</strong>
+                  <small>reflektieren</small>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel span-5">
+              <div class="panel-head">
+                <div>
+                  <p class="micro-label">Brain Dump</p>
+                  <h2>Schnell erfassen</h2>
+                </div>
+                <button class="icon-action" id="clearBrainForm" type="button" title="Leeren">
+                  Reset
                 </button>
               </div>
-              <p class="entry-content"></p>
-              <div class="tag-list"></div>
-              <div class="entry-actions">
-                <button class="ghost-button archive-button" type="button">
-                  Archivieren
+              <form class="quick-capture" id="brainForm">
+                <textarea
+                  id="brainInput"
+                  rows="5"
+                  maxlength="700"
+                  placeholder="Schreib alles roh rein. Struktur kommt danach."
+                  required
+                ></textarea>
+                <div class="capture-actions">
+                  <label>
+                    <span>Kategorie</span>
+                    <select id="brainCategory">
+                      <option>Idee</option>
+                      <option>Aufgabe</option>
+                      <option>Notiz</option>
+                      <option>Frage</option>
+                    </select>
+                  </label>
+                  <button class="primary-button" type="submit">Erfassen</button>
+                </div>
+              </form>
+            </article>
+
+            <article class="panel span-4">
+              <p class="micro-label">Heute</p>
+              <h2>Ein klarer Tag.</h2>
+              <div class="task-list" id="todayTasks"></div>
+            </article>
+
+            <article class="panel span-4">
+              <p class="micro-label">Fokus des Tages</p>
+              <h2>Aufbau-Block</h2>
+              <div class="focus-meter">
+                <span style="width: 72%"></span>
+              </div>
+              <p class="large-number">72%</p>
+              <p>Struktur steht. Naechster Schritt: Detailansicht schaerfen.</p>
+            </article>
+
+            <article class="panel span-4">
+              <p class="micro-label">Habits</p>
+              <h2>Basis halten.</h2>
+              <div class="habit-list" id="habitList"></div>
+            </article>
+
+            <article class="panel span-8">
+              <div class="panel-head">
+                <div>
+                  <p class="micro-label">Aktive Bereiche</p>
+                  <h2>Neutrale Demo-Kacheln</h2>
+                </div>
+                <button class="ghost-button" type="button" data-view="projects">
+                  Oeffnen
                 </button>
-                <button class="ghost-button delete-button danger" type="button">
-                  Loeschen
+              </div>
+              <div class="project-grid" id="projectGrid"></div>
+            </article>
+
+            <article class="panel span-4">
+              <p class="micro-label">5-Ebenen-Zoom</p>
+              <h2>Immer Kontext.</h2>
+              <div class="zoom-rail">
+                <button class="zoom-item active" type="button" data-view="dashboard">
+                  <span>1</span> Ueberblick
+                </button>
+                <button class="zoom-item" type="button" data-view="projects">
+                  <span>2</span> Projekt
+                </button>
+                <button class="zoom-item" type="button" data-view="structure">
+                  <span>3</span> Bereiche
+                </button>
+                <button class="zoom-item" type="button" data-view="structure">
+                  <span>4</span> Inhalte
+                </button>
+                <button class="zoom-item" type="button" data-view="structure">
+                  <span>5</span> Detail
                 </button>
               </div>
             </article>
-          </template>
-
-          <div id="emptyState" class="empty-state">
-            <p>Noch nichts hier. Der erste ungeordnete Gedanke darf ruhig chaotisch sein.</p>
           </div>
+        </section>
+
+        <section id="brain" class="view" aria-labelledby="brain-title">
+          <div class="two-column">
+            <article class="panel">
+              <p class="micro-label">Ebene 1</p>
+              <h2 id="brain-title">Brain Dump Eingang</h2>
+              <p>
+                Jede Information landet zuerst hier. Danach kann sie als
+                Aufgabe, Notiz, Idee oder Projekt-Baustein einsortiert werden.
+              </p>
+              <form class="quick-capture wide" id="brainFormLarge">
+                <textarea
+                  id="brainInputLarge"
+                  rows="8"
+                  maxlength="900"
+                  placeholder="Alles rein. Keine Ordnung noetig."
+                  required
+                ></textarea>
+                <div class="capture-actions">
+                  <label>
+                    <span>Typ</span>
+                    <select id="brainCategoryLarge">
+                      <option>Idee</option>
+                      <option>Aufgabe</option>
+                      <option>Notiz</option>
+                      <option>Frage</option>
+                    </select>
+                  </label>
+                  <button class="primary-button" type="submit">Speichern</button>
+                </div>
+              </form>
+            </article>
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="micro-label">Inbox</p>
+                  <h2>Neue Eintraege</h2>
+                </div>
+                <button class="ghost-button danger" id="clearBrainDump" type="button">
+                  Liste leeren
+                </button>
+              </div>
+              <div class="inbox-list" id="brainDumpList"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="projects" class="view" aria-labelledby="projects-title">
+          <div class="project-view">
+            <article class="panel project-overview">
+              <div class="panel-head">
+                <div>
+                  <p class="micro-label">Ebene 2</p>
+                  <h2 id="projects-title">Projektansicht</h2>
+                </div>
+                <span class="status-pill">In Bearbeitung</span>
+              </div>
+              <div class="project-header-block">
+                <div class="project-symbol" id="projectSymbol">SB</div>
+                <div>
+                  <h3 id="projectTitle">Scatterbrain Konzept</h3>
+                  <p id="projectSummary">
+                    Neutrale Demo fuer Navigation, Struktur, Aufgaben,
+                    Notizen und Fokuslogik.
+                  </p>
+                </div>
+              </div>
+              <div class="subtabs" role="tablist" aria-label="Projektbereiche">
+                <button class="subtab active" type="button" data-project-panel="overview">
+                  Uebersicht
+                </button>
+                <button class="subtab" type="button" data-project-panel="tasks">
+                  Aufgaben
+                </button>
+                <button class="subtab" type="button" data-project-panel="notes">
+                  Notizen
+                </button>
+                <button class="subtab" type="button" data-project-panel="files">
+                  Dateien
+                </button>
+              </div>
+              <div class="project-panel active-project-panel" id="project-overview">
+                <div id="projectRoadmap"></div>
+              </div>
+              <div class="project-panel" id="project-tasks">
+                <div class="task-list stacked" id="projectTasks"></div>
+              </div>
+              <div class="project-panel" id="project-notes">
+                <div class="note-card">
+                  <strong>Notiz</strong>
+                  <p>
+                    Das Produkt bleibt ruhig, hierarchisch und immer manuell
+                    korrigierbar.
+                  </p>
+                </div>
+              </div>
+              <div class="project-panel" id="project-files">
+                <div class="file-row"><span>design-tokens.pdf</span><small>Meta</small></div>
+                <div class="file-row"><span>wireframe.png</span><small>UI</small></div>
+              </div>
+            </article>
+
+            <aside class="panel detail-panel">
+              <p class="micro-label">Ebene 5</p>
+              <h2>Detailansicht</h2>
+              <div id="detailContent"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="structure" class="view" aria-labelledby="structure-title">
+          <div class="structure-layout">
+            <article class="panel tree-panel">
+              <p class="micro-label">Baum</p>
+              <h2 id="structure-title">Projektstruktur</h2>
+              <div id="structureTree"></div>
+              <div class="view-switch">
+                <button class="active" type="button" data-structure-mode="roadmap">Roadmap</button>
+                <button type="button" data-structure-mode="tree">Baum</button>
+                <button type="button" data-structure-mode="table">Tabelle</button>
+              </div>
+            </article>
+
+            <article class="panel mindmap-panel">
+              <p class="micro-label">Ebene 3 bis 4</p>
+              <h2>Visuelle Aufsplittung</h2>
+              <div id="structureCanvas"></div>
+            </article>
+
+            <article class="panel content-panel">
+              <p class="micro-label">Inhalte</p>
+              <h2 id="structureContentTitle">Projektinhalt</h2>
+              <div class="content-tabs" id="structureContentTabs"></div>
+              <div class="mini-table" id="structureContentTable"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="week" class="view" aria-labelledby="week-title">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="micro-label">Planung</p>
+                <h2 id="week-title">Wochenuebersicht</h2>
+              </div>
+              <div class="week-controls">
+                <button class="icon-action" type="button">Zurueck</button>
+                <button class="icon-action" type="button">Heute</button>
+              </div>
+            </div>
+            <div class="week-board" id="weekBoard"></div>
+          </article>
+        </section>
+
+        <section id="performance" class="view" aria-labelledby="performance-title">
+          <article class="panel">
+            <p class="micro-label">Reflexion</p>
+            <h2 id="performance-title">Leistungsuebersicht</h2>
+            <div class="metric-grid" id="metricGrid"></div>
+          </article>
         </section>
       </main>
     </div>
+
+    <template id="projectCardTemplate">
+      <button class="project-card" type="button">
+        <span class="project-icon"></span>
+        <strong></strong>
+        <small></small>
+        <span class="progress-track"><span></span></span>
+      </button>
+    </template>
 
     <script src="./app.js"></script>
   </body>
