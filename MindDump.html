@@ -1166,25 +1166,9 @@ select option { background:#1c1c1c; }
     <!-- FIREBASE SYNC -->
     <div class="set-card">
       <h3>Firebase Sync <span class="free-badge">GRATIS</span></h3>
-      <p>Für Sync zwischen PC und Handy. Einmalige Einrichtung, danach automatisch.</p>
-      <ol class="steps">
-        <li><div class="step-num">1</div><div>Geh auf <b>firebase.google.com</b> → "Projekt erstellen"</div></li>
-        <li><div class="step-num">2</div><div>Im Projekt: <b>"Web App hinzufügen"</b> → Config kopieren (das JSON-Objekt)</div></li>
-        <li><div class="step-num">3</div><div><b>Firestore Database</b> aktivieren → "Im Testmodus starten"</div></li>
-        <li><div class="step-num">4</div><div><b>Authentication</b> → "Google" als Anmeldeanbieter aktivieren</div></li>
-        <li><div class="step-num">5</div><div>Config unten einfügen → Verbinden</div></li>
-      </ol>
-      <div class="form-row" style="margin-top:4px">
-        <textarea class="form-ta" id="fb-config-in" style="min-height:90px;font-family:'Consolas',monospace;font-size:12px" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
-      </div>
-      <div class="form-row">
-        <button class="btn btn-primary btn-sm" onclick="connectFirebase()">🔥 Firebase verbinden</button>
-        <div class="fb-status-row" id="fb-status-row">
-          <span id="fb-status" style="color:var(--sub)">Nicht eingerichtet</span>
-        </div>
-      </div>
-      <div class="info-box info-yellow" style="margin-top:12px">
-        ⚠️ Nach der Einrichtung: In Firebase → Authentication → Settings → "Authorized domains" → deine GitHub Pages URL hinzufügen (z.B. <b>deinname.github.io</b>)
+      <p>Sync zwischen PC und Handy. Verbindet sich beim Start automatisch.</p>
+      <div class="fb-status-row" id="fb-status-row">
+        <span id="fb-status" style="color:var(--sub)">Nicht eingerichtet</span>
       </div>
     </div>
 
@@ -1240,7 +1224,7 @@ select option { background:#1c1c1c; }
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────
-let D = { tasks:[], thoughts:[], notes:[], habits:[], calEvents:[], dailyLog:{}, goals:[], subgoals:[], mapTopics:[], mapNodes:[] };
+let D = { tasks:[], thoughts:[], notes:[], habits:[], calEvents:[], goals:[], subgoals:[], mapTopics:[], mapNodes:[] };
 let S = { groqKey:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{}, navOrder:[] };
 let pendingResult = null;
 let taskFilter = 'all';
@@ -1312,7 +1296,6 @@ function loadLocal() {
   if(!Array.isArray(D.calEvents)) D.calEvents=[];
   if(!Array.isArray(D.tasks)) D.tasks=[];
   if(!Array.isArray(D.thoughts)) D.thoughts=[];
-  if(!D.dailyLog || typeof D.dailyLog!=='object') D.dailyLog={};
   // Local migration: thoughts → notes (only for non-Firebase users, preserves thoughts for safety)
   if(D.thoughts.length) {
     let migrated=false;
@@ -1367,36 +1350,6 @@ function rerender(colName) {
   if(currentTab==='karte' && (colName==='tasks'||colName==='mapTopics'||colName==='mapNodes')) renderKarte();
   if(currentTab==='heute' && (colName==='mapTopics'||colName==='mapNodes')) renderHeuteProjects();
   if(currentTab==='sb' && ['tasks','notes','habits','mapTopics','mapNodes','calEvents'].includes(colName)) renderSB();
-}
-
-// ── FIREBASE ──────────────────────────────────────────────────
-function connectFirebase() {
-  const raw = document.getElementById('fb-config-in').value.trim();
-  if(!raw) { toast('Bitte Firebase Config einfügen','err'); return; }
-  try {
-    // Accept both object literal and JSON
-    let configStr = raw;
-    if(!raw.startsWith('{')) throw new Error('Kein gültiges JSON-Objekt');
-    const config = JSON.parse(configStr);
-
-    firebase.apps.forEach(a => { try{a.delete();}catch(e){} });
-    firebase.initializeApp(config);
-    db = firebase.firestore();
-    auth = firebase.auth();
-
-    auth.onAuthStateChanged(user => {
-      currentUser = user;
-      renderUserArea();
-      if(user) { subscribeFS(); }
-      else { unsubListeners.forEach(u=>u()); unsubListeners=[]; D={tasks:[],thoughts:[],notes:[],habits:[],calEvents:[],dailyLog:{},goals:[],subgoals:[],mapTopics:[],mapNodes:[]}; badges(); }
-    });
-
-    saveSettings();
-    updateFBStatus(true);
-    toast('Firebase verbunden! Jetzt anmelden.');
-  } catch(e) {
-    toast('Firebase Fehler: '+e.message, 'err');
-  }
 }
 
 function subscribeFS() {
@@ -1455,34 +1408,6 @@ function subscribeFS() {
       await col('thoughts').doc(t.id).delete();
     }));
   }
-  // Daily log (keyed by date)
-  unsubListeners.push(
-    db.collection(`users/${currentUser.uid}/dailyLog`).onSnapshot(snap=>{
-      const remoteDailyLog = {};
-      snap.docs.forEach(d=>{ remoteDailyLog[d.id]={...d.data()}; });
-      const localDailyLog = (D.dailyLog && typeof D.dailyLog === 'object') ? D.dailyLog : {};
-      const mergedDailyLog = { ...remoteDailyLog };
-      const keys = new Set([...Object.keys(localDailyLog), ...Object.keys(remoteDailyLog)]);
-      keys.forEach(key => {
-        const localEntry = localDailyLog[key];
-        const remoteEntry = remoteDailyLog[key];
-        if(!localEntry) return;
-        if(!remoteEntry) {
-          mergedDailyLog[key] = localEntry;
-          if(useFS()) db.collection(`users/${currentUser.uid}/dailyLog`).doc(key).set(localEntry).catch(err=>console.error('dailyLog sync', err));
-          return;
-        }
-        const localStamp = localEntry.updatedAt || localEntry.schlafEnde || localEntry.schlafStart || 0;
-        const remoteStamp = remoteEntry.updatedAt || remoteEntry.schlafEnde || remoteEntry.schlafStart || 0;
-        if(localStamp > remoteStamp) {
-          mergedDailyLog[key] = localEntry;
-          if(useFS()) db.collection(`users/${currentUser.uid}/dailyLog`).doc(key).set(localEntry).catch(err=>console.error('dailyLog sync', err));
-        }
-      });
-      D.dailyLog = mergedDailyLog;
-      saveLocal();
-    }, err=>console.error('dailyLog',err))
-  );
   // Sync API key from Firebase
   db.collection('settings').doc(currentUser.uid).get().then(doc=>{
     if(doc.exists && doc.data().groqKey) {
@@ -4968,7 +4893,7 @@ function importData(e){
         renderTasks();
         toast(`Zu Firebase hochgeladen: ${imp.tasks.length} Tasks, ${imp.thoughts.length} Thoughts`);
       } else {
-        D={tasks:imp.tasks||[],thoughts:imp.thoughts||[],notes:imp.notes||[],habits:imp.habits||[],calEvents:imp.calEvents||[],dailyLog:imp.dailyLog||{},goals:imp.goals||[],subgoals:imp.subgoals||[]}; saveLocal();
+        D={tasks:imp.tasks||[],thoughts:imp.thoughts||[],notes:imp.notes||[],habits:imp.habits||[],calEvents:imp.calEvents||[],goals:imp.goals||[],subgoals:imp.subgoals||[]}; saveLocal();
         if(Array.isArray(imp.meta?.taskCategories)) S.taskCategories = imp.meta.taskCategories;
         if(imp.meta?.taskCategoryLabels && typeof imp.meta.taskCategoryLabels === 'object') S.taskCategoryLabels = imp.meta.taskCategoryLabels;
         if(Array.isArray(imp.meta?.taskCategoryOrder)) S.taskCategoryOrder = imp.meta.taskCategoryOrder;
@@ -4989,7 +4914,7 @@ function importData(e){
 }
 function clearAll(){
   if(confirm('Wirklich ALLE Daten löschen?')){
-    D={tasks:[],thoughts:[],notes:[],habits:[],calEvents:[],dailyLog:{},goals:[],subgoals:[]}; saveLocal();
+    D={tasks:[],thoughts:[],notes:[],habits:[],calEvents:[],goals:[],subgoals:[]}; saveLocal();
     renderTasks();
     toast('Alle Daten gelöscht');
   }
