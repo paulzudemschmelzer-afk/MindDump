@@ -1224,7 +1224,7 @@ select option { background:#1c1c1c; }
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────
-let D = { tasks:[], thoughts:[], notes:[], habits:[], calEvents:[], goals:[], subgoals:[], mapTopics:[], mapNodes:[] };
+let D = { tasks:[], thoughts:[], notes:[], habits:[], calEvents:[], goals:[], subgoals:[], mapTopics:[], mapNodes:[], categories:[], tags:[], habitCheckins:[] };
 let S = { groqKey:'', taskCategories:[], taskCategoryLabels:{}, taskCategoryOrder:[], taskCategoryShowSubsCollapsed:{}, taskCategoryParents:{}, thoughtCategories:[], thoughtCategoryLabels:{}, navOrder:[] };
 let pendingResult = null;
 let taskFilter = 'all';
@@ -1296,6 +1296,7 @@ function loadLocal() {
   if(!Array.isArray(D.calEvents)) D.calEvents=[];
   if(!Array.isArray(D.tasks)) D.tasks=[];
   if(!Array.isArray(D.thoughts)) D.thoughts=[];
+  for(const name of ['goals','subgoals','mapTopics','mapNodes','categories','tags','habitCheckins']) if(!Array.isArray(D[name])) D[name]=[];
   // Local migration: thoughts → notes (only for non-Firebase users, preserves thoughts for safety)
   if(D.thoughts.length) {
     let migrated=false;
@@ -4849,74 +4850,77 @@ function saveKey(){
   S.groqKey=document.getElementById('api-key-in').value.trim();
   saveSettings(); updateApiIndicator(); saveApiKeyToFirebase(); toast('API Key gespeichert!');
 }
+const DATA_COLLECTIONS=['tasks','thoughts','notes','habits','calEvents','goals','subgoals','mapTopics','mapNodes','categories','tags','habitCheckins'];
 function exportData(){
-  const blob=new Blob([JSON.stringify({...D,meta:{
-    taskCategories:S.taskCategories||[],
-    taskCategoryLabels:S.taskCategoryLabels||{},
-    taskCategoryOrder:S.taskCategoryOrder||[],
-    taskCategoryShowSubsCollapsed:S.taskCategoryShowSubsCollapsed||{},
-    taskCategoryParents:S.taskCategoryParents||{},
-    thoughtCategories:S.thoughtCategories||[],
-    thoughtCategoryLabels:S.thoughtCategoryLabels||{}
-  }},null,2)],{type:'application/json'});
+  // Complete v2 backup of every collection. Never export API credentials.
+  const data={schemaVersion:2,exportedAt:new Date().toISOString()};
+  for(const name of DATA_COLLECTIONS) data[name]=Array.isArray(D[name])?D[name]:[];
+  data.meta={
+    taskCategories:S.taskCategories||[],taskCategoryLabels:S.taskCategoryLabels||{},
+    taskCategoryOrder:S.taskCategoryOrder||[],taskCategoryShowSubsCollapsed:S.taskCategoryShowSubsCollapsed||{},
+    taskCategoryParents:S.taskCategoryParents||{},thoughtCategories:S.thoughtCategories||[],
+    thoughtCategoryLabels:S.thoughtCategoryLabels||{},navOrder:S.navOrder||[]
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download='scatterbrain-'+dateKey()+'.json'; a.click(); URL.revokeObjectURL(url);
+  const a=document.createElement('a');a.href=url;a.download='scatterbrain-'+dateKey()+'.json';a.click();URL.revokeObjectURL(url);
 }
-function importTrigger(){ document.getElementById('import-file').click(); }
+function importTrigger(){document.getElementById('import-file').click();}
+function validatedImport(raw){
+  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Ungültiges Backup');
+  if(!['tasks','notes','thoughts'].some(k=>Array.isArray(raw[k])))throw new Error('Keine bekannten Daten gefunden');
+  const result={};
+  for(const name of DATA_COLLECTIONS){
+    const items=raw[name]||[];
+    if(!Array.isArray(items))throw new Error('Collection '+name+' ist kein Array');
+    const ids=new Set();
+    result[name]=items.map(item=>{
+      if(!item||typeof item!=='object'||Array.isArray(item)||typeof item.id!=='string'||!item.id||item.id.includes('/'))
+        throw new Error('Ungültige ID in '+name);
+      if(ids.has(item.id))throw new Error('Doppelte ID in '+name);
+      ids.add(item.id);
+      return {...item};
+    });
+  }
+  return result;
+}
+function applyImportedSettings(meta){
+  if(!meta||typeof meta!=='object')return;
+  const fields=['taskCategories','taskCategoryLabels','taskCategoryOrder','taskCategoryShowSubsCollapsed',
+    'taskCategoryParents','thoughtCategories','thoughtCategoryLabels','navOrder'];
+  for(const key of fields)if(meta[key]!==undefined)S[key]=meta[key];
+  ensureTaskCategorySettings();ensureThoughtCategorySettings();
+  saveSettings();saveTaskCategoriesToFirebase();saveThoughtCategoriesToFirebase();saveNavOrderToFirebase();
+}
 function importData(e){
-  const file=e.target.files[0]; if(!file) return;
+  const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=async ev=>{
-    try {
-      const imp=JSON.parse(ev.target.result);
-      if(!imp.tasks||!imp.thoughts) throw new Error('Ungültiges Format');
-      if(currentUser && db) {
-        toast('Lade zu Firebase hoch...');
-        for(const name of ['tasks','thoughts']) {
-          for(const item of imp[name]) {
-            const {id,...data}=item;
-            await col(name).doc(id).set(data);
-          }
+    try{
+      const raw=JSON.parse(ev.target.result),incoming=validatedImport(raw);
+      const count=DATA_COLLECTIONS.reduce((n,k)=>n+incoming[k].length,0);
+      if(!confirm('Backup mit '+count+' Einträgen importieren? Einträge mit gleicher ID werden ersetzt; andere bleiben erhalten.'))return;
+      if(useFS()){
+        for(const name of DATA_COLLECTIONS)for(const item of incoming[name]){
+          const {id,...data}=item;
+          await col(name).doc(id).set(data);
         }
-        if(Array.isArray(imp.meta?.taskCategories)) S.taskCategories = imp.meta.taskCategories;
-        if(imp.meta?.taskCategoryLabels && typeof imp.meta.taskCategoryLabels === 'object') S.taskCategoryLabels = imp.meta.taskCategoryLabels;
-        if(Array.isArray(imp.meta?.taskCategoryOrder)) S.taskCategoryOrder = imp.meta.taskCategoryOrder;
-        if(imp.meta?.taskCategoryShowSubsCollapsed && typeof imp.meta.taskCategoryShowSubsCollapsed === 'object') S.taskCategoryShowSubsCollapsed = imp.meta.taskCategoryShowSubsCollapsed;
-        if(imp.meta?.taskCategoryParents && typeof imp.meta.taskCategoryParents === 'object') S.taskCategoryParents = imp.meta.taskCategoryParents;
-        if(Array.isArray(imp.meta?.thoughtCategories)) S.thoughtCategories = imp.meta.thoughtCategories;
-        if(imp.meta?.thoughtCategoryLabels && typeof imp.meta.thoughtCategoryLabels === 'object') S.thoughtCategoryLabels = imp.meta.thoughtCategoryLabels;
-        ensureTaskCategorySettings();
-        ensureThoughtCategorySettings();
-        saveSettings();
-        saveTaskCategoriesToFirebase();
-        renderTaskCategoryInputs();
-        renderTasks();
-        toast(`Zu Firebase hochgeladen: ${imp.tasks.length} Tasks, ${imp.thoughts.length} Thoughts`);
-      } else {
-        D={tasks:imp.tasks||[],thoughts:imp.thoughts||[],notes:imp.notes||[],habits:imp.habits||[],calEvents:imp.calEvents||[],goals:imp.goals||[],subgoals:imp.subgoals||[]}; saveLocal();
-        if(Array.isArray(imp.meta?.taskCategories)) S.taskCategories = imp.meta.taskCategories;
-        if(imp.meta?.taskCategoryLabels && typeof imp.meta.taskCategoryLabels === 'object') S.taskCategoryLabels = imp.meta.taskCategoryLabels;
-        if(Array.isArray(imp.meta?.taskCategoryOrder)) S.taskCategoryOrder = imp.meta.taskCategoryOrder;
-        if(imp.meta?.taskCategoryShowSubsCollapsed && typeof imp.meta.taskCategoryShowSubsCollapsed === 'object') S.taskCategoryShowSubsCollapsed = imp.meta.taskCategoryShowSubsCollapsed;
-        if(imp.meta?.taskCategoryParents && typeof imp.meta.taskCategoryParents === 'object') S.taskCategoryParents = imp.meta.taskCategoryParents;
-        if(Array.isArray(imp.meta?.thoughtCategories)) S.thoughtCategories = imp.meta.thoughtCategories;
-        if(imp.meta?.thoughtCategoryLabels && typeof imp.meta.thoughtCategoryLabels === 'object') S.thoughtCategoryLabels = imp.meta.thoughtCategoryLabels;
-        ensureTaskCategorySettings();
-        ensureThoughtCategorySettings();
-        saveSettings();
-        renderTaskCategoryInputs();
-        renderTasks();
-        toast(`Importiert: ${D.tasks.length} Tasks, ${D.thoughts.length} Thoughts`);
+      }else{
+        D={...D,...incoming};saveLocal();
       }
-    } catch(err){ toast('Import fehlgeschlagen: '+err.message,'err'); }
+      applyImportedSettings(raw.meta);
+      renderTasks();renderNotes();renderHabits();renderGoals();renderKarte();badges();
+      toast('Import abgeschlossen: '+count+' Einträge');
+    }catch(err){console.error('Import',err);toast('Import fehlgeschlagen: '+err.message,'err');}
   };
-  reader.readAsText(file); e.target.value='';
+  reader.readAsText(file);e.target.value='';
 }
 function clearAll(){
-  if(confirm('Wirklich ALLE Daten löschen?')){
-    D={tasks:[],thoughts:[],notes:[],habits:[],calEvents:[],goals:[],subgoals:[]}; saveLocal();
-    renderTasks();
-    toast('Alle Daten gelöscht');
+  if(useFS()){toast('Online-Daten werden hier nicht gelöscht.','err');return;}
+  if(confirm('Wirklich ALLE lokalen Daten löschen?')){
+    D=Object.fromEntries(DATA_COLLECTIONS.map(k=>[k,[]]));saveLocal();
+    renderTasks();renderNotes();renderHabits();renderGoals();renderKarte();
+    toast('Lokale Daten gelöscht');
   }
 }
 
