@@ -4929,7 +4929,10 @@ function importData(e){
           await col(name).doc(id).set(data);
         }
       }else{
-        D={...D,...incoming};saveLocal();
+        // Legacy backups may omit newer collections: keep those existing collections intact.
+        for(const name of DATA_COLLECTIONS)if(Object.prototype.hasOwnProperty.call(raw,name))D[name]=incoming[name];
+        migrateProjectLinksLocally();
+        saveLocal();
       }
       applyImportedSettings(raw.meta);
       renderTasks();renderNotes();renderHabits();renderGoals();renderKarte();badges();
