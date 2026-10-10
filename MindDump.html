@@ -1343,6 +1343,29 @@ async function fsDel(colName, id) {
   else { D[colName]=D[colName].filter(x=>x.id!==id); saveLocal(); rerender(colName); badges(); }
 }
 
+function legacyTaskMatchesProject(t,p){return (t.kategorie||'sonstiges')===p.taskCategory&&(!p.subkategorie||t.subkategorie===p.subkategorie);}
+function inferProjectId(t){
+  if(t.projectId)return t.projectId;
+  const node=(D.mapNodes||[]).find(n=>n.id===t.mapNodeId);
+  if(node&&(D.mapTopics||[]).some(p=>p.id===node.topicId))return node.topicId;
+  const matches=(D.mapTopics||[]).filter(p=>legacyTaskMatchesProject(t,p));
+  const exact=matches.filter(p=>p.subkategorie&&p.subkategorie===t.subkategorie);
+  return exact.length===1?exact[0].id:matches.length===1?matches[0].id:null;
+}
+function noteInProject(n,p){
+  return n.projectId?n.projectId===p.id:
+    n.category===p.title&&(D.mapTopics||[]).filter(x=>x.title===p.title).length===1;
+}
+function migrateProjectLinksLocally(){
+  if(useFS())return;
+  let changed=false;
+  for(const t of D.tasks){if(!t.projectId){const p=inferProjectId(t);if(p){t.projectId=p;changed=true;}}}
+  for(const n of D.notes){if(!n.projectId){
+    const matches=D.mapTopics.filter(p=>p.title===n.category);
+    if(matches.length===1){n.projectId=matches[0].id;changed=true;}
+  }}
+  if(changed)saveLocal();
+}
 function rerender(colName) {
   if(colName==='tasks') { renderTasks(); if(currentTab==='heute') renderHeute(); }
   if(colName==='notes') renderNotes();
@@ -1357,7 +1380,7 @@ function subscribeFS() {
   unsubListeners.forEach(u=>u());
   unsubListeners=[];
   let _notesReady=false, _thoughtsReady=false;
-  ['tasks','thoughts','notes','habits','calEvents','goals','subgoals','mapTopics','mapNodes'].forEach(name=>{
+  ['tasks','thoughts','notes','habits','calEvents','goals','subgoals','mapTopics','mapNodes','categories','tags','habitCheckins'].forEach(name=>{
     unsubListeners.push(
       col(name).onSnapshot(snap=>{
         D[name]=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -5299,7 +5322,7 @@ function sbProject(){
       ${tasks.length?tasks.map(t=>`<label class="sb-todo${t.done?' done':''}"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}')"><span class="sb-todo-title" onclick="event.preventDefault();sbOpenDetail('${t.id}','project')">${esc(t.title)}</span>${t.dueDate?`<span class="sb-chip">${t.dueDate}</span>`:''}</label>`).join(''):'<div class="sb-empty">Noch keine Aufgaben</div>'}
       <button class="sb-link-btn" onclick="sbQuickProjTask()">+ Aufgabe hinzufügen</button></div>`;
   } else if(sbProjectTab==='notizen'){
-    const notes=D.notes.filter(n=>n.category===tp.title);
+    const notes=D.notes.filter(n=>noteInProject(n,tp));
     body=`<div class="sb-card"><div class="sb-card-title">Notizen (Kategorie „${esc(tp.title)}“)</div>
       ${notes.length?notes.map(n=>`<div class="sb-entry" style="cursor:pointer" onclick="go('notes')"><span class="sb-entry-dot" style="background:#34d9a0"></span><span class="sb-entry-title">${esc(n.title)}</span><span class="sb-entry-time">${sbAgo(Date.parse(n.updated||n.created||''))}</span></div>`).join(''):'<div class="sb-empty">Noch keine Notizen in dieser Kategorie</div>'}
       <button class="sb-link-btn" onclick="sbQuickNote()">+ Neue Notiz</button></div>`;
@@ -5317,13 +5340,13 @@ async function sbQuickNote(){
   const tp=sbTopic(); if(!tp) return;
   const title=prompt('Titel der neuen Notiz:'); if(!title||!title.trim()) return;
   const now=new Date().toISOString();
-  await fsAdd('notes',{id:uid(),title:title.trim(),category:tp.title,subtopic:null,html:'',canvasData:null,created:now,updated:now});
+  await fsAdd('notes',{id:uid(),projectId:tp.id,title:title.trim(),category:tp.title,subtopic:null,html:'',canvasData:null,created:now,updated:now});
   toast('Notiz angelegt'); if(currentTab==='sb') renderSB();
 }
 async function sbQuickProjTask(){
   const tp=sbTopic(); if(!tp) return;
   const title=prompt('Neue Aufgabe in „'+tp.title+'“:'); if(!title||!title.trim()) return;
-  await fsAdd('tasks',{id:uid(),title:title.trim(),context:'',priority:'mittel',kategorie:tp.taskCategory,subkategorie:tp.subkategorie||null,dueDate:null,estimatedTime:null,recurrence:null,tags:[],done:false,createdAt:Date.now()});
+  await fsAdd('tasks',{id:uid(),projectId:tp.id,title:title.trim(),context:'',priority:'mittel',kategorie:tp.taskCategory,subkategorie:tp.subkategorie||null,dueDate:null,estimatedTime:null,recurrence:null,tags:[],done:false,createdAt:Date.now()});
   if(currentTab==='sb') renderSB();
 }
 async function sbQuickIdea(){
@@ -5424,7 +5447,7 @@ async function sbDelNodeIdea(i){ const nd=sbNodeObj(); if(!nd) return; if(!confi
 async function sbQuickNodeTask(){
   const tp=sbTopic(), nd=sbNodeObj(); if(!tp||!nd) return;
   const title=prompt('Neue Aufgabe in „'+nd.title+'“:'); if(!title||!title.trim()) return;
-  await fsAdd('tasks',{id:uid(),title:title.trim(),context:'',priority:'mittel',kategorie:tp.taskCategory,subkategorie:tp.subkategorie||null,mapNodeId:nd.id,dueDate:null,estimatedTime:null,recurrence:null,tags:[],done:false,createdAt:Date.now()});
+  await fsAdd('tasks',{id:uid(),title:title.trim(),context:'',priority:'mittel',projectId:tp.id,kategorie:tp.taskCategory,subkategorie:tp.subkategorie||null,mapNodeId:nd.id,dueDate:null,estimatedTime:null,recurrence:null,tags:[],done:false,createdAt:Date.now()});
   if(currentTab==='sb') renderSB();
 }
 
@@ -5504,6 +5527,7 @@ function sbLeistung(){
 
 function init() {
   loadLocal();
+  migrateProjectLinksLocally();
   renderTaskCategoryInputs();
   if(S.groqKey) document.getElementById('api-key-in').value=S.groqKey;
   updateApiIndicator();
@@ -5557,7 +5581,7 @@ function karteColorFor(key){
   return KARTE_BADGE_COLORS[h%KARTE_BADGE_COLORS.length];
 }
 function karteTopicTasks(topic){
-  return D.tasks.filter(t=>(t.kategorie||'sonstiges')===topic.taskCategory && (!topic.subkategorie || t.subkategorie===topic.subkategorie));
+  return D.tasks.filter(t=>t.projectId?t.projectId===topic.id:legacyTaskMatchesProject(t,topic));
 }
 function karteFreeSubcategoriesOf(kat){
   const subs=new Set();
@@ -5792,14 +5816,14 @@ function karteToggleMapOnly(id){
 }
 function karteMoveTask(id,nodeVal){
   const t=D.tasks.find(x=>x.id===id); if(!t) return;
-  t.mapNodeId=nodeVal||null; fsUpdate('tasks',t);
+  t.mapNodeId=nodeVal||null; t.projectId=karteTopicId; fsUpdate('tasks',t);
   const topic=(D.mapTopics||[]).find(x=>x.id===karteTopicId); if(topic) renderKarteDetail(document.getElementById('karte-root'),topic);
 }
 function karteAddTask(){
   const title=prompt('Neue Aufgabe:'); if(!title||!title.trim()) return;
   const topic=(D.mapTopics||[]).find(x=>x.id===karteTopicId); if(!topic) return;
   const onlyMap=confirm('Nur in der Karte anzeigen?\n\nOK = nur hier in der Karte.\nAbbrechen = auch im normalen Tasks-Screen.');
-  fsAdd('tasks',{id:uid(),title:title.trim(),context:'',priority:'mittel',kategorie:topic.taskCategory,subkategorie:topic.subkategorie||null,dueDate:null,estimatedTime:null,recurrence:null,tags:[],done:false,mapNodeId:karteNodeId||null,mapOnly:onlyMap,createdAt:Date.now()});
+  fsAdd('tasks',{id:uid(),projectId:topic.id,title:title.trim(),context:'',priority:'mittel',kategorie:topic.taskCategory,subkategorie:topic.subkategorie||null,dueDate:null,estimatedTime:null,recurrence:null,tags:[],done:false,mapNodeId:karteNodeId||null,mapOnly:onlyMap,createdAt:Date.now()});
   renderKarteDetail(document.getElementById('karte-root'),topic);
 }
 
